@@ -1,0 +1,4 @@
+<Solution>
+  <Project Path="HSMS.Model/HSMS.Model.csproj" />
+  <Project Path="HSMS.MVC/HSMS.MVC.csproj" />
+</Solution>
