@@ -58,11 +58,11 @@ public class AppDbContext : DbContext
 
             // Default roles seed data
             entity.HasData(
-                new Role { Id = 1, RoleCode = "STUDENT", RoleName = "Student", Description = "High school student", IsActive = true, CreatedAt = new DateTime(2026, 1, 1, 0, 0, 0, DateTimeKind.Utc) },
-                new Role { Id = 2, RoleCode = "PARENT", RoleName = "Parent", Description = "Parent or guardian of student", IsActive = true, CreatedAt = new DateTime(2026, 1, 1, 0, 0, 0, DateTimeKind.Utc) },
-                new Role { Id = 3, RoleCode = "TEACHER", RoleName = "Teacher", Description = "School teacher", IsActive = true, CreatedAt = new DateTime(2026, 1, 1, 0, 0, 0, DateTimeKind.Utc) },
-                new Role { Id = 4, RoleCode = "ADMIN", RoleName = "Administrator", Description = "System administrator", IsActive = true, CreatedAt = new DateTime(2026, 1, 1, 0, 0, 0, DateTimeKind.Utc) },
-                new Role { Id = 5, RoleCode = "STAFF", RoleName = "Staff", Description = "School staff", IsActive = true, CreatedAt = new DateTime(2026, 1, 1, 0, 0, 0, DateTimeKind.Utc) }
+                new Role(1, "STUDENT", "Student", "High school student", true, new DateTime(2026, 1, 1, 0, 0, 0, DateTimeKind.Utc)),
+                new Role(2, "PARENT", "Parent", "Parent or guardian of student", true, new DateTime(2026, 1, 1, 0, 0, 0, DateTimeKind.Utc)),
+                new Role(3, "TEACHER", "Teacher", "School teacher", true, new DateTime(2026, 1, 1, 0, 0, 0, DateTimeKind.Utc)),
+                new Role(4, "ADMIN", "Administrator", "System administrator", true, new DateTime(2026, 1, 1, 0, 0, 0, DateTimeKind.Utc)),
+                new Role(5, "STAFF", "Staff", "School staff", true, new DateTime(2026, 1, 1, 0, 0, 0, DateTimeKind.Utc))
             );
         });
 
