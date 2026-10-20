@@ -324,6 +324,9 @@ namespace HSMS.Repository.Migrations
                         .HasMaxLength(150)
                         .HasColumnType("nvarchar(150)");
 
+                    b.Property<long?>("ParentId")
+                        .HasColumnType("bigint");
+
                     b.Property<string>("PasswordHash")
                         .IsRequired()
                         .HasMaxLength(500)
@@ -332,6 +335,10 @@ namespace HSMS.Repository.Migrations
                     b.Property<string>("PhoneNumber")
                         .HasMaxLength(30)
                         .HasColumnType("nvarchar(30)");
+
+                    b.Property<string>("RelationshipType")
+                        .HasMaxLength(50)
+                        .HasColumnType("nvarchar(50)");
 
                     b.Property<string>("StudentCode")
                         .HasMaxLength(50)
@@ -348,6 +355,8 @@ namespace HSMS.Repository.Migrations
                     b.HasKey("Id")
                         .HasName("PK_Customer");
 
+                    b.HasIndex(new[] { "ParentId" }, "IX_Customer_ParentId");
+
                     b.HasIndex(new[] { "Email" }, "UQ_Customer_Email")
                         .IsUnique();
 
@@ -358,50 +367,9 @@ namespace HSMS.Repository.Migrations
                         .IsUnique()
                         .HasFilter("[StudentCode] IS NOT NULL");
 
-                    b.ToTable("Customer", (string)null);
-                });
-
-            modelBuilder.Entity("HSMS.Model.Model.CustomerRelationship", b =>
-                {
-                    b.Property<long>("Id")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("bigint");
-
-                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<long>("Id"));
-
-                    b.Property<DateTime>("CreatedAt")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("datetime2")
-                        .HasDefaultValueSql("SYSDATETIME()");
-
-                    b.Property<bool>("IsPrimaryGuardian")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("bit")
-                        .HasDefaultValue(false);
-
-                    b.Property<long>("ParentCustomerId")
-                        .HasColumnType("bigint");
-
-                    b.Property<string>("RelationshipType")
-                        .HasMaxLength(50)
-                        .HasColumnType("nvarchar(50)");
-
-                    b.Property<long>("StudentCustomerId")
-                        .HasColumnType("bigint");
-
-                    b.HasKey("Id")
-                        .HasName("PK_CustomerRelationship");
-
-                    b.HasIndex(new[] { "ParentCustomerId" }, "IX_CustomerRelationship_Parent");
-
-                    b.HasIndex(new[] { "StudentCustomerId" }, "IX_CustomerRelationship_Student");
-
-                    b.HasIndex(new[] { "ParentCustomerId", "StudentCustomerId" }, "UQ_CustomerRelationship")
-                        .IsUnique();
-
-                    b.ToTable("CustomerRelationship", null, t =>
+                    b.ToTable("Customer", null, t =>
                         {
-                            t.HasCheckConstraint("CK_CustomerRelationship_SameCustomer", "[ParentCustomerId] <> [StudentCustomerId]");
+                            t.HasCheckConstraint("CK_Customer_ParentNotSelf", "[ParentId] IS NULL OR [ParentId] <> [Id]");
                         });
                 });
 
@@ -1462,23 +1430,15 @@ namespace HSMS.Repository.Migrations
                     b.Navigation("Semester");
                 });
 
-            modelBuilder.Entity("HSMS.Model.Model.CustomerRelationship", b =>
+            modelBuilder.Entity("HSMS.Model.Model.Customer", b =>
                 {
-                    b.HasOne("HSMS.Model.Model.Customer", "ParentCustomer")
-                        .WithMany("ParentRelationships")
-                        .HasForeignKey("ParentCustomerId")
-                        .IsRequired()
-                        .HasConstraintName("FK_CustomerRelationship_Parent");
+                    b.HasOne("HSMS.Model.Model.Customer", "Parent")
+                        .WithMany("Children")
+                        .HasForeignKey("ParentId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .HasConstraintName("FK_Customer_Parent");
 
-                    b.HasOne("HSMS.Model.Model.Customer", "StudentCustomer")
-                        .WithMany("StudentRelationships")
-                        .HasForeignKey("StudentCustomerId")
-                        .IsRequired()
-                        .HasConstraintName("FK_CustomerRelationship_Student");
-
-                    b.Navigation("ParentCustomer");
-
-                    b.Navigation("StudentCustomer");
+                    b.Navigation("Parent");
                 });
 
             modelBuilder.Entity("HSMS.Model.Model.CustomerRole", b =>
@@ -1800,11 +1760,11 @@ namespace HSMS.Repository.Migrations
                 {
                     b.Navigation("AttendanceRecords");
 
+                    b.Navigation("Children");
+
                     b.Navigation("ConductEvaluations");
 
                     b.Navigation("CustomerRoles");
-
-                    b.Navigation("ParentRelationships");
 
                     b.Navigation("ReceivedNotifications");
 
@@ -1817,8 +1777,6 @@ namespace HSMS.Repository.Migrations
                     b.Navigation("StudentClasses");
 
                     b.Navigation("StudentLeaveRequests");
-
-                    b.Navigation("StudentRelationships");
 
                     b.Navigation("StudentScores");
 

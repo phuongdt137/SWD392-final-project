@@ -23,8 +23,10 @@ public class Customer
     public DateTime? UpdatedAt { get; private set; }
 
     public virtual ICollection<CustomerRole> CustomerRoles { get; private set; } = new List<CustomerRole>();
-    public virtual ICollection<CustomerRelationship> ParentRelationships { get; private set; } = new List<CustomerRelationship>();
-    public virtual ICollection<CustomerRelationship> StudentRelationships { get; private set; } = new List<CustomerRelationship>();
+    public long? ParentId { get; private set; }
+    public string? RelationshipType { get; private set; }
+    public virtual Customer? Parent { get; private set; }
+    public virtual ICollection<Customer> Children { get; private set; } = new List<Customer>();
     public virtual ICollection<StudentClass> StudentClasses { get; private set; } = new List<StudentClass>();
     public virtual ICollection<LeaveRequest> StudentLeaveRequests { get; private set; } = new List<LeaveRequest>();
     public virtual ICollection<LeaveRequest> RequestedLeaveRequests { get; private set; } = new List<LeaveRequest>();
@@ -51,7 +53,9 @@ public class Customer
         string? studentCode = null,
         DateTime? admissionDate = null,
         string? occupation = null,
-        string? emergencyContact = null)
+        string? emergencyContact = null,
+        long? parentId = null,
+        string? relationshipType = null)
     {
         if (string.IsNullOrWhiteSpace(username))
             throw new BusinessException("Tên đăng nhập không được để trống.", "USERNAME_REQUIRED");
@@ -64,6 +68,9 @@ public class Customer
 
         if (string.IsNullOrWhiteSpace(fullName))
             throw new BusinessException("Họ và tên không được để trống.", "FULLNAME_REQUIRED");
+
+        if (parentId.HasValue && parentId.Value <= 0)
+            throw new BusinessException("Id phụ huynh không hợp lệ.", "INVALID_PARENT_ID");
 
         Username = username.Trim();
         Email = email.Trim().ToLowerInvariant();
@@ -78,6 +85,8 @@ public class Customer
         AdmissionDate = admissionDate;
         Occupation = occupation;
         EmergencyContact = emergencyContact;
+        ParentId = parentId;
+        RelationshipType = relationshipType?.Trim();
         IsActive = true;
         CreatedAt = DateTime.UtcNow;
     }
@@ -110,6 +119,26 @@ public class Customer
         FullName = fullName.Trim();
         PhoneNumber = phoneNumber;
         Address = address;
+        UpdatedAt = DateTime.UtcNow;
+    }
+
+    public void AssignParent(long parentId, string? relationshipType = null)
+    {
+        if (parentId <= 0)
+            throw new BusinessException("Id phụ huynh không hợp lệ.", "INVALID_PARENT_ID");
+
+        if (Id != 0 && parentId == Id)
+            throw new BusinessException("Học sinh và phụ huynh không thể là cùng một người.", "SAME_CUSTOMER_RELATIONSHIP");
+
+        ParentId = parentId;
+        RelationshipType = relationshipType?.Trim();
+        UpdatedAt = DateTime.UtcNow;
+    }
+
+    public void RemoveParent()
+    {
+        ParentId = null;
+        RelationshipType = null;
         UpdatedAt = DateTime.UtcNow;
     }
 

@@ -14,7 +14,6 @@ public class AppDbContext : DbContext
     public DbSet<Employee> Employees => Set<Employee>();
     public DbSet<CustomerRole> CustomerRoles => Set<CustomerRole>();
     public DbSet<EmployeeRole> EmployeeRoles => Set<EmployeeRole>();
-    public DbSet<CustomerRelationship> CustomerRelationships => Set<CustomerRelationship>();
     public DbSet<AcademicYear> AcademicYears => Set<AcademicYear>();
     public DbSet<Semester> Semesters => Set<Semester>();
     public DbSet<GradeLevel> GradeLevels => Set<GradeLevel>();
@@ -71,7 +70,10 @@ public class AppDbContext : DbContext
         // ============================================================
         modelBuilder.Entity<Customer>(entity =>
         {
-            entity.ToTable("Customer");
+            entity.ToTable("Customer", t =>
+            {
+                t.HasCheckConstraint("CK_Customer_ParentNotSelf", "[ParentId] IS NULL OR [ParentId] <> [Id]");
+            });
             entity.HasKey(e => e.Id).HasName("PK_Customer");
             entity.Property(e => e.Username).HasMaxLength(100).IsRequired();
             entity.Property(e => e.Email).HasMaxLength(255).IsRequired();
@@ -86,6 +88,7 @@ public class AppDbContext : DbContext
             entity.Property(e => e.AdmissionDate).HasColumnType("date");
             entity.Property(e => e.Occupation).HasMaxLength(150);
             entity.Property(e => e.EmergencyContact).HasMaxLength(255);
+            entity.Property(e => e.RelationshipType).HasMaxLength(50);
             entity.Property(e => e.IsActive).HasDefaultValue(true);
             entity.Property(e => e.CreatedAt).HasDefaultValueSql("SYSDATETIME()");
             entity.Property(e => e.UpdatedAt);
@@ -93,6 +96,13 @@ public class AppDbContext : DbContext
             entity.HasIndex(e => e.Username, "UQ_Customer_Username").IsUnique();
             entity.HasIndex(e => e.Email, "UQ_Customer_Email").IsUnique();
             entity.HasIndex(e => e.StudentCode, "UX_Customer_StudentCode").IsUnique().HasFilter("[StudentCode] IS NOT NULL");
+            entity.HasIndex(e => e.ParentId, "IX_Customer_ParentId");
+
+            entity.HasOne(e => e.Parent)
+                .WithMany(c => c.Children)
+                .HasForeignKey(e => e.ParentId)
+                .HasConstraintName("FK_Customer_Parent")
+                .OnDelete(DeleteBehavior.Restrict);
         });
 
         // ============================================================
@@ -180,37 +190,6 @@ public class AppDbContext : DbContext
                 .WithMany(r => r.EmployeeRoles)
                 .HasForeignKey(e => e.RoleId)
                 .HasConstraintName("FK_EmployeeRole_Role")
-                .OnDelete(DeleteBehavior.ClientSetNull);
-        });
-
-        // ============================================================
-        // 6. CUSTOMER RELATIONSHIP
-        // ============================================================
-        modelBuilder.Entity<CustomerRelationship>(entity =>
-        {
-            entity.ToTable("CustomerRelationship", t =>
-            {
-                t.HasCheckConstraint("CK_CustomerRelationship_SameCustomer", "[ParentCustomerId] <> [StudentCustomerId]");
-            });
-            entity.HasKey(e => e.Id).HasName("PK_CustomerRelationship");
-            entity.Property(e => e.RelationshipType).HasMaxLength(50);
-            entity.Property(e => e.IsPrimaryGuardian).HasDefaultValue(false);
-            entity.Property(e => e.CreatedAt).HasDefaultValueSql("SYSDATETIME()");
-
-            entity.HasIndex(e => new { e.ParentCustomerId, e.StudentCustomerId }, "UQ_CustomerRelationship").IsUnique();
-            entity.HasIndex(e => e.ParentCustomerId, "IX_CustomerRelationship_Parent");
-            entity.HasIndex(e => e.StudentCustomerId, "IX_CustomerRelationship_Student");
-
-            entity.HasOne(e => e.ParentCustomer)
-                .WithMany(c => c.ParentRelationships)
-                .HasForeignKey(e => e.ParentCustomerId)
-                .HasConstraintName("FK_CustomerRelationship_Parent")
-                .OnDelete(DeleteBehavior.ClientSetNull);
-
-            entity.HasOne(e => e.StudentCustomer)
-                .WithMany(c => c.StudentRelationships)
-                .HasForeignKey(e => e.StudentCustomerId)
-                .HasConstraintName("FK_CustomerRelationship_Student")
                 .OnDelete(DeleteBehavior.ClientSetNull);
         });
 
