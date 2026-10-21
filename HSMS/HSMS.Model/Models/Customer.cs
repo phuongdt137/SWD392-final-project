@@ -37,7 +37,6 @@ public class Customer
     public virtual ICollection<TeacherFeedback> TeacherFeedbacks { get; private set; } = new List<TeacherFeedback>();
     public virtual ICollection<Notification> SentNotifications { get; private set; } = new List<Notification>();
     public virtual ICollection<Notification> ReceivedNotifications { get; private set; } = new List<Notification>();
-    public virtual ICollection<MessageLog> ReceivedMessageLogs { get; private set; } = new List<MessageLog>();
 
     protected Customer() { }
 
