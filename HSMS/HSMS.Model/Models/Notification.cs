@@ -19,6 +19,7 @@ public class Notification
     public virtual Employee? SenderEmployee { get; private set; }
     public virtual Customer? RecipientCustomer { get; private set; }
     public virtual Employee? RecipientEmployee { get; private set; }
+    public virtual ICollection<MessageLog> MessageLogs { get; private set; } = new List<MessageLog>();
 
     protected Notification() { }
 

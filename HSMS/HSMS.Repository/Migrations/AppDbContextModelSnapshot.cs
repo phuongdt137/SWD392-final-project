@@ -645,6 +645,109 @@ namespace HSMS.Repository.Migrations
                         });
                 });
 
+            modelBuilder.Entity("HSMS.Model.Model.MessageLog", b =>
+                {
+                    b.Property<long>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("bigint");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<long>("Id"));
+
+                    b.Property<string>("Channel")
+                        .IsRequired()
+                        .HasMaxLength(20)
+                        .HasColumnType("nvarchar(20)");
+
+                    b.Property<decimal?>("Cost")
+                        .HasColumnType("decimal(10, 2)");
+
+                    b.Property<DateTime>("CreatedAt")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("datetime2")
+                        .HasDefaultValueSql("SYSDATETIME()");
+
+                    b.Property<long?>("CreatedByEmployeeId")
+                        .HasColumnType("bigint");
+
+                    b.Property<DateTime?>("DeliveredAt")
+                        .HasColumnType("datetime2");
+
+                    b.Property<string>("ErrorMessage")
+                        .HasMaxLength(1000)
+                        .HasColumnType("nvarchar(1000)");
+
+                    b.Property<string>("ExternalMessageId")
+                        .HasMaxLength(255)
+                        .HasColumnType("nvarchar(255)");
+
+                    b.Property<string>("MessageBody")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<long?>("NotificationId")
+                        .HasColumnType("bigint");
+
+                    b.Property<string>("Provider")
+                        .HasMaxLength(50)
+                        .HasColumnType("nvarchar(50)");
+
+                    b.Property<string>("RecipientAddress")
+                        .IsRequired()
+                        .HasMaxLength(255)
+                        .HasColumnType("nvarchar(255)");
+
+                    b.Property<long?>("RecipientCustomerId")
+                        .HasColumnType("bigint");
+
+                    b.Property<long?>("RecipientEmployeeId")
+                        .HasColumnType("bigint");
+
+                    b.Property<int>("RetryCount")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int")
+                        .HasDefaultValue(0);
+
+                    b.Property<DateTime?>("SentAt")
+                        .HasColumnType("datetime2");
+
+                    b.Property<string>("Status")
+                        .IsRequired()
+                        .ValueGeneratedOnAdd()
+                        .HasMaxLength(30)
+                        .HasColumnType("nvarchar(30)")
+                        .HasDefaultValue("QUEUED");
+
+                    b.Property<string>("Subject")
+                        .HasMaxLength(255)
+                        .HasColumnType("nvarchar(255)");
+
+                    b.Property<string>("TemplateCode")
+                        .HasMaxLength(50)
+                        .HasColumnType("nvarchar(50)");
+
+                    b.HasKey("Id")
+                        .HasName("PK_MessageLog");
+
+                    b.HasIndex(new[] { "Channel", "Status" }, "IX_MessageLog_Channel_Status");
+
+                    b.HasIndex(new[] { "CreatedAt" }, "IX_MessageLog_CreatedAt");
+
+                    b.HasIndex(new[] { "CreatedByEmployeeId" }, "IX_MessageLog_CreatedByEmployee");
+
+                    b.HasIndex(new[] { "NotificationId" }, "IX_MessageLog_Notification");
+
+                    b.HasIndex(new[] { "RecipientAddress" }, "IX_MessageLog_RecipientAddress");
+
+                    b.HasIndex(new[] { "RecipientCustomerId" }, "IX_MessageLog_RecipientCustomer");
+
+                    b.HasIndex(new[] { "RecipientEmployeeId" }, "IX_MessageLog_RecipientEmployee");
+
+                    b.ToTable("MessageLog", null, t =>
+                        {
+                            t.HasCheckConstraint("CK_MessageLog_Recipient", "[RecipientCustomerId] IS NULL OR [RecipientEmployeeId] IS NULL");
+                        });
+                });
+
             modelBuilder.Entity("HSMS.Model.Model.Notification", b =>
                 {
                     b.Property<long>("Id")
@@ -1507,6 +1610,37 @@ namespace HSMS.Repository.Migrations
                     b.Navigation("StudentCustomer");
                 });
 
+            modelBuilder.Entity("HSMS.Model.Model.MessageLog", b =>
+                {
+                    b.HasOne("HSMS.Model.Model.Employee", "CreatedByEmployee")
+                        .WithMany("SentMessageLogs")
+                        .HasForeignKey("CreatedByEmployeeId")
+                        .HasConstraintName("FK_MessageLog_CreatedByEmployee");
+
+                    b.HasOne("HSMS.Model.Model.Notification", "Notification")
+                        .WithMany("MessageLogs")
+                        .HasForeignKey("NotificationId")
+                        .HasConstraintName("FK_MessageLog_Notification");
+
+                    b.HasOne("HSMS.Model.Model.Customer", "RecipientCustomer")
+                        .WithMany("ReceivedMessageLogs")
+                        .HasForeignKey("RecipientCustomerId")
+                        .HasConstraintName("FK_MessageLog_RecipientCustomer");
+
+                    b.HasOne("HSMS.Model.Model.Employee", "RecipientEmployee")
+                        .WithMany("ReceivedMessageLogs")
+                        .HasForeignKey("RecipientEmployeeId")
+                        .HasConstraintName("FK_MessageLog_RecipientEmployee");
+
+                    b.Navigation("CreatedByEmployee");
+
+                    b.Navigation("Notification");
+
+                    b.Navigation("RecipientCustomer");
+
+                    b.Navigation("RecipientEmployee");
+                });
+
             modelBuilder.Entity("HSMS.Model.Model.Notification", b =>
                 {
                     b.HasOne("HSMS.Model.Model.Customer", "RecipientCustomer")
@@ -1766,6 +1900,8 @@ namespace HSMS.Repository.Migrations
 
                     b.Navigation("CustomerRoles");
 
+                    b.Navigation("ReceivedMessageLogs");
+
                     b.Navigation("ReceivedNotifications");
 
                     b.Navigation("RequestedLeaveRequests");
@@ -1793,6 +1929,8 @@ namespace HSMS.Repository.Migrations
 
                     b.Navigation("HomeroomClasses");
 
+                    b.Navigation("ReceivedMessageLogs");
+
                     b.Navigation("ReceivedNotifications");
 
                     b.Navigation("RecordedAttendanceRecords");
@@ -1800,6 +1938,8 @@ namespace HSMS.Repository.Migrations
                     b.Navigation("ReviewedLeaveRequests");
 
                     b.Navigation("ScoreAuditLogs");
+
+                    b.Navigation("SentMessageLogs");
 
                     b.Navigation("SentNotifications");
 
@@ -1814,6 +1954,11 @@ namespace HSMS.Repository.Migrations
             modelBuilder.Entity("HSMS.Model.Model.LeaveRequest", b =>
                 {
                     b.Navigation("AttendanceRecords");
+                });
+
+            modelBuilder.Entity("HSMS.Model.Model.Notification", b =>
+                {
+                    b.Navigation("MessageLogs");
                 });
 
             modelBuilder.Entity("HSMS.Model.Model.Role", b =>
