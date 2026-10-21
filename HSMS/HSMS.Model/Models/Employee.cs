@@ -35,6 +35,8 @@ public class Employee
     public virtual ICollection<SemesterReport> FinalizedSemesterReports { get; private set; } = new List<SemesterReport>();
     public virtual ICollection<Notification> SentNotifications { get; private set; } = new List<Notification>();
     public virtual ICollection<Notification> ReceivedNotifications { get; private set; } = new List<Notification>();
+    public virtual ICollection<MessageLog> ReceivedMessageLogs { get; private set; } = new List<MessageLog>();
+    public virtual ICollection<MessageLog> SentMessageLogs { get; private set; } = new List<MessageLog>();
 
     protected Employee() { }
 

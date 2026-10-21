@@ -35,6 +35,7 @@ public class AppDbContext : DbContext
     public DbSet<SemesterSubjectResult> SemesterSubjectResults => Set<SemesterSubjectResult>();
     public DbSet<TeacherFeedback> TeacherFeedbacks => Set<TeacherFeedback>();
     public DbSet<Notification> Notifications => Set<Notification>();
+    public DbSet<MessageLog> MessageLogs => Set<MessageLog>();
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
@@ -797,6 +798,62 @@ public class AppDbContext : DbContext
                 .HasForeignKey(e => e.RecipientEmployeeId)
                 .HasConstraintName("FK_Notification_RecipientEmployee")
                 .OnDelete(DeleteBehavior.ClientSetNull);
+        });
+
+        // ============================================================
+        // 27. MESSAGE LOG
+        // ============================================================
+        modelBuilder.Entity<MessageLog>(entity =>
+        {
+            entity.ToTable("MessageLog", t =>
+            {
+                t.HasCheckConstraint("CK_MessageLog_Recipient", "[RecipientCustomerId] IS NULL OR [RecipientEmployeeId] IS NULL");
+            });
+            entity.HasKey(e => e.Id).HasName("PK_MessageLog");
+            entity.Property(e => e.Channel).HasMaxLength(20).IsRequired();
+            entity.Property(e => e.Provider).HasMaxLength(50);
+            entity.Property(e => e.RecipientAddress).HasMaxLength(255).IsRequired();
+            entity.Property(e => e.Subject).HasMaxLength(255);
+            entity.Property(e => e.MessageBody).IsRequired();
+            entity.Property(e => e.TemplateCode).HasMaxLength(50);
+            entity.Property(e => e.Status).HasMaxLength(30).HasDefaultValue("QUEUED");
+            entity.Property(e => e.ExternalMessageId).HasMaxLength(255);
+            entity.Property(e => e.ErrorMessage).HasMaxLength(1000);
+            entity.Property(e => e.RetryCount).HasDefaultValue(0);
+            entity.Property(e => e.Cost).HasColumnType("decimal(10, 2)");
+            entity.Property(e => e.CreatedAt).HasDefaultValueSql("SYSDATETIME()");
+
+            entity.HasIndex(e => e.RecipientAddress, "IX_MessageLog_RecipientAddress");
+            entity.HasIndex(e => new { e.Channel, e.Status }, "IX_MessageLog_Channel_Status");
+            entity.HasIndex(e => e.CreatedAt, "IX_MessageLog_CreatedAt");
+            entity.HasIndex(e => e.RecipientCustomerId, "IX_MessageLog_RecipientCustomer");
+            entity.HasIndex(e => e.RecipientEmployeeId, "IX_MessageLog_RecipientEmployee");
+            entity.HasIndex(e => e.CreatedByEmployeeId, "IX_MessageLog_CreatedByEmployee");
+            entity.HasIndex(e => e.NotificationId, "IX_MessageLog_Notification");
+
+            entity.HasOne(e => e.RecipientCustomer)
+                .WithMany(c => c.ReceivedMessageLogs)
+                .HasForeignKey(e => e.RecipientCustomerId)
+                .HasConstraintName("FK_MessageLog_RecipientCustomer")
+                .OnDelete(DeleteBehavior.SetNull);
+
+            entity.HasOne(e => e.RecipientEmployee)
+                .WithMany(emp => emp.ReceivedMessageLogs)
+                .HasForeignKey(e => e.RecipientEmployeeId)
+                .HasConstraintName("FK_MessageLog_RecipientEmployee")
+                .OnDelete(DeleteBehavior.SetNull);
+
+            entity.HasOne(e => e.CreatedByEmployee)
+                .WithMany(emp => emp.SentMessageLogs)
+                .HasForeignKey(e => e.CreatedByEmployeeId)
+                .HasConstraintName("FK_MessageLog_CreatedByEmployee")
+                .OnDelete(DeleteBehavior.SetNull);
+
+            entity.HasOne(e => e.Notification)
+                .WithMany(n => n.MessageLogs)
+                .HasForeignKey(e => e.NotificationId)
+                .HasConstraintName("FK_MessageLog_Notification")
+                .OnDelete(DeleteBehavior.SetNull);
         });
     }
 }
