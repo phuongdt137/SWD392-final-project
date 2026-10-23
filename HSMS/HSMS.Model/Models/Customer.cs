@@ -35,6 +35,8 @@ public class Customer
     public virtual ICollection<ConductEvaluation> ConductEvaluations { get; private set; } = new List<ConductEvaluation>();
     public virtual ICollection<SemesterReport> SemesterReports { get; private set; } = new List<SemesterReport>();
     public virtual ICollection<TeacherFeedback> TeacherFeedbacks { get; private set; } = new List<TeacherFeedback>();
+    public virtual ICollection<StudentTransfer> StudentTransfers { get; private set; } = new List<StudentTransfer>();
+    public virtual ICollection<StudentAnnualReport> StudentAnnualReports { get; private set; } = new List<StudentAnnualReport>();
     public virtual ICollection<Notification> SentNotifications { get; private set; } = new List<Notification>();
     public virtual ICollection<Notification> ReceivedNotifications { get; private set; } = new List<Notification>();
     public virtual ICollection<MessageLog> ReceivedMessageLogs { get; private set; } = new List<MessageLog>();

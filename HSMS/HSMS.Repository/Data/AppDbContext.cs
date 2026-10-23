@@ -36,6 +36,8 @@ public class AppDbContext : DbContext
     public DbSet<TeacherFeedback> TeacherFeedbacks => Set<TeacherFeedback>();
     public DbSet<Notification> Notifications => Set<Notification>();
     public DbSet<MessageLog> MessageLogs => Set<MessageLog>();
+    public DbSet<StudentTransfer> StudentTransfers => Set<StudentTransfer>();
+    public DbSet<StudentAnnualReport> StudentAnnualReports => Set<StudentAnnualReport>();
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
@@ -854,6 +856,43 @@ public class AppDbContext : DbContext
                 .HasForeignKey(e => e.NotificationId)
                 .HasConstraintName("FK_MessageLog_Notification")
                 .OnDelete(DeleteBehavior.ClientSetNull);
+        });
+
+        modelBuilder.Entity<StudentTransfer>(entity =>
+        {
+            entity.ToTable("StudentTransfer", t => t.HasCheckConstraint("CK_StudentTransfer_Type", "[TransferType] IN ('CLASS','SCHOOL_IN','SCHOOL_OUT')"));
+            entity.HasKey(e => e.Id).HasName("PK_StudentTransfer");
+            entity.Property(e => e.TransferType).HasMaxLength(20).IsUnicode(false).IsRequired();
+            entity.Property(e => e.FromSchoolName).HasMaxLength(200);
+            entity.Property(e => e.ToSchoolName).HasMaxLength(200);
+            entity.Property(e => e.EffectiveDate).HasColumnType("date");
+            entity.Property(e => e.Reason).HasMaxLength(1000).IsRequired();
+            entity.Property(e => e.Status).HasMaxLength(30).HasDefaultValue("COMPLETED");
+            entity.Property(e => e.RecordedAt).HasDefaultValueSql("SYSDATETIME()");
+            entity.HasIndex(e => new { e.CustomerId, e.EffectiveDate }, "IX_StudentTransfer_Student_Date");
+            entity.HasIndex(e => e.FromClassId, "IX_StudentTransfer_FromClass");
+            entity.HasIndex(e => e.ToClassId, "IX_StudentTransfer_ToClass");
+            entity.HasOne(e => e.Customer).WithMany(c => c.StudentTransfers).HasForeignKey(e => e.CustomerId).HasConstraintName("FK_StudentTransfer_Customer").OnDelete(DeleteBehavior.ClientSetNull);
+            entity.HasOne(e => e.FromClass).WithMany(c => c.TransfersFrom).HasForeignKey(e => e.FromClassId).HasConstraintName("FK_StudentTransfer_FromClass").OnDelete(DeleteBehavior.ClientSetNull);
+            entity.HasOne(e => e.ToClass).WithMany(c => c.TransfersTo).HasForeignKey(e => e.ToClassId).HasConstraintName("FK_StudentTransfer_ToClass").OnDelete(DeleteBehavior.ClientSetNull);
+            entity.HasOne(e => e.RecordedByEmployee).WithMany(e => e.RecordedStudentTransfers).HasForeignKey(e => e.RecordedByEmployeeId).HasConstraintName("FK_StudentTransfer_Employee").OnDelete(DeleteBehavior.ClientSetNull);
+        });
+
+        modelBuilder.Entity<StudentAnnualReport>(entity =>
+        {
+            entity.ToTable("StudentAnnualReport", t => t.HasCheckConstraint("CK_StudentAnnualReport_GPA", "[AnnualGpa] IS NULL OR ([AnnualGpa] >= 0 AND [AnnualGpa] <= 10)"));
+            entity.HasKey(e => e.Id).HasName("PK_StudentAnnualReport");
+            entity.Property(e => e.Status).HasMaxLength(30).HasDefaultValue("DRAFT");
+            entity.Property(e => e.AnnualGpa).HasPrecision(5, 2);
+            entity.Property(e => e.AcademicResult).HasMaxLength(100);
+            entity.Property(e => e.ConductGrade).HasMaxLength(50);
+            entity.Property(e => e.TeacherComment).HasMaxLength(2000);
+            entity.Property(e => e.PrincipalComment).HasMaxLength(2000);
+            entity.Property(e => e.CreatedAt).HasDefaultValueSql("SYSDATETIME()");
+            entity.HasIndex(e => new { e.CustomerId, e.AcademicYearId }, "UQ_StudentAnnualReport").IsUnique();
+            entity.HasOne(e => e.Customer).WithMany(c => c.StudentAnnualReports).HasForeignKey(e => e.CustomerId).HasConstraintName("FK_StudentAnnualReport_Customer").OnDelete(DeleteBehavior.ClientSetNull);
+            entity.HasOne(e => e.AcademicYear).WithMany(y => y.StudentAnnualReports).HasForeignKey(e => e.AcademicYearId).HasConstraintName("FK_StudentAnnualReport_AcademicYear").OnDelete(DeleteBehavior.ClientSetNull);
+            entity.HasOne(e => e.FinalizedByEmployee).WithMany(e => e.FinalizedStudentAnnualReports).HasForeignKey(e => e.FinalizedByEmployeeId).HasConstraintName("FK_StudentAnnualReport_FinalizedEmployee").OnDelete(DeleteBehavior.ClientSetNull);
         });
     }
 }

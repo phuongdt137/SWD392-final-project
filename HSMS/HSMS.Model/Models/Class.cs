@@ -16,6 +16,8 @@ public class Class
     public virtual GradeLevel GradeLevel { get; private set; } = null!;
     public virtual ICollection<StudentClass> StudentClasses { get; private set; } = new List<StudentClass>();
     public virtual ICollection<TeachingAssignment> TeachingAssignments { get; private set; } = new List<TeachingAssignment>();
+    public virtual ICollection<StudentTransfer> TransfersFrom { get; private set; } = new List<StudentTransfer>();
+    public virtual ICollection<StudentTransfer> TransfersTo { get; private set; } = new List<StudentTransfer>();
 
     protected Class() { }
 

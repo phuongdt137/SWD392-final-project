@@ -1130,6 +1130,74 @@ namespace HSMS.Repository.Migrations
                         });
                 });
 
+            modelBuilder.Entity("HSMS.Model.Model.StudentAnnualReport", b =>
+                {
+                    b.Property<long>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("bigint");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<long>("Id"));
+
+                    b.Property<string>("AcademicResult")
+                        .HasMaxLength(100)
+                        .HasColumnType("nvarchar(100)");
+
+                    b.Property<long>("AcademicYearId")
+                        .HasColumnType("bigint");
+
+                    b.Property<decimal?>("AnnualGpa")
+                        .HasPrecision(5, 2)
+                        .HasColumnType("decimal(5,2)");
+
+                    b.Property<string>("ConductGrade")
+                        .HasMaxLength(50)
+                        .HasColumnType("nvarchar(50)");
+
+                    b.Property<DateTime>("CreatedAt")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("datetime2")
+                        .HasDefaultValueSql("SYSDATETIME()");
+
+                    b.Property<long>("CustomerId")
+                        .HasColumnType("bigint");
+
+                    b.Property<DateTime?>("FinalizedAt")
+                        .HasColumnType("datetime2");
+
+                    b.Property<long?>("FinalizedByEmployeeId")
+                        .HasColumnType("bigint");
+
+                    b.Property<string>("PrincipalComment")
+                        .HasMaxLength(2000)
+                        .HasColumnType("nvarchar(2000)");
+
+                    b.Property<string>("Status")
+                        .IsRequired()
+                        .ValueGeneratedOnAdd()
+                        .HasMaxLength(30)
+                        .HasColumnType("nvarchar(30)")
+                        .HasDefaultValue("DRAFT");
+
+                    b.Property<string>("TeacherComment")
+                        .HasMaxLength(2000)
+                        .HasColumnType("nvarchar(2000)");
+
+                    b.HasKey("Id")
+                        .HasName("PK_StudentAnnualReport");
+
+                    b.HasIndex("AcademicYearId");
+
+                    b.HasIndex("FinalizedByEmployeeId");
+
+                    b.HasIndex(new[] { "CustomerId", "AcademicYearId" }, "UQ_StudentAnnualReport")
+                        .IsUnique();
+
+                    b.ToTable("StudentAnnualReport", null, t =>
+                        {
+                            t.HasCheckConstraint("CK_StudentAnnualReport_GPA", "[AnnualGpa] IS NULL OR ([AnnualGpa] >= 0 AND [AnnualGpa] <= 10)");
+                        });
+                });
+
             modelBuilder.Entity("HSMS.Model.Model.StudentClass", b =>
                 {
                     b.Property<long>("Id")
@@ -1218,6 +1286,77 @@ namespace HSMS.Repository.Migrations
                     b.ToTable("StudentScore", null, t =>
                         {
                             t.HasCheckConstraint("CK_StudentScore_Score", "[Score] IS NULL OR ([Score] >= 0 AND [Score] <= 10)");
+                        });
+                });
+
+            modelBuilder.Entity("HSMS.Model.Model.StudentTransfer", b =>
+                {
+                    b.Property<long>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("bigint");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<long>("Id"));
+
+                    b.Property<long>("CustomerId")
+                        .HasColumnType("bigint");
+
+                    b.Property<DateTime>("EffectiveDate")
+                        .HasColumnType("date");
+
+                    b.Property<long?>("FromClassId")
+                        .HasColumnType("bigint");
+
+                    b.Property<string>("FromSchoolName")
+                        .HasMaxLength(200)
+                        .HasColumnType("nvarchar(200)");
+
+                    b.Property<string>("Reason")
+                        .IsRequired()
+                        .HasMaxLength(1000)
+                        .HasColumnType("nvarchar(1000)");
+
+                    b.Property<DateTime>("RecordedAt")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("datetime2")
+                        .HasDefaultValueSql("SYSDATETIME()");
+
+                    b.Property<long>("RecordedByEmployeeId")
+                        .HasColumnType("bigint");
+
+                    b.Property<string>("Status")
+                        .IsRequired()
+                        .ValueGeneratedOnAdd()
+                        .HasMaxLength(30)
+                        .HasColumnType("nvarchar(30)")
+                        .HasDefaultValue("COMPLETED");
+
+                    b.Property<long?>("ToClassId")
+                        .HasColumnType("bigint");
+
+                    b.Property<string>("ToSchoolName")
+                        .HasMaxLength(200)
+                        .HasColumnType("nvarchar(200)");
+
+                    b.Property<string>("TransferType")
+                        .IsRequired()
+                        .HasMaxLength(20)
+                        .IsUnicode(false)
+                        .HasColumnType("varchar(20)");
+
+                    b.HasKey("Id")
+                        .HasName("PK_StudentTransfer");
+
+                    b.HasIndex("RecordedByEmployeeId");
+
+                    b.HasIndex(new[] { "FromClassId" }, "IX_StudentTransfer_FromClass");
+
+                    b.HasIndex(new[] { "CustomerId", "EffectiveDate" }, "IX_StudentTransfer_Student_Date");
+
+                    b.HasIndex(new[] { "ToClassId" }, "IX_StudentTransfer_ToClass");
+
+                    b.ToTable("StudentTransfer", null, t =>
+                        {
+                            t.HasCheckConstraint("CK_StudentTransfer_Type", "[TransferType] IN ('CLASS','SCHOOL_IN','SCHOOL_OUT')");
                         });
                 });
 
@@ -1747,6 +1886,32 @@ namespace HSMS.Repository.Migrations
                     b.Navigation("Subject");
                 });
 
+            modelBuilder.Entity("HSMS.Model.Model.StudentAnnualReport", b =>
+                {
+                    b.HasOne("HSMS.Model.Model.AcademicYear", "AcademicYear")
+                        .WithMany("StudentAnnualReports")
+                        .HasForeignKey("AcademicYearId")
+                        .IsRequired()
+                        .HasConstraintName("FK_StudentAnnualReport_AcademicYear");
+
+                    b.HasOne("HSMS.Model.Model.Customer", "Customer")
+                        .WithMany("StudentAnnualReports")
+                        .HasForeignKey("CustomerId")
+                        .IsRequired()
+                        .HasConstraintName("FK_StudentAnnualReport_Customer");
+
+                    b.HasOne("HSMS.Model.Model.Employee", "FinalizedByEmployee")
+                        .WithMany("FinalizedStudentAnnualReports")
+                        .HasForeignKey("FinalizedByEmployeeId")
+                        .HasConstraintName("FK_StudentAnnualReport_FinalizedEmployee");
+
+                    b.Navigation("AcademicYear");
+
+                    b.Navigation("Customer");
+
+                    b.Navigation("FinalizedByEmployee");
+                });
+
             modelBuilder.Entity("HSMS.Model.Model.StudentClass", b =>
                 {
                     b.HasOne("HSMS.Model.Model.Class", "Class")
@@ -1783,6 +1948,39 @@ namespace HSMS.Repository.Migrations
                     b.Navigation("Assessment");
 
                     b.Navigation("Customer");
+                });
+
+            modelBuilder.Entity("HSMS.Model.Model.StudentTransfer", b =>
+                {
+                    b.HasOne("HSMS.Model.Model.Customer", "Customer")
+                        .WithMany("StudentTransfers")
+                        .HasForeignKey("CustomerId")
+                        .IsRequired()
+                        .HasConstraintName("FK_StudentTransfer_Customer");
+
+                    b.HasOne("HSMS.Model.Model.Class", "FromClass")
+                        .WithMany("TransfersFrom")
+                        .HasForeignKey("FromClassId")
+                        .HasConstraintName("FK_StudentTransfer_FromClass");
+
+                    b.HasOne("HSMS.Model.Model.Employee", "RecordedByEmployee")
+                        .WithMany("RecordedStudentTransfers")
+                        .HasForeignKey("RecordedByEmployeeId")
+                        .IsRequired()
+                        .HasConstraintName("FK_StudentTransfer_Employee");
+
+                    b.HasOne("HSMS.Model.Model.Class", "ToClass")
+                        .WithMany("TransfersTo")
+                        .HasForeignKey("ToClassId")
+                        .HasConstraintName("FK_StudentTransfer_ToClass");
+
+                    b.Navigation("Customer");
+
+                    b.Navigation("FromClass");
+
+                    b.Navigation("RecordedByEmployee");
+
+                    b.Navigation("ToClass");
                 });
 
             modelBuilder.Entity("HSMS.Model.Model.TeacherFeedback", b =>
@@ -1871,6 +2069,8 @@ namespace HSMS.Repository.Migrations
                     b.Navigation("Classes");
 
                     b.Navigation("Semesters");
+
+                    b.Navigation("StudentAnnualReports");
                 });
 
             modelBuilder.Entity("HSMS.Model.Model.Assessment", b =>
@@ -1888,6 +2088,10 @@ namespace HSMS.Repository.Migrations
                     b.Navigation("StudentClasses");
 
                     b.Navigation("TeachingAssignments");
+
+                    b.Navigation("TransfersFrom");
+
+                    b.Navigation("TransfersTo");
                 });
 
             modelBuilder.Entity("HSMS.Model.Model.Customer", b =>
@@ -1910,11 +2114,15 @@ namespace HSMS.Repository.Migrations
 
                     b.Navigation("SentNotifications");
 
+                    b.Navigation("StudentAnnualReports");
+
                     b.Navigation("StudentClasses");
 
                     b.Navigation("StudentLeaveRequests");
 
                     b.Navigation("StudentScores");
+
+                    b.Navigation("StudentTransfers");
 
                     b.Navigation("TeacherFeedbacks");
                 });
@@ -1927,6 +2135,8 @@ namespace HSMS.Repository.Migrations
 
                     b.Navigation("FinalizedSemesterReports");
 
+                    b.Navigation("FinalizedStudentAnnualReports");
+
                     b.Navigation("HomeroomClasses");
 
                     b.Navigation("ReceivedMessageLogs");
@@ -1934,6 +2144,8 @@ namespace HSMS.Repository.Migrations
                     b.Navigation("ReceivedNotifications");
 
                     b.Navigation("RecordedAttendanceRecords");
+
+                    b.Navigation("RecordedStudentTransfers");
 
                     b.Navigation("ReviewedLeaveRequests");
 

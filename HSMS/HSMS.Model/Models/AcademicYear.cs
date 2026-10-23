@@ -11,6 +11,7 @@ public class AcademicYear
 
     public virtual ICollection<Semester> Semesters { get; private set; } = new List<Semester>();
     public virtual ICollection<Class> Classes { get; private set; } = new List<Class>();
+    public virtual ICollection<StudentAnnualReport> StudentAnnualReports { get; private set; } = new List<StudentAnnualReport>();
 
     protected AcademicYear() { }
 
