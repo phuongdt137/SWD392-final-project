@@ -1,5 +1,5 @@
 using Microsoft.EntityFrameworkCore;
-using HSMS.Repository.Data;
+using HSMS.MVC.Data;
 
 var builder = WebApplication.CreateBuilder(args);
 
