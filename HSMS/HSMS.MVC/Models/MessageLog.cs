@@ -1,14 +1,16 @@
-using HSMS.MVC.Exceptions;
+﻿using HSMS.MVC.Common;
 
 namespace HSMS.MVC.Models;
 
+/// <summary>
+/// Thực thể Lưu vết Gửi tin nhắn (Email/SMS/Notification).
+/// </summary>
 public class MessageLog
 {
     public long Id { get; private set; }
     public string Channel { get; private set; } = null!;
     public string? Provider { get; private set; }
-    public long? RecipientCustomerId { get; private set; }
-    public long? RecipientEmployeeId { get; private set; }
+    public long? RecipientUserId { get; private set; }
     public string RecipientAddress { get; private set; } = null!;
     public string? Subject { get; private set; }
     public string MessageBody { get; private set; } = null!;
@@ -20,13 +22,12 @@ public class MessageLog
     public decimal? Cost { get; private set; }
     public DateTime? SentAt { get; private set; }
     public DateTime? DeliveredAt { get; private set; }
-    public long? CreatedByEmployeeId { get; private set; }
+    public long? CreatedByUserId { get; private set; }
     public long? NotificationId { get; private set; }
     public DateTime CreatedAt { get; private set; }
 
-    public virtual Customer? RecipientCustomer { get; private set; }
-    public virtual Employee? RecipientEmployee { get; private set; }
-    public virtual Employee? CreatedByEmployee { get; private set; }
+    public virtual User? RecipientUser { get; private set; }
+    public virtual User? CreatedByUser { get; private set; }
     public virtual Notification? Notification { get; private set; }
 
     protected MessageLog() { }
@@ -38,38 +39,31 @@ public class MessageLog
         string? subject = null,
         string? provider = null,
         string? templateCode = null,
-        long? recipientCustomerId = null,
-        long? recipientEmployeeId = null,
-        long? createdByEmployeeId = null,
+        long? recipientUserId = null,
+        long? createdByUserId = null,
         long? notificationId = null,
         decimal? cost = null)
     {
         if (string.IsNullOrWhiteSpace(channel))
-            throw new BusinessException("Kênh gửi tin nhắn không được để trống.", "CHANNEL_REQUIRED");
+            throw new AppError("Kênh gửi tin nhắn không được để trống.", "CHANNEL_REQUIRED");
 
         if (string.IsNullOrWhiteSpace(recipientAddress))
-            throw new BusinessException("Địa chỉ nhận tin không được để trống.", "RECIPIENT_ADDRESS_REQUIRED");
+            throw new AppError("Địa chỉ nhận tin không được để trống.", "RECIPIENT_ADDRESS_REQUIRED");
 
         if (string.IsNullOrWhiteSpace(messageBody))
-            throw new BusinessException("Nội dung tin nhắn không được để trống.", "MESSAGE_BODY_REQUIRED");
+            throw new AppError("Nội dung tin nhắn không được để trống.", "MESSAGE_BODY_REQUIRED");
 
-        if (recipientCustomerId.HasValue && recipientEmployeeId.HasValue)
-            throw new BusinessException("Người nhận không thể đồng thời là Customer và Employee.", "INVALID_RECIPIENT");
+        if (recipientUserId.HasValue && recipientUserId.Value <= 0)
+            throw new AppError("Id người nhận tin không hợp lệ.", "INVALID_USER_ID");
 
-        if (recipientCustomerId.HasValue && recipientCustomerId.Value <= 0)
-            throw new BusinessException("Id Customer nhận tin không hợp lệ.", "INVALID_CUSTOMER_ID");
-
-        if (recipientEmployeeId.HasValue && recipientEmployeeId.Value <= 0)
-            throw new BusinessException("Id Employee nhận tin không hợp lệ.", "INVALID_EMPLOYEE_ID");
-
-        if (createdByEmployeeId.HasValue && createdByEmployeeId.Value <= 0)
-            throw new BusinessException("Id người tạo tin không hợp lệ.", "INVALID_CREATOR_ID");
+        if (createdByUserId.HasValue && createdByUserId.Value <= 0)
+            throw new AppError("Id người tạo tin không hợp lệ.", "INVALID_CREATOR_ID");
 
         if (notificationId.HasValue && notificationId.Value <= 0)
-            throw new BusinessException("Id thông báo liên kết không hợp lệ.", "INVALID_NOTIFICATION_ID");
+            throw new AppError("Id thông báo liên kết không hợp lệ.", "INVALID_NOTIFICATION_ID");
 
         if (cost.HasValue && cost.Value < 0)
-            throw new BusinessException("Chi phí gửi tin không được âm.", "INVALID_COST");
+            throw new AppError("Chi phí gửi tin không được âm.", "INVALID_COST");
 
         Channel = channel.Trim().ToUpperInvariant();
         RecipientAddress = recipientAddress.Trim();
@@ -77,9 +71,8 @@ public class MessageLog
         Subject = subject?.Trim();
         Provider = provider?.Trim();
         TemplateCode = templateCode?.Trim();
-        RecipientCustomerId = recipientCustomerId;
-        RecipientEmployeeId = recipientEmployeeId;
-        CreatedByEmployeeId = createdByEmployeeId;
+        RecipientUserId = recipientUserId;
+        CreatedByUserId = createdByUserId;
         NotificationId = notificationId;
         Cost = cost;
         Status = "QUEUED";
@@ -111,7 +104,7 @@ public class MessageLog
     public void MarkAsFailed(string errorMessage)
     {
         if (string.IsNullOrWhiteSpace(errorMessage))
-            throw new BusinessException("Thông báo lỗi không được để trống.", "ERROR_MESSAGE_REQUIRED");
+            throw new AppError("Thông báo lỗi không được để trống.", "ERROR_MESSAGE_REQUIRED");
 
         Status = "FAILED";
         ErrorMessage = errorMessage.Trim();

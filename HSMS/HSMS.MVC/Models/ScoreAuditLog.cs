@@ -1,4 +1,4 @@
-using HSMS.MVC.Exceptions;
+﻿using HSMS.MVC.Common;
 
 namespace HSMS.MVC.Models;
 
@@ -21,13 +21,13 @@ public class ScoreAuditLog
     public ScoreAuditLog(long studentScoreId, decimal? oldScore, decimal? newScore, string? changeReason, long changedByEmployeeId, DateTime changedAt, string? ipAddress = null, StudentScore? studentScore = null, Employee? changedByEmployee = null)
     {
         if (studentScoreId <= 0)
-            throw new BusinessException("Id điểm học sinh không hợp lệ.", "INVALID_STUDENT_SCORE_ID");
+            throw new AppError("Id điểm học sinh không hợp lệ.", "INVALID_STUDENT_SCORE_ID");
 
         if (changedByEmployeeId <= 0)
-            throw new BusinessException("Id cán bộ chỉnh sửa không hợp lệ.", "INVALID_EMPLOYEE_ID");
+            throw new AppError("Id cán bộ chỉnh sửa không hợp lệ.", "INVALID_EMPLOYEE_ID");
 
         if (string.IsNullOrWhiteSpace(changeReason))
-            throw new BusinessException("Lý do sửa điểm không được để trống.", "REASON_REQUIRED");
+            throw new AppError("Lý do sửa điểm không được để trống.", "REASON_REQUIRED");
         StudentScoreId = studentScoreId;
         OldScore = oldScore;
         NewScore = newScore;

@@ -1,4 +1,4 @@
-using HSMS.MVC.Exceptions;
+﻿using HSMS.MVC.Common;
 
 namespace HSMS.MVC.Models;
 
@@ -22,13 +22,13 @@ public class StudentScore
     public StudentScore(long customerId, long assessmentId, decimal? score = null, string? comment = null)
     {
         if (customerId <= 0)
-            throw new BusinessException("Id học sinh không hợp lệ.", "INVALID_CUSTOMER_ID");
+            throw new AppError("Id học sinh không hợp lệ.", "INVALID_CUSTOMER_ID");
 
         if (assessmentId <= 0)
-            throw new BusinessException("Id bài kiểm tra không hợp lệ.", "INVALID_ASSESSMENT_ID");
+            throw new AppError("Id bài kiểm tra không hợp lệ.", "INVALID_ASSESSMENT_ID");
 
         if (score.HasValue && (score.Value < 0 || score.Value > 10))
-            throw new BusinessException("Điểm số phải nằm trong khoảng từ 0 đến 10.", "INVALID_SCORE");
+            throw new AppError("Điểm số phải nằm trong khoảng từ 0 đến 10.", "INVALID_SCORE");
 
         CustomerId = customerId;
         AssessmentId = assessmentId;
@@ -41,10 +41,10 @@ public class StudentScore
     public void EnterScore(decimal score, string? comment = null)
     {
         if (IsLocked)
-            throw new BusinessException("Bảng điểm đã bị khóa, không thể nhập điểm.", "SCORE_LOCKED");
+            throw new AppError("Bảng điểm đã bị khóa, không thể nhập điểm.", "SCORE_LOCKED");
 
         if (score < 0 || score > 10)
-            throw new BusinessException("Điểm số phải nằm trong khoảng từ 0 đến 10.", "INVALID_SCORE");
+            throw new AppError("Điểm số phải nằm trong khoảng từ 0 đến 10.", "INVALID_SCORE");
 
         Score = score;
         Comment = comment;
@@ -55,13 +55,13 @@ public class StudentScore
     {
         ArgumentNullException.ThrowIfNull(employee);
         if (IsLocked)
-            throw new BusinessException("Bảng điểm đã bị khóa, không thể chỉnh sửa điểm.", "SCORE_LOCKED");
+            throw new AppError("Bảng điểm đã bị khóa, không thể chỉnh sửa điểm.", "SCORE_LOCKED");
 
         if (newScore < 0 || newScore > 10)
-            throw new BusinessException("Điểm số phải nằm trong khoảng từ 0 đến 10.", "INVALID_SCORE");
+            throw new AppError("Điểm số phải nằm trong khoảng từ 0 đến 10.", "INVALID_SCORE");
 
         if (string.IsNullOrWhiteSpace(reason))
-            throw new BusinessException("Lý do sửa điểm không được để trống.", "REASON_REQUIRED");
+            throw new AppError("Lý do sửa điểm không được để trống.", "REASON_REQUIRED");
 
         var auditLog = new ScoreAuditLog(
             Id,

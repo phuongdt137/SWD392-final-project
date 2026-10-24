@@ -1,4 +1,4 @@
-using HSMS.MVC.Exceptions;
+﻿using HSMS.MVC.Common;
 
 namespace HSMS.MVC.Models;
 
@@ -24,16 +24,16 @@ public class AttendanceRecord
     public AttendanceRecord(long customerId, long timetableEntryId, long recordedByEmployeeId, DateTime attendanceDate, string status, string? comment = null, long? leaveRequestId = null)
     {
         if (customerId <= 0)
-            throw new BusinessException("Id học sinh không hợp lệ.", "INVALID_CUSTOMER_ID");
+            throw new AppError("Id học sinh không hợp lệ.", "INVALID_CUSTOMER_ID");
 
         if (timetableEntryId <= 0)
-            throw new BusinessException("Id thời khóa biểu không hợp lệ.", "INVALID_TIMETABLE_ENTRY_ID");
+            throw new AppError("Id thời khóa biểu không hợp lệ.", "INVALID_TIMETABLE_ENTRY_ID");
 
         if (recordedByEmployeeId <= 0)
-            throw new BusinessException("Id cán bộ điểm danh không hợp lệ.", "INVALID_EMPLOYEE_ID");
+            throw new AppError("Id cán bộ điểm danh không hợp lệ.", "INVALID_EMPLOYEE_ID");
 
         if (string.IsNullOrWhiteSpace(status))
-            throw new BusinessException("Trạng thái điểm danh không được để trống.", "INVALID_STATUS");
+            throw new AppError("Trạng thái điểm danh không được để trống.", "INVALID_STATUS");
 
         CustomerId = customerId;
         TimetableEntryId = timetableEntryId;
@@ -48,7 +48,7 @@ public class AttendanceRecord
     public void Mark(string status, string? comment = null)
     {
         if (string.IsNullOrWhiteSpace(status))
-            throw new BusinessException("Trạng thái điểm danh không được để trống.", "INVALID_STATUS");
+            throw new AppError("Trạng thái điểm danh không được để trống.", "INVALID_STATUS");
 
         Status = status.Trim().ToUpperInvariant();
         Comment = comment;
@@ -58,10 +58,10 @@ public class AttendanceRecord
     {
         ArgumentNullException.ThrowIfNull(request);
         if (request.Status != "APPROVED")
-            throw new BusinessException("Đơn xin nghỉ phép chưa được duyệt.", "LEAVE_NOT_APPROVED");
+            throw new AppError("Đơn xin nghỉ phép chưa được duyệt.", "LEAVE_NOT_APPROVED");
 
         if (AttendanceDate < request.StartDate || AttendanceDate > request.EndDate)
-            throw new BusinessException("Ngày điểm danh không nằm trong khoảng thời gian nghỉ phép của đơn.", "DATE_OUT_OF_LEAVE_RANGE");
+            throw new AppError("Ngày điểm danh không nằm trong khoảng thời gian nghỉ phép của đơn.", "DATE_OUT_OF_LEAVE_RANGE");
 
         LeaveRequestId = request.Id;
         LeaveRequest = request;

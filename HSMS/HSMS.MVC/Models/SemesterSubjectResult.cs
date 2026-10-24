@@ -1,4 +1,4 @@
-using HSMS.MVC.Exceptions;
+﻿using HSMS.MVC.Common;
 
 namespace HSMS.MVC.Models;
 
@@ -18,13 +18,13 @@ public class SemesterSubjectResult
     public SemesterSubjectResult(long semesterReportId, long subjectId, decimal? averageScore = null, string? evaluationResult = null)
     {
         if (semesterReportId <= 0)
-            throw new BusinessException("Id báo cáo học kỳ không hợp lệ.", "INVALID_REPORT_ID");
+            throw new AppError("Id báo cáo học kỳ không hợp lệ.", "INVALID_REPORT_ID");
 
         if (subjectId <= 0)
-            throw new BusinessException("Id môn học không hợp lệ.", "INVALID_SUBJECT_ID");
+            throw new AppError("Id môn học không hợp lệ.", "INVALID_SUBJECT_ID");
 
         if (averageScore.HasValue && (averageScore.Value < 0 || averageScore.Value > 10))
-            throw new BusinessException("Điểm trung bình môn phải nằm trong khoảng từ 0 đến 10.", "INVALID_SCORE");
+            throw new AppError("Điểm trung bình môn phải nằm trong khoảng từ 0 đến 10.", "INVALID_SCORE");
 
         SemesterReportId = semesterReportId;
         SubjectId = subjectId;
@@ -49,10 +49,10 @@ public class SemesterSubjectResult
     public bool UpdateSubjectResult(decimal average, string result)
     {
         if (average < 0 || average > 10)
-            throw new BusinessException("Điểm trung bình môn phải nằm trong khoảng từ 0 đến 10.", "INVALID_SCORE");
+            throw new AppError("Điểm trung bình môn phải nằm trong khoảng từ 0 đến 10.", "INVALID_SCORE");
 
         if (string.IsNullOrWhiteSpace(result))
-            throw new BusinessException("Kết quả đánh giá môn không được để trống.", "RESULT_REQUIRED");
+            throw new AppError("Kết quả đánh giá môn không được để trống.", "RESULT_REQUIRED");
 
         AverageScore = average;
         EvaluationResult = result.Trim();

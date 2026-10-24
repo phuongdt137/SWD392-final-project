@@ -1,3 +1,28 @@
+@using Microsoft.AspNetCore.Http
+@using System.Text.Json
+@using HSMS.MVC.DTOs.Auth
+@{
+    var isAuthenticated = false;
+    string? displayName = null;
+    LoginResponseDto? currentUser = null;
+    try
+    {
+        var currentUserJson = Context.Session.GetString("CurrentUser");
+        if (!string.IsNullOrWhiteSpace(currentUserJson))
+        {
+            currentUser = JsonSerializer.Deserialize<LoginResponseDto>(currentUserJson);
+            if (currentUser != null)
+            {
+                displayName = !string.IsNullOrWhiteSpace(currentUser.FullName) ? currentUser.FullName : currentUser.Username;
+                isAuthenticated = true;
+            }
+        }
+    }
+    catch
+    {
+        isAuthenticated = false;
+    }
+}
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -7,7 +32,7 @@
     
     <!-- Google Fonts -->
     <link rel="preconnect" href="https://fonts.googleapis.com">
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link rel="preconnect" href="https://fonts.gstatic.com">
     <link href="https://fonts.googleapis.com/css2?family=Caveat:wght@600;700&family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
     
     <!-- Bootstrap & Icons -->
@@ -34,9 +59,15 @@
             <!-- Navigation Links -->
             <nav class="d-none d-md-flex align-items-center gap-1">
                 <a class="nav-link-custom active" asp-controller="Home" asp-action="Index">Home</a>
-                <a class="nav-link-custom" href="#features">Features</a>
-                <a class="nav-link-custom" href="#about">About</a>
-                <a class="nav-link-custom" href="#contact">Contact</a>
+                <a class="nav-link-custom" href="/#features">Features</a>
+                <a class="nav-link-custom" href="/#about">About</a>
+                <a class="nav-link-custom" href="/#contact">Contact</a>
+                @if (isAuthenticated)
+                {
+                    <a class="nav-link-custom text-primary fw-semibold" asp-controller="Dashboard" asp-action="Index">
+                        <i class="bi bi-speedometer2 me-1"></i>Dashboard
+                    </a>
+                }
             </nav>
 
             <!-- Right Controls: Search & Login -->
@@ -45,10 +76,58 @@
                     <i class="bi bi-search"></i>
                     <input type="text" class="search-input" placeholder="Search..." aria-label="Search" />
                 </div>
-                <a href="#login" class="btn-login-nav">
-                    <i class="bi bi-person-fill"></i>
-                    <span>Login</span>
-                </a>
+                @if (isAuthenticated && currentUser != null)
+                {
+                    <div class="dropdown">
+                        <button class="btn btn-outline-secondary dropdown-toggle d-flex align-items-center gap-2 rounded-pill px-3 py-1 bg-white border shadow-sm" 
+                                type="button" 
+                                id="userProfileDropdown" 
+                                data-bs-toggle="dropdown" 
+                                aria-expanded="false">
+                            <i class="bi bi-person-circle text-primary fs-5"></i>
+                            <span class="fw-semibold text-dark small">@displayName</span>
+                        </button>
+                        <ul class="dropdown-menu dropdown-menu-end shadow border-0 rounded-3 mt-2" aria-labelledby="userProfileDropdown" style="min-width: 220px;">
+                            <li class="px-3 py-2 border-bottom">
+                                <div class="fw-bold text-dark text-truncate">@displayName</div>
+                                <div class="small text-muted text-truncate">@currentUser.Email</div>
+                                @if (currentUser.Roles.Count > 0)
+                                {
+                                    <span class="badge bg-primary-subtle text-primary mt-1">@string.Join(", ", currentUser.Roles)</span>
+                                }
+                            </li>
+                            <li>
+                                <a class="dropdown-item py-2 d-flex align-items-center gap-2" asp-controller="Dashboard" asp-action="Index">
+                                    <i class="bi bi-speedometer2 text-primary"></i>
+                                    <span>Bảng điều khiển</span>
+                                </a>
+                            </li>
+                            <li>
+                                <a class="dropdown-item py-2 d-flex align-items-center gap-2" asp-controller="Auth" asp-action="ChangePassword">
+                                    <i class="bi bi-key text-muted"></i>
+                                    <span>Đổi mật khẩu</span>
+                                </a>
+                            </li>
+                            <li><hr class="dropdown-divider my-1"></li>
+                            <li>
+                                <form asp-controller="Auth" asp-action="Logout" method="post" class="m-0 p-0">
+                                    @Html.AntiForgeryToken()
+                                    <button type="submit" class="dropdown-item py-2 text-danger d-flex align-items-center gap-2">
+                                        <i class="bi bi-box-arrow-right"></i>
+                                        <span>Đăng xuất</span>
+                                    </button>
+                                </form>
+                            </li>
+                        </ul>
+                    </div>
+                }
+                else
+                {
+                    <a asp-controller="Auth" asp-action="Login" class="btn-login-nav">
+                        <i class="bi bi-person-fill"></i>
+                        <span>Login</span>
+                    </a>
+                }
             </div>
         </div>
     </header>
@@ -74,9 +153,9 @@
 
                 <ul class="footer-links">
                     <li><a asp-controller="Home" asp-action="Index">Home</a></li>
-                    <li><a href="#features">Features</a></li>
-                    <li><a href="#about">About</a></li>
-                    <li><a href="#contact">Contact</a></li>
+                    <li><a href="/#features">Features</a></li>
+                    <li><a href="/#about">About</a></li>
+                    <li><a href="/#contact">Contact</a></li>
                 </ul>
             </div>
 
@@ -100,3 +179,4 @@
     @await RenderSectionAsync("Scripts", required: false)
 </body>
 </html>
+

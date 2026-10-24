@@ -1,0 +1,203 @@
+@using Microsoft.AspNetCore.Http
+@using System.Text.Json
+@using HSMS.MVC.DTOs.Auth
+@{
+    LoginResponseDto? currentUser = null;
+    try
+    {
+        var userJson = Context.Session.GetString("CurrentUser");
+        if (!string.IsNullOrEmpty(userJson))
+        {
+            currentUser = JsonSerializer.Deserialize<LoginResponseDto>(userJson);
+        }
+    }
+    catch { }
+
+    var displayName = currentUser?.FullName ?? currentUser?.Username ?? "User";
+    var primaryRole = currentUser?.Roles?.FirstOrDefault() ?? "Staff";
+    var roleDisplayName = primaryRole switch
+    {
+        "ADMIN" => "Administrator",
+        "TEACHER" => "Teacher",
+        "STUDENT" => "Student",
+        "PARENT" => "Parent",
+        "STAFF" => "Staff",
+        _ => primaryRole
+    };
+}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>@ViewData["Title"] - High School Management System</title>
+
+    <!-- Google Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Caveat:wght@600;700&family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+
+    <!-- Bootstrap 5 & Bootstrap Icons -->
+    <link rel="stylesheet" href="~/lib/bootstrap/dist/css/bootstrap.min.css" />
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css">
+
+    <!-- Dashboard CSS -->
+    <link rel="stylesheet" href="~/css/dashboard.css" asp-append-version="true" />
+</head>
+<body class="dashboard-body-tag">
+    <div class="dashboard-wrapper">
+        <!-- ==================== SIDEBAR ==================== -->
+        <aside class="dashboard-sidebar" id="dashboardSidebar">
+            <!-- Brand -->
+            <a asp-controller="Dashboard" asp-action="Index" class="sidebar-brand">
+                <div class="sidebar-brand-icon">
+                    <i class="bi bi-mortarboard-fill"></i>
+                </div>
+                <div class="sidebar-brand-text">
+                    High School<br>Management System
+                </div>
+            </a>
+
+            <!-- Navigation Menu -->
+            <nav class="sidebar-nav">
+                <a asp-controller="Dashboard" asp-action="Index" class="sidebar-link active">
+                    <i class="bi bi-grid-1x2-fill"></i>
+                    <span>Dashboard</span>
+                </a>
+                <a href="#classes" class="sidebar-link">
+                    <i class="bi bi-people-fill"></i>
+                    <span>My Classes</span>
+                </a>
+                <a href="#students" class="sidebar-link">
+                    <i class="bi bi-person-badge"></i>
+                    <span>Students</span>
+                </a>
+                <a href="#attendance" class="sidebar-link">
+                    <i class="bi bi-calendar-check"></i>
+                    <span>Attendance</span>
+                </a>
+                <a href="#grades" class="sidebar-link">
+                    <i class="bi bi-card-checklist"></i>
+                    <span>Grades</span>
+                </a>
+                <a href="#assignments" class="sidebar-link">
+                    <i class="bi bi-journal-text"></i>
+                    <span>Assignments</span>
+                </a>
+                <a href="#schedule" class="sidebar-link">
+                    <i class="bi bi-calendar3"></i>
+                    <span>Schedule</span>
+                </a>
+                <a href="#messages" class="sidebar-link">
+                    <i class="bi bi-chat-dots-fill"></i>
+                    <span>Messages</span>
+                    <span class="sidebar-badge">3</span>
+                </a>
+                <a href="#reports" class="sidebar-link">
+                    <i class="bi bi-bar-chart-line-fill"></i>
+                    <span>Reports</span>
+                </a>
+                <a href="#settings" class="sidebar-link">
+                    <i class="bi bi-gear-fill"></i>
+                    <span>Settings</span>
+                </a>
+            </nav>
+
+            <!-- Bottom Motivation Banner -->
+            <div class="sidebar-footer-widget">
+                <div class="sidebar-quote-box">
+                    <div class="sidebar-quote-text">Support Students<br>Build Brighter Tomorrows. ↗</div>
+                </div>
+            </div>
+        </aside>
+
+        <!-- ==================== MAIN CONTENT AREA ==================== -->
+        <div class="dashboard-main">
+            <!-- Top Header Bar -->
+            <header class="dashboard-topbar">
+                <div class="topbar-left">
+                    <button class="sidebar-toggle-btn" id="sidebarToggle" aria-label="Toggle Sidebar">
+                        <i class="bi bi-list"></i>
+                    </button>
+                    <div class="topbar-search-wrap">
+                        <i class="bi bi-search topbar-search-icon"></i>
+                        <input type="text" class="topbar-search-input" placeholder="Search students, classes, assignments..." />
+                    </div>
+                </div>
+
+                <div class="topbar-right">
+                    <!-- Notifications -->
+                    <button class="notification-btn" title="Thông báo">
+                        <i class="bi bi-bell"></i>
+                        <span class="notification-badge-dot">5</span>
+                    </button>
+
+                    <!-- User Profile Dropdown -->
+                    <div class="dropdown">
+                        <button class="user-profile-btn dropdown-toggle" type="button" id="userMenuButton" data-bs-toggle="dropdown" aria-expanded="false">
+                            <div class="user-avatar-circle">
+                                @if (!string.IsNullOrWhiteSpace(currentUser?.AvatarUrl))
+                                {
+                                    <img src="@currentUser.AvatarUrl" alt="Avatar" />
+                                }
+                                else
+                                {
+                                    <span>@displayName.Substring(0, 1).ToUpper()</span>
+                                }
+                            </div>
+                            <div class="user-info-text d-none d-sm-block">
+                                <div class="user-name">@displayName</div>
+                                <div class="user-role">@roleDisplayName</div>
+                            </div>
+                        </button>
+                        <ul class="dropdown-menu dropdown-menu-end shadow border-0 rounded-3 mt-2" aria-labelledby="userMenuButton" style="min-width: 220px;">
+                            <li class="px-3 py-2 border-bottom">
+                                <div class="fw-bold text-dark text-truncate">@displayName</div>
+                                <div class="small text-muted text-truncate">@(currentUser?.Email ?? "")</div>
+                                <span class="badge bg-primary-subtle text-primary mt-1">@roleDisplayName</span>
+                            </li>
+                            <li>
+                                <a class="dropdown-item py-2 d-flex align-items-center gap-2" asp-controller="Auth" asp-action="ChangePassword">
+                                    <i class="bi bi-key text-muted"></i>
+                                    <span>Đổi mật khẩu</span>
+                                </a>
+                            </li>
+                            <li><hr class="dropdown-divider my-1"></li>
+                            <li>
+                                <form asp-controller="Auth" asp-action="Logout" method="post" class="m-0 p-0">
+                                    @Html.AntiForgeryToken()
+                                    <button type="submit" class="dropdown-item py-2 text-danger d-flex align-items-center gap-2">
+                                        <i class="bi bi-box-arrow-right"></i>
+                                        <span>Đăng xuất</span>
+                                    </button>
+                                </form>
+                            </li>
+                        </ul>
+                    </div>
+                </div>
+            </header>
+
+            <!-- Main Page Content -->
+            <main class="dashboard-content">
+                @RenderBody()
+            </main>
+        </div>
+    </div>
+
+    <!-- Scripts -->
+    <script src="~/lib/jquery/dist/jquery.min.js"></script>
+    <script src="~/lib/bootstrap/dist/js/bootstrap.bundle.min.js"></script>
+    <script>
+        // Sidebar Toggle for Mobile / Responsive
+        const sidebarToggle = document.getElementById('sidebarToggle');
+        const sidebar = document.getElementById('dashboardSidebar');
+        if (sidebarToggle && sidebar) {
+            sidebarToggle.addEventListener('click', () => {
+                sidebar.classList.toggle('show');
+            });
+        }
+    </script>
+    @await RenderSectionAsync("Scripts", required: false)
+</body>
+</html>
+

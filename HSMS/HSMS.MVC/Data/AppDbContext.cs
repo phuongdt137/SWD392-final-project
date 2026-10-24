@@ -9,11 +9,11 @@ public class AppDbContext : DbContext
     {
     }
 
+    public DbSet<User> Users => Set<User>();
     public DbSet<Role> Roles => Set<Role>();
+    public DbSet<UserRole> UserRoles => Set<UserRole>();
     public DbSet<Customer> Customers => Set<Customer>();
     public DbSet<Employee> Employees => Set<Employee>();
-    public DbSet<CustomerRole> CustomerRoles => Set<CustomerRole>();
-    public DbSet<EmployeeRole> EmployeeRoles => Set<EmployeeRole>();
     public DbSet<AcademicYear> AcademicYears => Set<AcademicYear>();
     public DbSet<Semester> Semesters => Set<Semester>();
     public DbSet<GradeLevel> GradeLevels => Set<GradeLevel>();
@@ -69,7 +69,57 @@ public class AppDbContext : DbContext
         });
 
         // ============================================================
-        // 2. CUSTOMER
+        // 2. USER
+        // ============================================================
+        modelBuilder.Entity<User>(entity =>
+        {
+            entity.ToTable("User");
+            entity.HasKey(e => e.Id).HasName("PK_User");
+            entity.Property(e => e.Username).HasMaxLength(50).IsRequired();
+            entity.Property(e => e.Email).HasMaxLength(100).IsRequired();
+            entity.Property(e => e.PasswordHash).HasMaxLength(255).IsRequired();
+            entity.Property(e => e.FullName).HasMaxLength(100).IsRequired();
+            entity.Property(e => e.PhoneNumber).HasMaxLength(20);
+            entity.Property(e => e.AvatarUrl).HasMaxLength(500);
+            entity.Property(e => e.IsActive).HasDefaultValue(true);
+            entity.Property(e => e.CreatedAt).HasDefaultValueSql("SYSDATETIME()");
+            entity.Property(e => e.LastLoginAt);
+            entity.Property(e => e.PasswordResetToken).HasMaxLength(255);
+            entity.Property(e => e.PasswordResetTokenExpiry);
+
+            entity.HasIndex(e => e.Username, "UQ_User_Username").IsUnique();
+            entity.HasIndex(e => e.Email, "UQ_User_Email").IsUnique();
+        });
+
+        // ============================================================
+        // 3. USER ROLE
+        // ============================================================
+        modelBuilder.Entity<UserRole>(entity =>
+        {
+            entity.ToTable("UserRole");
+            entity.HasKey(e => e.Id).HasName("PK_UserRole");
+            entity.Property(e => e.IsActive).HasDefaultValue(true);
+            entity.Property(e => e.AssignedAt).HasDefaultValueSql("SYSDATETIME()");
+
+            entity.HasIndex(e => new { e.UserId, e.RoleId }, "UQ_UserRole").IsUnique();
+            entity.HasIndex(e => e.UserId, "IX_UserRole_UserId");
+            entity.HasIndex(e => e.RoleId, "IX_UserRole_RoleId");
+
+            entity.HasOne(e => e.User)
+                .WithMany(u => u.UserRoles)
+                .HasForeignKey(e => e.UserId)
+                .HasConstraintName("FK_UserRole_User")
+                .OnDelete(DeleteBehavior.Cascade);
+
+            entity.HasOne(e => e.Role)
+                .WithMany(r => r.UserRoles)
+                .HasForeignKey(e => e.RoleId)
+                .HasConstraintName("FK_UserRole_Role")
+                .OnDelete(DeleteBehavior.ClientSetNull);
+        });
+
+        // ============================================================
+        // 4. CUSTOMER
         // ============================================================
         modelBuilder.Entity<Customer>(entity =>
         {
@@ -78,28 +128,26 @@ public class AppDbContext : DbContext
                 t.HasCheckConstraint("CK_Customer_ParentNotSelf", "[ParentId] IS NULL OR [ParentId] <> [Id]");
             });
             entity.HasKey(e => e.Id).HasName("PK_Customer");
-            entity.Property(e => e.Username).HasMaxLength(100).IsRequired();
-            entity.Property(e => e.Email).HasMaxLength(255).IsRequired();
-            entity.Property(e => e.PasswordHash).HasMaxLength(500).IsRequired();
-            entity.Property(e => e.FullName).HasMaxLength(200).IsRequired();
-            entity.Property(e => e.PhoneNumber).HasMaxLength(30);
+            entity.Property(e => e.UserId).IsRequired();
             entity.Property(e => e.Gender).HasMaxLength(20);
             entity.Property(e => e.DateOfBirth).HasColumnType("date");
             entity.Property(e => e.Address).HasMaxLength(500);
-            entity.Property(e => e.AvatarUrl).HasMaxLength(1000);
             entity.Property(e => e.StudentCode).HasMaxLength(50);
             entity.Property(e => e.AdmissionDate).HasColumnType("date");
             entity.Property(e => e.Occupation).HasMaxLength(150);
             entity.Property(e => e.EmergencyContact).HasMaxLength(255);
             entity.Property(e => e.RelationshipType).HasMaxLength(50);
-            entity.Property(e => e.IsActive).HasDefaultValue(true);
-            entity.Property(e => e.CreatedAt).HasDefaultValueSql("SYSDATETIME()");
             entity.Property(e => e.UpdatedAt);
 
-            entity.HasIndex(e => e.Username, "UQ_Customer_Username").IsUnique();
-            entity.HasIndex(e => e.Email, "UQ_Customer_Email").IsUnique();
+            entity.HasIndex(e => e.UserId, "UQ_Customer_UserId").IsUnique();
             entity.HasIndex(e => e.StudentCode, "UX_Customer_StudentCode").IsUnique().HasFilter("[StudentCode] IS NOT NULL");
             entity.HasIndex(e => e.ParentId, "IX_Customer_ParentId");
+
+            entity.HasOne(e => e.User)
+                .WithOne(u => u.CustomerProfile)
+                .HasForeignKey<Customer>(e => e.UserId)
+                .HasConstraintName("FK_Customer_User")
+                .OnDelete(DeleteBehavior.Cascade);
 
             entity.HasOne(e => e.Parent)
                 .WithMany(c => c.Children)
@@ -109,7 +157,7 @@ public class AppDbContext : DbContext
         });
 
         // ============================================================
-        // 3. EMPLOYEE
+        // 5. EMPLOYEE
         // ============================================================
         modelBuilder.Entity<Employee>(entity =>
         {
@@ -118,82 +166,26 @@ public class AppDbContext : DbContext
                 t.HasCheckConstraint("CK_Employee_MaxPeriodsPerWeek", "[MaxPeriodsPerWeek] IS NULL OR [MaxPeriodsPerWeek] >= 0");
             });
             entity.HasKey(e => e.Id).HasName("PK_Employee");
+            entity.Property(e => e.UserId).IsRequired();
             entity.Property(e => e.EmployeeCode).HasMaxLength(50).IsRequired();
-            entity.Property(e => e.Username).HasMaxLength(100).IsRequired();
-            entity.Property(e => e.Email).HasMaxLength(255).IsRequired();
-            entity.Property(e => e.PasswordHash).HasMaxLength(500).IsRequired();
-            entity.Property(e => e.FullName).HasMaxLength(200).IsRequired();
-            entity.Property(e => e.PhoneNumber).HasMaxLength(30);
             entity.Property(e => e.Gender).HasMaxLength(20);
             entity.Property(e => e.DateOfBirth).HasColumnType("date");
             entity.Property(e => e.Address).HasMaxLength(500);
-            entity.Property(e => e.AvatarUrl).HasMaxLength(1000);
             entity.Property(e => e.Department).HasMaxLength(150);
             entity.Property(e => e.Position).HasMaxLength(150);
             entity.Property(e => e.Specialization).HasMaxLength(255);
             entity.Property(e => e.Qualification).HasMaxLength(255);
             entity.Property(e => e.HireDate).HasColumnType("date");
-            entity.Property(e => e.IsActive).HasDefaultValue(true);
-            entity.Property(e => e.CreatedAt).HasDefaultValueSql("SYSDATETIME()");
             entity.Property(e => e.UpdatedAt);
 
+            entity.HasIndex(e => e.UserId, "UQ_Employee_UserId").IsUnique();
             entity.HasIndex(e => e.EmployeeCode, "UQ_Employee_EmployeeCode").IsUnique();
-            entity.HasIndex(e => e.Username, "UQ_Employee_Username").IsUnique();
-            entity.HasIndex(e => e.Email, "UQ_Employee_Email").IsUnique();
-        });
 
-        // ============================================================
-        // 4. CUSTOMER ROLE
-        // ============================================================
-        modelBuilder.Entity<CustomerRole>(entity =>
-        {
-            entity.ToTable("CustomerRole");
-            entity.HasKey(e => e.Id).HasName("PK_CustomerRole");
-            entity.Property(e => e.IsActive).HasDefaultValue(true);
-            entity.Property(e => e.AssignedAt).HasDefaultValueSql("SYSDATETIME()");
-
-            entity.HasIndex(e => new { e.CustomerId, e.RoleId }, "UQ_CustomerRole").IsUnique();
-            entity.HasIndex(e => e.CustomerId, "IX_CustomerRole_CustomerId");
-            entity.HasIndex(e => e.RoleId, "IX_CustomerRole_RoleId");
-
-            entity.HasOne(e => e.Customer)
-                .WithMany(c => c.CustomerRoles)
-                .HasForeignKey(e => e.CustomerId)
-                .HasConstraintName("FK_CustomerRole_Customer")
+            entity.HasOne(e => e.User)
+                .WithOne(u => u.EmployeeProfile)
+                .HasForeignKey<Employee>(e => e.UserId)
+                .HasConstraintName("FK_Employee_User")
                 .OnDelete(DeleteBehavior.Cascade);
-
-            entity.HasOne(e => e.Role)
-                .WithMany(r => r.CustomerRoles)
-                .HasForeignKey(e => e.RoleId)
-                .HasConstraintName("FK_CustomerRole_Role")
-                .OnDelete(DeleteBehavior.ClientSetNull);
-        });
-
-        // ============================================================
-        // 5. EMPLOYEE ROLE
-        // ============================================================
-        modelBuilder.Entity<EmployeeRole>(entity =>
-        {
-            entity.ToTable("EmployeeRole");
-            entity.HasKey(e => e.Id).HasName("PK_EmployeeRole");
-            entity.Property(e => e.IsActive).HasDefaultValue(true);
-            entity.Property(e => e.AssignedAt).HasDefaultValueSql("SYSDATETIME()");
-
-            entity.HasIndex(e => new { e.EmployeeId, e.RoleId }, "UQ_EmployeeRole").IsUnique();
-            entity.HasIndex(e => e.EmployeeId, "IX_EmployeeRole_EmployeeId");
-            entity.HasIndex(e => e.RoleId, "IX_EmployeeRole_RoleId");
-
-            entity.HasOne(e => e.Employee)
-                .WithMany(emp => emp.EmployeeRoles)
-                .HasForeignKey(e => e.EmployeeId)
-                .HasConstraintName("FK_EmployeeRole_Employee")
-                .OnDelete(DeleteBehavior.Cascade);
-
-            entity.HasOne(e => e.Role)
-                .WithMany(r => r.EmployeeRoles)
-                .HasForeignKey(e => e.RoleId)
-                .HasConstraintName("FK_EmployeeRole_Role")
-                .OnDelete(DeleteBehavior.ClientSetNull);
         });
 
         // ============================================================
@@ -762,55 +754,36 @@ public class AppDbContext : DbContext
         // ============================================================
         modelBuilder.Entity<Notification>(entity =>
         {
-            entity.ToTable("Notification", t =>
-            {
-                t.HasCheckConstraint("CK_Notification_Sender", "[SenderCustomerId] IS NULL OR [SenderEmployeeId] IS NULL");
-                t.HasCheckConstraint("CK_Notification_Recipient", "([RecipientCustomerId] IS NOT NULL AND [RecipientEmployeeId] IS NULL) OR ([RecipientCustomerId] IS NULL AND [RecipientEmployeeId] IS NOT NULL)");
-            });
+            entity.ToTable("Notification");
             entity.HasKey(e => e.Id).HasName("PK_Notification");
             entity.Property(e => e.Title).HasMaxLength(255).IsRequired();
             entity.Property(e => e.Content).IsRequired();
             entity.Property(e => e.IsRead).HasDefaultValue(false);
             entity.Property(e => e.SentAt).HasDefaultValueSql("SYSDATETIME()");
 
-            entity.HasIndex(e => e.RecipientCustomerId, "IX_Notification_RecipientCustomer");
-            entity.HasIndex(e => e.RecipientEmployeeId, "IX_Notification_RecipientEmployee");
+            entity.HasIndex(e => e.RecipientId, "IX_Notification_RecipientId");
+            entity.HasIndex(e => e.SenderId, "IX_Notification_SenderId");
             entity.HasIndex(e => e.IsRead, "IX_Notification_IsRead");
 
-            entity.HasOne(e => e.SenderCustomer)
-                .WithMany(c => c.SentNotifications)
-                .HasForeignKey(e => e.SenderCustomerId)
-                .HasConstraintName("FK_Notification_SenderCustomer")
-                .OnDelete(DeleteBehavior.ClientSetNull);
+            entity.HasOne(e => e.Recipient)
+                .WithMany(u => u.ReceivedNotifications)
+                .HasForeignKey(e => e.RecipientId)
+                .HasConstraintName("FK_Notification_RecipientUser")
+                .OnDelete(DeleteBehavior.Restrict);
 
-            entity.HasOne(e => e.SenderEmployee)
-                .WithMany(emp => emp.SentNotifications)
-                .HasForeignKey(e => e.SenderEmployeeId)
-                .HasConstraintName("FK_Notification_SenderEmployee")
-                .OnDelete(DeleteBehavior.ClientSetNull);
-
-            entity.HasOne(e => e.RecipientCustomer)
-                .WithMany(c => c.ReceivedNotifications)
-                .HasForeignKey(e => e.RecipientCustomerId)
-                .HasConstraintName("FK_Notification_RecipientCustomer")
-                .OnDelete(DeleteBehavior.ClientSetNull);
-
-            entity.HasOne(e => e.RecipientEmployee)
-                .WithMany(emp => emp.ReceivedNotifications)
-                .HasForeignKey(e => e.RecipientEmployeeId)
-                .HasConstraintName("FK_Notification_RecipientEmployee")
+            entity.HasOne(e => e.Sender)
+                .WithMany(u => u.SentNotifications)
+                .HasForeignKey(e => e.SenderId)
+                .HasConstraintName("FK_Notification_SenderUser")
                 .OnDelete(DeleteBehavior.ClientSetNull);
         });
 
         // ============================================================
-        // 27. MESSAGE LOG
+        // 28. MESSAGE LOG
         // ============================================================
         modelBuilder.Entity<MessageLog>(entity =>
         {
-            entity.ToTable("MessageLog", t =>
-            {
-                t.HasCheckConstraint("CK_MessageLog_Recipient", "[RecipientCustomerId] IS NULL OR [RecipientEmployeeId] IS NULL");
-            });
+            entity.ToTable("MessageLog");
             entity.HasKey(e => e.Id).HasName("PK_MessageLog");
             entity.Property(e => e.Channel).HasMaxLength(20).IsRequired();
             entity.Property(e => e.Provider).HasMaxLength(50);
@@ -828,27 +801,20 @@ public class AppDbContext : DbContext
             entity.HasIndex(e => e.RecipientAddress, "IX_MessageLog_RecipientAddress");
             entity.HasIndex(e => new { e.Channel, e.Status }, "IX_MessageLog_Channel_Status");
             entity.HasIndex(e => e.CreatedAt, "IX_MessageLog_CreatedAt");
-            entity.HasIndex(e => e.RecipientCustomerId, "IX_MessageLog_RecipientCustomer");
-            entity.HasIndex(e => e.RecipientEmployeeId, "IX_MessageLog_RecipientEmployee");
-            entity.HasIndex(e => e.CreatedByEmployeeId, "IX_MessageLog_CreatedByEmployee");
+            entity.HasIndex(e => e.RecipientUserId, "IX_MessageLog_RecipientUserId");
+            entity.HasIndex(e => e.CreatedByUserId, "IX_MessageLog_CreatedByUserId");
             entity.HasIndex(e => e.NotificationId, "IX_MessageLog_Notification");
 
-            entity.HasOne(e => e.RecipientCustomer)
-                .WithMany(c => c.ReceivedMessageLogs)
-                .HasForeignKey(e => e.RecipientCustomerId)
-                .HasConstraintName("FK_MessageLog_RecipientCustomer")
+            entity.HasOne(e => e.RecipientUser)
+                .WithMany(u => u.ReceivedMessageLogs)
+                .HasForeignKey(e => e.RecipientUserId)
+                .HasConstraintName("FK_MessageLog_RecipientUser")
                 .OnDelete(DeleteBehavior.ClientSetNull);
 
-            entity.HasOne(e => e.RecipientEmployee)
-                .WithMany(emp => emp.ReceivedMessageLogs)
-                .HasForeignKey(e => e.RecipientEmployeeId)
-                .HasConstraintName("FK_MessageLog_RecipientEmployee")
-                .OnDelete(DeleteBehavior.ClientSetNull);
-
-            entity.HasOne(e => e.CreatedByEmployee)
-                .WithMany(emp => emp.SentMessageLogs)
-                .HasForeignKey(e => e.CreatedByEmployeeId)
-                .HasConstraintName("FK_MessageLog_CreatedByEmployee")
+            entity.HasOne(e => e.CreatedByUser)
+                .WithMany(u => u.CreatedMessageLogs)
+                .HasForeignKey(e => e.CreatedByUserId)
+                .HasConstraintName("FK_MessageLog_CreatedByUser")
                 .OnDelete(DeleteBehavior.ClientSetNull);
 
             entity.HasOne(e => e.Notification)

@@ -1,4 +1,4 @@
-using HSMS.MVC.Exceptions;
+﻿using HSMS.MVC.Common;
 
 namespace HSMS.MVC.Models;
 
@@ -21,16 +21,16 @@ public class ConductEvaluation
     public ConductEvaluation(long customerId, long semesterId, long homeroomEmployeeId, string conductGrade, string? teacherComment = null)
     {
         if (customerId <= 0)
-            throw new BusinessException("Id học sinh không hợp lệ.", "INVALID_CUSTOMER_ID");
+            throw new AppError("Id học sinh không hợp lệ.", "INVALID_CUSTOMER_ID");
 
         if (semesterId <= 0)
-            throw new BusinessException("Id học kỳ không hợp lệ.", "INVALID_SEMESTER_ID");
+            throw new AppError("Id học kỳ không hợp lệ.", "INVALID_SEMESTER_ID");
 
         if (homeroomEmployeeId <= 0)
-            throw new BusinessException("Id giáo viên chủ nhiệm không hợp lệ.", "INVALID_EMPLOYEE_ID");
+            throw new AppError("Id giáo viên chủ nhiệm không hợp lệ.", "INVALID_EMPLOYEE_ID");
 
         if (string.IsNullOrWhiteSpace(conductGrade))
-            throw new BusinessException("Xếp loại hạnh kiểm không được để trống.", "GRADE_REQUIRED");
+            throw new AppError("Xếp loại hạnh kiểm không được để trống.", "GRADE_REQUIRED");
 
         CustomerId = customerId;
         SemesterId = semesterId;
@@ -44,7 +44,7 @@ public class ConductEvaluation
     {
         ArgumentNullException.ThrowIfNull(teacher);
         if (string.IsNullOrWhiteSpace(grade))
-            throw new BusinessException("Xếp loại hạnh kiểm không được để trống.", "GRADE_REQUIRED");
+            throw new AppError("Xếp loại hạnh kiểm không được để trống.", "GRADE_REQUIRED");
 
         ConductGrade = grade.Trim();
         TeacherComment = comment;
@@ -57,7 +57,7 @@ public class ConductEvaluation
     public bool UpdateEvaluation(string newGrade, string? newComment = null)
     {
         if (string.IsNullOrWhiteSpace(newGrade))
-            throw new BusinessException("Xếp loại hạnh kiểm không được để trống.", "GRADE_REQUIRED");
+            throw new AppError("Xếp loại hạnh kiểm không được để trống.", "GRADE_REQUIRED");
 
         ConductGrade = newGrade.Trim();
         TeacherComment = newComment;

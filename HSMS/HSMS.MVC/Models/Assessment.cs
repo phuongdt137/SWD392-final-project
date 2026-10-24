@@ -1,4 +1,4 @@
-using HSMS.MVC.Exceptions;
+﻿using HSMS.MVC.Common;
 
 namespace HSMS.MVC.Models;
 
@@ -19,13 +19,13 @@ public class Assessment
     public Assessment(long teachingAssignmentId, long assessmentTypeId, string assessmentName, DateTime? conductedAt = null)
     {
         if (teachingAssignmentId <= 0)
-            throw new BusinessException("Id phân công giảng dạy không hợp lệ.", "INVALID_TEACHING_ASSIGNMENT_ID");
+            throw new AppError("Id phân công giảng dạy không hợp lệ.", "INVALID_TEACHING_ASSIGNMENT_ID");
 
         if (assessmentTypeId <= 0)
-            throw new BusinessException("Id loại bài kiểm tra không hợp lệ.", "INVALID_ASSESSMENT_TYPE_ID");
+            throw new AppError("Id loại bài kiểm tra không hợp lệ.", "INVALID_ASSESSMENT_TYPE_ID");
 
         if (string.IsNullOrWhiteSpace(assessmentName))
-            throw new BusinessException("Tên bài kiểm tra không được để trống.", "ASSESSMENT_NAME_REQUIRED");
+            throw new AppError("Tên bài kiểm tra không được để trống.", "ASSESSMENT_NAME_REQUIRED");
 
         TeachingAssignmentId = teachingAssignmentId;
         AssessmentTypeId = assessmentTypeId;

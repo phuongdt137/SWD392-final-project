@@ -1,4 +1,4 @@
-using HSMS.MVC.Exceptions;
+﻿using HSMS.MVC.Common;
 
 namespace HSMS.MVC.Models;
 
@@ -30,15 +30,15 @@ public class TimetableEntry
         string status = "ACTIVE")
     {
         if (teachingAssignmentId <= 0)
-            throw new BusinessException("Phân công giảng dạy không hợp lệ.", "INVALID_TEACHING_ASSIGNMENT_ID");
+            throw new AppError("Phân công giảng dạy không hợp lệ.", "INVALID_TEACHING_ASSIGNMENT_ID");
         if (roomId <= 0)
-            throw new BusinessException("Phòng học không hợp lệ.", "INVALID_ROOM_ID");
+            throw new AppError("Phòng học không hợp lệ.", "INVALID_ROOM_ID");
         if (timeSlotId <= 0)
-            throw new BusinessException("Tiết học không hợp lệ.", "INVALID_TIME_SLOT_ID");
+            throw new AppError("Tiết học không hợp lệ.", "INVALID_TIME_SLOT_ID");
         if (dayOfWeek < 1 || dayOfWeek > 7)
-            throw new BusinessException("Thứ trong tuần phải nằm trong khoảng từ 1 đến 7.", "INVALID_DAY_OF_WEEK");
+            throw new AppError("Thứ trong tuần phải nằm trong khoảng từ 1 đến 7.", "INVALID_DAY_OF_WEEK");
         if (effectiveFrom.HasValue && effectiveTo.HasValue && effectiveTo.Value < effectiveFrom.Value)
-            throw new BusinessException("Ngày kết thúc hiệu lực phải sau ngày bắt đầu hiệu lực.", "INVALID_EFFECTIVE_DATE_RANGE");
+            throw new AppError("Ngày kết thúc hiệu lực phải sau ngày bắt đầu hiệu lực.", "INVALID_EFFECTIVE_DATE_RANGE");
 
         TeachingAssignmentId = teachingAssignmentId;
         RoomId = roomId;
@@ -66,7 +66,7 @@ public class TimetableEntry
         ArgumentNullException.ThrowIfNull(newSlot);
 
         if (newDayOfWeek < 1 || newDayOfWeek > 7)
-            throw new BusinessException("Thứ trong tuần phải nằm trong khoảng từ 1 đến 7.", "INVALID_DAY_OF_WEEK");
+            throw new AppError("Thứ trong tuần phải nằm trong khoảng từ 1 đến 7.", "INVALID_DAY_OF_WEEK");
 
         RoomId = newRoom.Id;
         Room = newRoom;

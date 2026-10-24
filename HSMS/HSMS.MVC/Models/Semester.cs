@@ -1,4 +1,4 @@
-using HSMS.MVC.Exceptions;
+﻿using HSMS.MVC.Common;
 
 namespace HSMS.MVC.Models;
 
@@ -21,16 +21,16 @@ public class Semester
     public Semester(string semesterCode, string semesterName, DateTime startDate, DateTime endDate, long academicYearId)
     {
         if (string.IsNullOrWhiteSpace(semesterCode))
-            throw new BusinessException("Mã học kỳ không được để trống.", "SEMESTER_CODE_REQUIRED");
+            throw new AppError("Mã học kỳ không được để trống.", "SEMESTER_CODE_REQUIRED");
 
         if (string.IsNullOrWhiteSpace(semesterName))
-            throw new BusinessException("Tên học kỳ không được để trống.", "SEMESTER_NAME_REQUIRED");
+            throw new AppError("Tên học kỳ không được để trống.", "SEMESTER_NAME_REQUIRED");
 
         if (academicYearId <= 0)
-            throw new BusinessException("Id năm học không hợp lệ.", "INVALID_ACADEMIC_YEAR_ID");
+            throw new AppError("Id năm học không hợp lệ.", "INVALID_ACADEMIC_YEAR_ID");
 
         if (endDate < startDate)
-            throw new BusinessException("Ngày kết thúc học kỳ phải lớn hơn hoặc bằng ngày bắt đầu.", "INVALID_DATE_RANGE");
+            throw new AppError("Ngày kết thúc học kỳ phải lớn hơn hoặc bằng ngày bắt đầu.", "INVALID_DATE_RANGE");
 
         SemesterCode = semesterCode.Trim().ToUpperInvariant();
         SemesterName = semesterName.Trim();

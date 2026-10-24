@@ -1,4 +1,4 @@
-using HSMS.MVC.Exceptions;
+﻿using HSMS.MVC.Common;
 
 namespace HSMS.MVC.Models;
 
@@ -18,11 +18,11 @@ public class TimeSlot
     public TimeSlot(string slotCode, int periodNo, TimeSpan startTime, TimeSpan endTime, string? session = null)
     {
         if (string.IsNullOrWhiteSpace(slotCode))
-            throw new BusinessException("Mã tiết học không được để trống.", "EMPTY_SLOT_CODE");
+            throw new AppError("Mã tiết học không được để trống.", "EMPTY_SLOT_CODE");
         if (periodNo <= 0)
-            throw new BusinessException("Số thứ tự tiết học phải lớn hơn 0.", "INVALID_PERIOD_NO");
+            throw new AppError("Số thứ tự tiết học phải lớn hơn 0.", "INVALID_PERIOD_NO");
         if (endTime <= startTime)
-            throw new BusinessException("Thời gian kết thúc phải lớn hơn thời gian bắt đầu.", "INVALID_TIME_RANGE");
+            throw new AppError("Thời gian kết thúc phải lớn hơn thời gian bắt đầu.", "INVALID_TIME_RANGE");
 
         SlotCode = slotCode.Trim();
         PeriodNo = periodNo;

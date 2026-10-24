@@ -1,4 +1,4 @@
-using HSMS.MVC.Exceptions;
+﻿using HSMS.MVC.Common;
 
 namespace HSMS.MVC.Models;
 
@@ -24,13 +24,13 @@ public class Class
     public Class(string className, long academicYearId, long gradeLevelId, long? homeroomEmployeeId = null, string status = "ACTIVE")
     {
         if (string.IsNullOrWhiteSpace(className))
-            throw new BusinessException("Tên lớp học không được để trống.", "CLASS_NAME_REQUIRED");
+            throw new AppError("Tên lớp học không được để trống.", "CLASS_NAME_REQUIRED");
 
         if (academicYearId <= 0)
-            throw new BusinessException("Id năm học không hợp lệ.", "INVALID_ACADEMIC_YEAR_ID");
+            throw new AppError("Id năm học không hợp lệ.", "INVALID_ACADEMIC_YEAR_ID");
 
         if (gradeLevelId <= 0)
-            throw new BusinessException("Id khối lớp không hợp lệ.", "INVALID_GRADE_LEVEL_ID");
+            throw new AppError("Id khối lớp không hợp lệ.", "INVALID_GRADE_LEVEL_ID");
 
         ClassName = className.Trim();
         AcademicYearId = academicYearId;

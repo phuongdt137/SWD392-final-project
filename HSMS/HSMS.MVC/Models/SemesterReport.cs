@@ -1,4 +1,4 @@
-using HSMS.MVC.Exceptions;
+﻿using HSMS.MVC.Common;
 
 namespace HSMS.MVC.Models;
 
@@ -24,10 +24,10 @@ public class SemesterReport
     public SemesterReport(long customerId, long semesterId, string status = "DRAFT")
     {
         if (customerId <= 0)
-            throw new BusinessException("Id học sinh không hợp lệ.", "INVALID_CUSTOMER_ID");
+            throw new AppError("Id học sinh không hợp lệ.", "INVALID_CUSTOMER_ID");
 
         if (semesterId <= 0)
-            throw new BusinessException("Id học kỳ không hợp lệ.", "INVALID_SEMESTER_ID");
+            throw new AppError("Id học kỳ không hợp lệ.", "INVALID_SEMESTER_ID");
 
         CustomerId = customerId;
         SemesterId = semesterId;

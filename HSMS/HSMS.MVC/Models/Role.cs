@@ -1,4 +1,4 @@
-using HSMS.MVC.Exceptions;
+﻿using HSMS.MVC.Common;
 
 namespace HSMS.MVC.Models;
 
@@ -11,18 +11,17 @@ public class Role
     public bool IsActive { get; private set; } = true;
     public DateTime CreatedAt { get; private set; }
 
-    public virtual ICollection<CustomerRole> CustomerRoles { get; private set; } = new List<CustomerRole>();
-    public virtual ICollection<EmployeeRole> EmployeeRoles { get; private set; } = new List<EmployeeRole>();
+    public virtual ICollection<UserRole> UserRoles { get; private set; } = new List<UserRole>();
 
     protected Role() { }
 
     public Role(string roleCode, string roleName, string? description = null, bool isActive = true)
     {
         if (string.IsNullOrWhiteSpace(roleCode))
-            throw new BusinessException("Mã vai trò không được để trống.", "ROLE_CODE_REQUIRED");
+            throw new AppError("Mã vai trò không được để trống.", "ROLE_CODE_REQUIRED");
 
         if (string.IsNullOrWhiteSpace(roleName))
-            throw new BusinessException("Tên vai trò không được để trống.", "ROLE_NAME_REQUIRED");
+            throw new AppError("Tên vai trò không được để trống.", "ROLE_NAME_REQUIRED");
 
         RoleCode = roleCode.Trim().ToUpperInvariant();
         RoleName = roleName.Trim();

@@ -1,4 +1,4 @@
-using HSMS.MVC.Exceptions;
+﻿using HSMS.MVC.Common;
 
 namespace HSMS.MVC.Models;
 
@@ -27,16 +27,16 @@ public class LeaveRequest
     public LeaveRequest(long studentCustomerId, long requestedByCustomerId, string reason, DateTime startDate, DateTime endDate, string? attachment = null)
     {
         if (studentCustomerId <= 0)
-            throw new BusinessException("Id học sinh không hợp lệ.", "INVALID_STUDENT_ID");
+            throw new AppError("Id học sinh không hợp lệ.", "INVALID_STUDENT_ID");
 
         if (requestedByCustomerId <= 0)
-            throw new BusinessException("Id người nộp đơn không hợp lệ.", "INVALID_REQUESTER_ID");
+            throw new AppError("Id người nộp đơn không hợp lệ.", "INVALID_REQUESTER_ID");
 
         if (string.IsNullOrWhiteSpace(reason))
-            throw new BusinessException("Lý do xin nghỉ không được để trống.", "REASON_REQUIRED");
+            throw new AppError("Lý do xin nghỉ không được để trống.", "REASON_REQUIRED");
 
         if (endDate < startDate)
-            throw new BusinessException("Ngày kết thúc nghỉ phép không được nhỏ hơn ngày bắt đầu.", "INVALID_DATE_RANGE");
+            throw new AppError("Ngày kết thúc nghỉ phép không được nhỏ hơn ngày bắt đầu.", "INVALID_DATE_RANGE");
 
         StudentCustomerId = studentCustomerId;
         RequestedByCustomerId = requestedByCustomerId;
@@ -51,7 +51,7 @@ public class LeaveRequest
     public void Submit()
     {
         if (EndDate < StartDate)
-            throw new BusinessException("Ngày kết thúc nghỉ phép không được nhỏ hơn ngày bắt đầu.", "INVALID_DATE_RANGE");
+            throw new AppError("Ngày kết thúc nghỉ phép không được nhỏ hơn ngày bắt đầu.", "INVALID_DATE_RANGE");
 
         Status = "PENDING";
         RequestedAt = DateTime.UtcNow;
@@ -61,7 +61,7 @@ public class LeaveRequest
     {
         ArgumentNullException.ThrowIfNull(reviewer);
         if (Status != "PENDING")
-            throw new BusinessException("Chỉ đơn xin nghỉ ở trạng thái PENDING mới có thể phê duyệt.", "INVALID_STATUS");
+            throw new AppError("Chỉ đơn xin nghỉ ở trạng thái PENDING mới có thể phê duyệt.", "INVALID_STATUS");
 
         Status = "APPROVED";
         ReviewedByEmployeeId = reviewer.Id;
@@ -74,10 +74,10 @@ public class LeaveRequest
     {
         ArgumentNullException.ThrowIfNull(reviewer);
         if (string.IsNullOrWhiteSpace(reason))
-            throw new BusinessException("Lý do từ chối không được để trống.", "REASON_REQUIRED");
+            throw new AppError("Lý do từ chối không được để trống.", "REASON_REQUIRED");
 
         if (Status != "PENDING")
-            throw new BusinessException("Chỉ đơn xin nghỉ ở trạng thái PENDING mới có thể từ chối.", "INVALID_STATUS");
+            throw new AppError("Chỉ đơn xin nghỉ ở trạng thái PENDING mới có thể từ chối.", "INVALID_STATUS");
 
         Status = "REJECTED";
         ReviewedByEmployeeId = reviewer.Id;

@@ -1,4 +1,4 @@
-using HSMS.MVC.Exceptions;
+﻿using HSMS.MVC.Common;
 
 namespace HSMS.MVC.Models;
 
@@ -19,10 +19,10 @@ public class Room
     public Room(string roomCode, string? roomName = null, string? building = null, string? roomType = null, int? capacity = null, string status = "ACTIVE")
     {
         if (string.IsNullOrWhiteSpace(roomCode))
-            throw new BusinessException("Mã phòng học không được để trống.", "ROOM_CODE_REQUIRED");
+            throw new AppError("Mã phòng học không được để trống.", "ROOM_CODE_REQUIRED");
 
         if (capacity.HasValue && capacity.Value < 0)
-            throw new BusinessException("Sức chứa phòng học phải >= 0.", "INVALID_CAPACITY");
+            throw new AppError("Sức chứa phòng học phải >= 0.", "INVALID_CAPACITY");
 
         RoomCode = roomCode.Trim().ToUpperInvariant();
         RoomName = roomName;

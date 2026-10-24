@@ -1,4 +1,4 @@
-using HSMS.MVC.Exceptions;
+﻿using HSMS.MVC.Common;
 
 namespace HSMS.MVC.Models;
 
@@ -18,10 +18,10 @@ public class AcademicYear
     public AcademicYear(string yearCode, DateTime startDate, DateTime endDate)
     {
         if (string.IsNullOrWhiteSpace(yearCode))
-            throw new BusinessException("Mã năm học không được để trống.", "YEAR_CODE_REQUIRED");
+            throw new AppError("Mã năm học không được để trống.", "YEAR_CODE_REQUIRED");
 
         if (endDate < startDate)
-            throw new BusinessException("Ngày kết thúc năm học phải lớn hơn hoặc bằng ngày bắt đầu.", "INVALID_DATE_RANGE");
+            throw new AppError("Ngày kết thúc năm học phải lớn hơn hoặc bằng ngày bắt đầu.", "INVALID_DATE_RANGE");
 
         YearCode = yearCode.Trim();
         StartDate = startDate;

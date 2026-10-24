@@ -1,4 +1,4 @@
-using HSMS.MVC.Exceptions;
+﻿using HSMS.MVC.Common;
 
 namespace HSMS.MVC.Models;
 
@@ -19,10 +19,10 @@ public class StudentClass
     public StudentClass(long customerId, long classId, DateTime? joinedAt = null, string status = "ACTIVE")
     {
         if (customerId <= 0)
-            throw new BusinessException("Id học sinh không hợp lệ.", "INVALID_CUSTOMER_ID");
+            throw new AppError("Id học sinh không hợp lệ.", "INVALID_CUSTOMER_ID");
 
         if (classId <= 0)
-            throw new BusinessException("Id lớp học không hợp lệ.", "INVALID_CLASS_ID");
+            throw new AppError("Id lớp học không hợp lệ.", "INVALID_CLASS_ID");
 
         CustomerId = customerId;
         ClassId = classId;
@@ -34,7 +34,7 @@ public class StudentClass
     {
         ArgumentNullException.ThrowIfNull(newClass);
         if (Status != "ACTIVE")
-            throw new BusinessException("Học sinh không ở trạng thái hoạt động trong lớp này để chuyển lớp.", "INVALID_STATUS");
+            throw new AppError("Học sinh không ở trạng thái hoạt động trong lớp này để chuyển lớp.", "INVALID_STATUS");
 
         Status = "TRANSFERRED";
         LeftAt = DateTime.Today;
@@ -43,7 +43,7 @@ public class StudentClass
     public void Withdraw()
     {
         if (Status != "ACTIVE")
-            throw new BusinessException("Học sinh không ở trạng thái hoạt động để rút khỏi lớp.", "INVALID_STATUS");
+            throw new AppError("Học sinh không ở trạng thái hoạt động để rút khỏi lớp.", "INVALID_STATUS");
 
         Status = "WITHDRAWN";
         LeftAt = DateTime.Today;

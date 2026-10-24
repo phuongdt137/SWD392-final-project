@@ -1,4 +1,4 @@
-using HSMS.MVC.Exceptions;
+﻿using HSMS.MVC.Common;
 
 namespace HSMS.MVC.Models;
 
@@ -20,13 +20,13 @@ public class TeacherFeedback
     public TeacherFeedback(long customerId, long teachingAssignmentId, string comment, string? feedbackType = null)
     {
         if (customerId <= 0)
-            throw new BusinessException("Id học sinh không hợp lệ.", "INVALID_CUSTOMER_ID");
+            throw new AppError("Id học sinh không hợp lệ.", "INVALID_CUSTOMER_ID");
 
         if (teachingAssignmentId <= 0)
-            throw new BusinessException("Id phân công giảng dạy không hợp lệ.", "INVALID_TEACHING_ASSIGNMENT_ID");
+            throw new AppError("Id phân công giảng dạy không hợp lệ.", "INVALID_TEACHING_ASSIGNMENT_ID");
 
         if (string.IsNullOrWhiteSpace(comment))
-            throw new BusinessException("Nội dung nhận xét không được để trống.", "COMMENT_REQUIRED");
+            throw new AppError("Nội dung nhận xét không được để trống.", "COMMENT_REQUIRED");
 
         CustomerId = customerId;
         TeachingAssignmentId = teachingAssignmentId;
@@ -38,7 +38,7 @@ public class TeacherFeedback
     public bool AddFeedback(string comment, string? type = null)
     {
         if (string.IsNullOrWhiteSpace(comment))
-            throw new BusinessException("Nội dung nhận xét không được để trống.", "COMMENT_REQUIRED");
+            throw new AppError("Nội dung nhận xét không được để trống.", "COMMENT_REQUIRED");
 
         Comment = comment.Trim();
         FeedbackType = type;
@@ -49,7 +49,7 @@ public class TeacherFeedback
     public bool EditFeedback(string newComment)
     {
         if (string.IsNullOrWhiteSpace(newComment))
-            throw new BusinessException("Nội dung nhận xét không được để trống.", "COMMENT_REQUIRED");
+            throw new AppError("Nội dung nhận xét không được để trống.", "COMMENT_REQUIRED");
 
         Comment = newComment.Trim();
         UpdatedAt = DateTime.UtcNow;

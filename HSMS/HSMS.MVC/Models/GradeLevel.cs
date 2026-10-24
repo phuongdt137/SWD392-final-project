@@ -1,4 +1,4 @@
-using HSMS.MVC.Exceptions;
+﻿using HSMS.MVC.Common;
 
 namespace HSMS.MVC.Models;
 
@@ -15,10 +15,10 @@ public class GradeLevel
     public GradeLevel(string levelCode, string levelName)
     {
         if (string.IsNullOrWhiteSpace(levelCode))
-            throw new BusinessException("Mã khối lớp không được để trống.", "LEVEL_CODE_REQUIRED");
+            throw new AppError("Mã khối lớp không được để trống.", "LEVEL_CODE_REQUIRED");
 
         if (string.IsNullOrWhiteSpace(levelName))
-            throw new BusinessException("Tên khối lớp không được để trống.", "LEVEL_NAME_REQUIRED");
+            throw new AppError("Tên khối lớp không được để trống.", "LEVEL_NAME_REQUIRED");
 
         LevelCode = levelCode.Trim();
         LevelName = levelName.Trim();

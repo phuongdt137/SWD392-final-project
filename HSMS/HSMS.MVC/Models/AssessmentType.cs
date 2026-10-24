@@ -1,4 +1,4 @@
-using HSMS.MVC.Exceptions;
+﻿using HSMS.MVC.Common;
 
 namespace HSMS.MVC.Models;
 
@@ -18,19 +18,19 @@ public class AssessmentType
     public AssessmentType(string typeCode, string typeName, decimal weight, int minEntries = 1, int? maxEntries = null)
     {
         if (string.IsNullOrWhiteSpace(typeCode))
-            throw new BusinessException("Mã loại đánh giá không được để trống.", "TYPE_CODE_REQUIRED");
+            throw new AppError("Mã loại đánh giá không được để trống.", "TYPE_CODE_REQUIRED");
 
         if (string.IsNullOrWhiteSpace(typeName))
-            throw new BusinessException("Tên loại đánh giá không được để trống.", "TYPE_NAME_REQUIRED");
+            throw new AppError("Tên loại đánh giá không được để trống.", "TYPE_NAME_REQUIRED");
 
         if (weight < 0 || weight > 100)
-            throw new BusinessException("Trọng số bài kiểm tra phải từ 0 đến 100%.", "INVALID_WEIGHT");
+            throw new AppError("Trọng số bài kiểm tra phải từ 0 đến 100%.", "INVALID_WEIGHT");
 
         if (minEntries < 0)
-            throw new BusinessException("Số lượng đầu điểm tối thiểu phải >= 0.", "INVALID_MIN_ENTRIES");
+            throw new AppError("Số lượng đầu điểm tối thiểu phải >= 0.", "INVALID_MIN_ENTRIES");
 
         if (maxEntries.HasValue && maxEntries.Value < minEntries)
-            throw new BusinessException("Số lượng đầu điểm tối đa không thể nhỏ hơn số tối thiểu.", "INVALID_MAX_ENTRIES");
+            throw new AppError("Số lượng đầu điểm tối đa không thể nhỏ hơn số tối thiểu.", "INVALID_MAX_ENTRIES");
 
         TypeCode = typeCode.Trim();
         TypeName = typeName.Trim();

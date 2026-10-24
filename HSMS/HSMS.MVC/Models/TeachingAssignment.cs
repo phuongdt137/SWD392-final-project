@@ -1,4 +1,4 @@
-using HSMS.MVC.Exceptions;
+﻿using HSMS.MVC.Common;
 
 namespace HSMS.MVC.Models;
 
@@ -24,16 +24,16 @@ public class TeachingAssignment
     public TeachingAssignment(long employeeId, long subjectId, long classId, long semesterId, string status = "ACTIVE")
     {
         if (employeeId <= 0)
-            throw new BusinessException("Id giáo viên không hợp lệ.", "INVALID_EMPLOYEE_ID");
+            throw new AppError("Id giáo viên không hợp lệ.", "INVALID_EMPLOYEE_ID");
 
         if (subjectId <= 0)
-            throw new BusinessException("Id môn học không hợp lệ.", "INVALID_SUBJECT_ID");
+            throw new AppError("Id môn học không hợp lệ.", "INVALID_SUBJECT_ID");
 
         if (classId <= 0)
-            throw new BusinessException("Id lớp học không hợp lệ.", "INVALID_CLASS_ID");
+            throw new AppError("Id lớp học không hợp lệ.", "INVALID_CLASS_ID");
 
         if (semesterId <= 0)
-            throw new BusinessException("Id học kỳ không hợp lệ.", "INVALID_SEMESTER_ID");
+            throw new AppError("Id học kỳ không hợp lệ.", "INVALID_SEMESTER_ID");
 
         EmployeeId = employeeId;
         SubjectId = subjectId;
