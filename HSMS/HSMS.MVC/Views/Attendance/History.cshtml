@@ -1,0 +1,47 @@
+@using HSMS.MVC.Common
+@using HSMS.MVC.ViewModels.Attendance
+@model HSMS.MVC.ViewModels.Attendance.AttendanceHistory
+@{
+    Layout = "_DashboardLayout"; ViewData["Title"] = "Lịch sử chuyên cần";
+    var f = Model.Filter;
+    var pages = Math.Max(1, (int)Math.Ceiling(Model.Total / 30d));
+    string PageUrl(int page) => Url.Action("History", new { f.From, f.To, f.StudentId, f.ClassId, f.SubjectId, f.Status, Page = page })!;
+}
+<div class="attendance-page">
+    <h1 class="h3 fw-bold">Tra cứu chuyên cần</h1>
+    <p class="text-muted">Thống kê theo lượt học sinh–tiết đã ghi nhận; các tiết chưa điểm danh không được tính là vắng.</p>
+    <form method="get" class="row g-3 mb-4">
+        <div class="col-sm-3"><label for="from" class="form-label">Từ ngày</label><input id="from" name="From" type="date" value="@f.From?.ToString("yyyy-MM-dd")" class="form-control" /></div>
+        <div class="col-sm-3"><label for="to" class="form-label">Đến ngày</label><input id="to" name="To" type="date" value="@f.To?.ToString("yyyy-MM-dd")" class="form-control" /></div>
+        <div class="col-sm-3"><label for="status" class="form-label">Trạng thái</label><select id="status" name="Status" class="form-select"><option value="">Tất cả</option>
+            @foreach (var s in AttendanceStatuses.All) { <option value="@s" selected="@(f.Status == s)">@AttendanceStatuses.Label(s)</option> }</select></div>
+        @if (Model.Choices.Students.Count > 0) {
+            <div class="col-sm-3"><label for="student" class="form-label">Học sinh</label><select id="student" name="StudentId" class="form-select"><option value="">Tất cả trong phạm vi</option>
+                @foreach (var s in Model.Choices.Students) { <option value="@s.Id" selected="@(f.StudentId == s.Id)">@s.Name</option> }</select></div>
+        }
+        <div class="col-sm-3"><label for="class" class="form-label">Lớp</label><select id="class" name="ClassId" class="form-select"><option value="">Tất cả</option>
+            @foreach (var c in Model.Choices.Classes) { <option value="@c.Id" selected="@(f.ClassId == c.Id)">@c.Name</option> }</select></div>
+        <div class="col-sm-3"><label for="subject" class="form-label">Môn học</label><select id="subject" name="SubjectId" class="form-select"><option value="">Tất cả</option>
+            @foreach (var s in Model.Choices.Subjects) { <option value="@s.Id" selected="@(f.SubjectId == s.Id)">@s.Name</option> }</select></div>
+        <div class="col-12"><button class="btn btn-primary">Tra cứu</button> <a asp-action="Index" class="btn btn-outline-secondary">Lịch điểm danh</a></div>
+    </form>
+    <div class="attendance-stats mb-4">
+        <div><strong>@(Model.Summary.Rate?.ToString("0.#") + (Model.Summary.Rate.HasValue ? "%" : "Chưa có dữ liệu"))</strong><span>Tỷ lệ tham dự</span></div>
+        <div><strong>@Model.Summary.Absent</strong><span>Tiết vắng không phép</span></div><div><strong>@Model.Summary.Excused</strong><span>Tiết vắng có phép</span></div><div><strong>@Model.Summary.Late</strong><span>Tiết đi muộn</span></div>
+    </div>
+    <div class="card p-3 border-0 shadow-sm table-responsive"><table class="table align-middle">
+        <thead><tr><th>Ngày / Tiết</th><th>Học sinh</th><th>Lớp / Môn</th><th>Kết quả</th><th>Ghi chú</th><th>Thao tác</th></tr></thead>
+        <tbody>@foreach (var r in Model.Records) {
+            <tr><td>@r.AttendanceDate.ToString("dd/MM/yyyy")<br /><small>Tiết @r.TimetableEntry.TimeSlot.PeriodNo</small></td><td>@r.Customer.FullName<br /><small>@r.Customer.StudentCode</small></td>
+                <td>@r.TimetableEntry.TeachingAssignment.Class.ClassName<br /><small>@r.TimetableEntry.TeachingAssignment.Subject.SubjectName</small></td>
+                <td><span class="attendance-badge @r.Status.ToLowerInvariant()">@AttendanceStatuses.Label(r.Status)</span></td><td>@r.Comment</td>
+                <td><div class="d-flex gap-2 align-items-center">
+                    @if (User.IsInRole("ADMIN") || User.IsInRole("STAFF")) { <a asp-action="Mark" asp-route-timetableEntryId="@r.TimetableEntryId" asp-route-date="@r.AttendanceDate.ToString("yyyy-MM-dd")" asp-route-returnUrl="@PageUrl(f.Page)" class="btn btn-sm btn-outline-primary">Chỉnh sửa</a> }
+                    @if (User.IsInRole("ADMIN") || User.IsInRole("STAFF") || User.IsInRole("PRINCIPAL") || User.IsInRole("TEACHER")) { <a asp-action="Audit" asp-route-id="@r.Id">Nhật ký</a> }
+                </div></td></tr>
+        }</tbody>
+    </table>@if (Model.Total == 0) { <p class="text-muted">Chưa có dữ liệu phù hợp trong phạm vi truy cập.</p> }</div>
+    <footer class="review-pagination"><span>@Model.Total kết quả · Trang @f.Page/@pages</span>
+        <partial name="_AttendancePagination" model="@(new AttendancePagination(f.Page, pages, PageUrl))" />
+    </footer>
+</div>

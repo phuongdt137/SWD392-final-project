@@ -6,7 +6,7 @@ namespace HSMS.MVC.Data;
 /// <summary>
 /// Hỗ trợ khởi tạo dữ liệu mẫu (Seeder) cho hệ thống HSMS.
 /// </summary>
-public static class DbSeeder
+public static partial class DbSeeder
 {
     public const string DefaultPassword = "Password@123";
 

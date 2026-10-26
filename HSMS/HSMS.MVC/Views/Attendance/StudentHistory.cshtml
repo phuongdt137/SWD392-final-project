@@ -1,0 +1,118 @@
+@using System.Globalization
+@using HSMS.MVC.Common
+@using HSMS.MVC.ViewModels.Attendance
+@model StudentAttendanceHistory
+@{
+    Layout = "_DashboardLayout";
+    ViewData["Title"] = Model.IsParent ? "Điểm danh của con" : "Điểm danh cá nhân";
+    var course = Model.Assignment;
+    var vi = CultureInfo.GetCultureInfo("vi-VN");
+    var pages = Math.Max(1, (int)Math.Ceiling(Model.Total / (double)StudentAttendanceHistory.PageSize));
+    string PageUrl(int page) => Url.Action("History", new { Model.StudentId, Model.SemesterId, TeachingAssignmentId = course?.Id, Page = page })!;
+}
+<div class="attendance-page attendance-review">
+    <header class="review-page-heading">
+        <h1>@ViewData["Title"]</h1>
+        <p>@(Model.IsParent ? "Chọn con, học kỳ và môn học để theo dõi từng tiết học." : "Theo dõi kết quả điểm danh và lịch học theo từng môn.")</p>
+    </header>
+
+    @if (Model.IsParent && Model.Students.Count == 0)
+    {
+        <div class="review-empty"><i class="bi bi-people" aria-hidden="true"></i><h2>Chưa có học sinh được liên kết</h2><p>Liên hệ nhà trường để liên kết hồ sơ con với tài khoản phụ huynh.</p></div>
+    }
+    else
+    {
+        <form asp-action="History" method="get" class="review-filters @(Model.IsParent ? "review-filters-parent" : "")" id="attendance-review-filters" data-attendance-filter-form data-auto-submit="true">
+            @if (Model.IsParent)
+            {
+                <div class="review-filter">
+                    <label for="review-student">Học sinh</label>
+                    <select id="review-student" name="StudentId" class="form-select" data-reset="SemesterId,TeachingAssignmentId">
+                        @foreach (var student in Model.Students) { <option value="@student.Id" selected="@(Model.StudentId == student.Id)">@student.Name</option> }
+                    </select>
+                </div>
+            }
+            <div class="review-filter">
+                <label for="review-semester">Học kỳ</label>
+                <select id="review-semester" name="SemesterId" class="form-select" data-reset="TeachingAssignmentId" disabled="@(Model.Semesters.Count == 0)">
+                    @if (Model.Semesters.Count == 0) { <option>Chưa có học kỳ</option> }
+                    @foreach (var semester in Model.Semesters) { <option value="@semester.Id" selected="@(Model.SemesterId == semester.Id)">@semester.SemesterName · @semester.AcademicYear.YearCode</option> }
+                </select>
+            </div>
+            <div class="review-filter">
+                <label for="review-course">Lớp / Môn học</label>
+                <select id="review-course" name="TeachingAssignmentId" class="form-select" disabled="@(Model.Assignments.Count == 0)">
+                    @if (Model.Assignments.Count == 0) { <option>Chưa có lớp học</option> }
+                    @foreach (var assignment in Model.Assignments) { <option value="@assignment.Id" selected="@(course?.Id == assignment.Id)">@assignment.Subject.SubjectName (@assignment.Subject.SubjectCode) · @assignment.Class.ClassName</option> }
+                </select>
+            </div>
+            <noscript><button class="btn btn-primary">Xem điểm danh</button></noscript>
+        </form>
+
+        @if (course == null)
+        {
+            <div class="review-empty"><i class="bi bi-calendar3" aria-hidden="true"></i><h2>Chưa có lịch học để hiển thị</h2><p>@(Model.IsParent ? "Học sinh được chọn chưa có lớp/môn học trong học kỳ này." : "Bạn chưa được xếp lớp/môn học trong học kỳ này.")</p></div>
+        }
+        else
+        {
+            <section class="review-course" aria-labelledby="review-course-title">
+                <header class="review-course-heading">
+                    <div>
+                        <div class="review-course-title"><h2 id="review-course-title">@course.Subject.SubjectName</h2><span class="review-subject-code">@course.Subject.SubjectCode</span></div>
+                        <div class="review-course-meta"><span><i class="bi bi-book" aria-hidden="true"></i> @course.Class.ClassName</span><span><i class="bi bi-calendar3" aria-hidden="true"></i> @course.Semester.SemesterName</span></div>
+                    </div>
+                    @if (Model.IsParent) { <span class="review-student-name"><i class="bi bi-person" aria-hidden="true"></i> @Model.StudentName</span> }
+                </header>
+                <div class="review-summary" role="status">
+                    <div><i class="bi bi-info-circle" aria-hidden="true"></i>
+                        @if (Model.Recorded > 0)
+                        {
+                            <span>Vắng <strong>@Model.AbsenceRate?.ToString("0.#", vi)% (@Model.Absent/@Model.Recorded tiết đã điểm danh)</strong>, còn <strong>@Model.Unmarked tiết chưa điểm danh</strong>.</span>
+                        }
+                        else { <span>Chưa có kết quả điểm danh. Có <strong>@Model.Unmarked tiết chưa điểm danh</strong>.</span> }
+                    </div>
+                    @if (Model.Upcoming > 0) { <span class="review-upcoming-count"><i class="bi bi-clock" aria-hidden="true"></i> @Model.Upcoming tiết sắp tới</span> }
+                </div>
+                @if (Model.Sessions.Count == 0)
+                {
+                    <div class="review-empty review-empty-inline"><h3>Chưa có tiết học trong học kỳ này</h3><p>Lịch học sẽ hiển thị khi nhà trường cập nhật thời khóa biểu.</p></div>
+                }
+                else
+                {
+                    <div class="review-table-scroll" tabindex="0" role="region" aria-label="Bảng điểm danh theo tiết học">
+                        <table class="review-table">
+                            <caption class="visually-hidden">Điểm danh môn @course.Subject.SubjectName của @Model.StudentName</caption>
+                            <thead><tr><th scope="col">#</th><th scope="col">Ngày học</th><th scope="col">Tiết / Giờ học</th><th scope="col">Phòng</th><th scope="col">Giáo viên</th><th scope="col">Lớp học</th><th scope="col">Trạng thái</th><th scope="col">Ghi chú</th></tr></thead>
+                            <tbody>@for (var i = 0; i < Model.Sessions.Count; i++)
+                            {
+                                var session = Model.Sessions[i];
+                                var entry = session.Entry;
+                                var status = session.Record?.Status;
+                                var upcoming = status == null && session.Date.Add(entry.TimeSlot.StartTime) > Model.LocalNow;
+                                var label = status == null ? (upcoming ? "Chưa đến giờ" : "Chưa điểm danh") : AttendanceStatuses.Label(status);
+                                var statusClass = status?.ToLowerInvariant() ?? (upcoming ? "upcoming" : "unmarked");
+                                var icon = status switch { AttendanceStatuses.Present => "bi-check-circle-fill", AttendanceStatuses.Absent => "bi-x-circle-fill", AttendanceStatuses.Late => "bi-clock-fill", AttendanceStatuses.Excused => "bi-file-earmark-check-fill", _ => upcoming ? "bi-clock" : "bi-clock-history" };
+                                <tr>
+                                    <td class="review-row-number">@((Model.Page - 1) * StudentAttendanceHistory.PageSize + i + 1)</td>
+                                    <td><span class="review-date"><i class="bi bi-calendar3" aria-hidden="true"></i> @session.Date.ToString("dddd dd/MM/yyyy", vi)</span></td>
+                                    <td><span class="review-time"><i class="bi bi-clock" aria-hidden="true"></i> @entry.TimeSlot.StartTime.ToString(@"hh\:mm") - @entry.TimeSlot.EndTime.ToString(@"hh\:mm")</span><span class="review-period">Tiết @entry.TimeSlot.PeriodNo</span></td>
+                                    <td>@(entry.Room.RoomName ?? entry.Room.RoomCode)</td>
+                                    <td>@entry.TeachingAssignment.Employee.FullName</td>
+                                    <td>@entry.TeachingAssignment.Class.ClassName</td>
+                                    <td><span class="review-status @statusClass"><i class="bi @icon" aria-hidden="true"></i> @label</span></td>
+                                    <td class="review-comment">@(string.IsNullOrWhiteSpace(session.Record?.Comment) ? "—" : session.Record.Comment)</td>
+                                </tr>
+                            }</tbody>
+                        </table>
+                    </div>
+                    <footer class="review-pagination">
+                        <span>@Model.Total tiết học · Trang @Model.Page/@pages</span>
+                        <partial name="_AttendancePagination" model="@(new AttendancePagination(Model.Page, pages, PageUrl))" />
+                    </footer>
+                }
+            </section>
+            <p class="review-footnote">Tỷ lệ vắng tính trên các tiết đã có kết quả, gồm vắng có phép và không phép. Tiết chưa điểm danh hoặc chưa đến giờ không được tính là vắng.</p>
+        }
+    }
+</div>
+@section Scripts { <script src="~/js/attendance-review.js" asp-append-version="true"></script> }

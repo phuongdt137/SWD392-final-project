@@ -15,6 +15,12 @@ public class Notification
     public bool IsRead { get; private set; }
     public DateTime SentAt { get; private set; }
     public DateTime? ReadAt { get; private set; }
+    public long? AttendanceAuditLogId { get; private set; }
+    public virtual AttendanceAuditLog? AttendanceAuditLog { get; private set; }
+    public DateTime? DispatchedAt { get; private set; }
+    public int DeliveryAttempts { get; private set; }
+    public DateTime? NextDeliveryAttemptAt { get; private set; }
+    public string? Link { get; private set; }
 
     public virtual User? Sender { get; private set; }
     public virtual User Recipient { get; private set; } = null!;
@@ -56,5 +62,20 @@ public class Notification
         IsRead = true;
         ReadAt = DateTime.UtcNow;
         return true;
+    }
+
+    public void AttachAttendance(AttendanceAuditLog audit, string link, DateTime utcNow)
+    {
+        AttendanceAuditLog = audit; AttendanceAuditLogId = audit.Id;
+        Link = link; SentAt = utcNow; NextDeliveryAttemptAt = utcNow;
+    }
+    public void Delivered(DateTime utcNow)
+    {
+        DispatchedAt = utcNow; DeliveryAttempts++; NextDeliveryAttemptAt = null;
+    }
+    public void RetryLater(DateTime utcNow)
+    {
+        DeliveryAttempts++;
+        NextDeliveryAttemptAt = utcNow.AddSeconds(Math.Min(3600, Math.Pow(2, Math.Min(DeliveryAttempts, 11)) * 5));
     }
 }
