@@ -38,4 +38,6 @@ public class ScoreAuditLog
         if (studentScore != null) StudentScore = studentScore;
         if (changedByEmployee != null) ChangedByEmployee = changedByEmployee;
     }
+
+    public decimal GetScoreDifference() => (NewScore ?? 0m) - (OldScore ?? 0m);
 }

@@ -25,6 +25,13 @@ builder.Services.AddScoped(typeof(IGenericRepository<>), typeof(GenericRepositor
 builder.Services.AddScoped<IUserRepository, UserRepository>();
 builder.Services.AddScoped<IAuthService, AuthService>();
 builder.Services.AddScoped<IEmailService, EmailService>();
+builder.Services.AddScoped<IAssessmentTypeRepository, AssessmentTypeRepository>();
+builder.Services.AddScoped<ITeachingAssignmentRepository, TeachingAssignmentRepository>();
+builder.Services.AddScoped<IAssessmentRepository, AssessmentRepository>();
+builder.Services.AddScoped<ICustomerRepository, CustomerRepository>();
+builder.Services.AddScoped<IStudentScoreRepository, StudentScoreRepository>();
+builder.Services.AddScoped<INotificationService, NotificationService>();
+builder.Services.AddScoped<IScoreService, ScoreService>();
 
 var app = builder.Build();
 
@@ -52,6 +59,7 @@ using (var scope = app.Services.CreateScope())
 {
     var context = scope.ServiceProvider.GetRequiredService<AppDbContext>();
     await DbSeeder.SeedAdminAccountsAsync(context);
+    await ScoreSeeder.SeedAsync(context);
 }
 
 app.Run();

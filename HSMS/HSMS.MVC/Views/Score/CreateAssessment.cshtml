@@ -1,0 +1,51 @@
+@using Microsoft.AspNetCore.Mvc.Rendering
+@model HSMS.MVC.ViewModels.Score.CreateAssessmentViewModel
+@{
+    ViewData["Title"] = "Tạo bài kiểm tra - High School Management System";
+    Layout = "_DashboardLayout";
+    var assignments = (IEnumerable<SelectListItem>)ViewBag.Assignments;
+    var assessmentTypes = (IEnumerable<SelectListItem>)ViewBag.AssessmentTypes;
+}
+
+<h1 class="welcome-title h3 mb-4">Tạo bài kiểm tra</h1>
+
+<div class="card border-0 shadow-sm">
+    <div class="card-body p-4">
+        <form asp-action="CreateAssessment" method="post" class="row g-3">
+            <div asp-validation-summary="ModelOnly" class="text-danger col-12"></div>
+
+            <div class="col-md-6">
+                <label asp-for="AssignmentId" class="form-label"></label>
+                <select asp-for="AssignmentId" asp-items="assignments" class="form-select">
+                    <option value="">-- Chọn lớp/môn --</option>
+                </select>
+                <span asp-validation-for="AssignmentId" class="text-danger"></span>
+            </div>
+
+            <div class="col-md-6">
+                <label asp-for="AssessmentTypeId" class="form-label"></label>
+                <select asp-for="AssessmentTypeId" asp-items="assessmentTypes" class="form-select">
+                    <option value="">-- Chọn loại --</option>
+                </select>
+                <span asp-validation-for="AssessmentTypeId" class="text-danger"></span>
+            </div>
+
+            <div class="col-md-8">
+                <label asp-for="AssessmentName" class="form-label"></label>
+                <input asp-for="AssessmentName" class="form-control" placeholder="Ví dụ: Kiểm tra 15 phút chương 1" />
+                <span asp-validation-for="AssessmentName" class="text-danger"></span>
+            </div>
+
+            <div class="col-md-4">
+                <label asp-for="ConductedAt" class="form-label"></label>
+                <input asp-for="ConductedAt" class="form-control" />
+                <span asp-validation-for="ConductedAt" class="text-danger"></span>
+            </div>
+
+            <div class="col-12 d-flex gap-2">
+                <button type="submit" class="btn btn-primary">Tạo bài kiểm tra</button>
+                <a asp-action="Index" class="btn btn-light">Quay lại</a>
+            </div>
+        </form>
+    </div>
+</div>
