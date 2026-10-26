@@ -1,0 +1,389 @@
+@model HSMS.MVC.DTOs.Auth.LoginResponseDto?
+
+@{
+    ViewData["Title"] = "Principal Dashboard - High School Management System";
+    Layout = "_DashboardLayout";
+
+    var displayName = Model?.FullName ?? Model?.Username ?? "Hiệu trưởng";
+}
+
+<!-- ==========================================
+     1. WELCOME BANNER (PRINCIPAL)
+     ========================================== -->
+<div class="welcome-banner d-flex flex-column flex-lg-row align-items-lg-center justify-content-between gap-4">
+    <div>
+        <div class="d-flex align-items-center gap-2 mb-1">
+            <span class="badge bg-primary text-white rounded-pill px-3 py-1 small fw-semibold">
+                <i class="bi bi-award-fill me-1"></i>Ban Giám Hiệu (Principal Executive Portal)
+            </span>
+        </div>
+        <h1 class="welcome-title">Bảng Điều Hành Hiệu Trưởng</h1>
+        <p class="welcome-subtitle">
+            Kính chào <strong>@displayName</strong>! Tổng quan chỉ số chất lượng đào tạo, tiến độ giảng dạy và các tờ trình cần phê duyệt toàn trường.
+        </p>
+    </div>
+
+    <div class="d-flex align-items-center gap-3">
+        <div class="d-none d-md-block text-end">
+            <span style="font-family: 'Caveat', cursive; font-size: 1.35rem; color: #2563EB; font-weight: 700; line-height: 1.1; display: block;">
+                Visionary Leadership.<br>Educational Excellence.
+            </span>
+        </div>
+        <div class="welcome-quote-card d-none d-sm-block">
+            "Dẫn dắt tầm nhìn, nâng tầm chất lượng giáo dục."
+        </div>
+    </div>
+</div>
+
+<!-- ==========================================
+     2. 4 TOP EXECUTIVE KPI STAT CARDS
+     ========================================== -->
+<div class="row g-3 mb-4">
+    <!-- Academic Excellence Rate -->
+    <div class="col-12 col-sm-6 col-xl-3">
+        <div class="kpi-card">
+            <div class="d-flex align-items-center">
+                <div class="kpi-icon-wrap kpi-icon-blue">
+                    <i class="bi bi-graph-up-arrow"></i>
+                </div>
+                <div class="kpi-content">
+                    <div class="kpi-title">Tỷ lệ Học lực Khá - Giỏi</div>
+                    <div class="kpi-value">88.4% <span class="fs-6 text-success">↑</span></div>
+                    <div class="kpi-subtext">+3.2% so với cùng kỳ năm trước</div>
+                </div>
+            </div>
+            <div class="kpi-arrow-btn">
+                <i class="bi bi-chevron-right"></i>
+            </div>
+        </div>
+    </div>
+
+    <!-- School-wide Attendance & Discipline -->
+    <div class="col-12 col-sm-6 col-xl-3">
+        <div class="kpi-card">
+            <div class="d-flex align-items-center">
+                <div class="kpi-icon-wrap kpi-icon-green">
+                    <i class="bi bi-shield-check"></i>
+                </div>
+                <div class="kpi-content">
+                    <div class="kpi-title">Nề nếp & Chuyên cần</div>
+                    <div class="kpi-value">97.2%</div>
+                    <div class="kpi-subtext">1,213 / 1,248 HS có mặt hôm nay</div>
+                </div>
+            </div>
+            <div class="kpi-arrow-btn">
+                <i class="bi bi-chevron-right"></i>
+            </div>
+        </div>
+    </div>
+
+    <!-- Executive Approvals Pending -->
+    <div class="col-12 col-sm-6 col-xl-3">
+        <div class="kpi-card">
+            <div class="d-flex align-items-center">
+                <div class="kpi-icon-wrap kpi-icon-amber">
+                    <i class="bi bi-file-earmark-check-fill"></i>
+                </div>
+                <div class="kpi-content">
+                    <div class="kpi-title">Tờ trình Chờ Phê duyệt</div>
+                    <div class="kpi-value">5</div>
+                    <div class="kpi-subtext">Chuyển trường, Sổ điểm & Nhân sự</div>
+                </div>
+            </div>
+            <div class="kpi-arrow-btn">
+                <i class="bi bi-chevron-right"></i>
+            </div>
+        </div>
+    </div>
+
+    <!-- Curriculum Progress -->
+    <div class="col-12 col-sm-6 col-xl-3">
+        <div class="kpi-card">
+            <div class="d-flex align-items-center">
+                <div class="kpi-icon-wrap kpi-icon-purple">
+                    <i class="bi bi-mortarboard-fill"></i>
+                </div>
+                <div class="kpi-content">
+                    <div class="kpi-title">Tiến độ Chương trình</div>
+                    <div class="kpi-value">98.5%</div>
+                    <div class="kpi-subtext">86/86 GV bám sát phân phối CT</div>
+                </div>
+            </div>
+            <div class="kpi-arrow-btn">
+                <i class="bi bi-chevron-right"></i>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- ==========================================
+     3. 3-COLUMN EXECUTIVE CONTENT SECTION
+     ========================================== -->
+<div class="row g-4 mb-4">
+    <!-- Column 1: Academic Quality by Grade Level -->
+    <div class="col-12 col-lg-4">
+        <div class="dash-card h-100">
+            <div class="d-flex align-items-center justify-content-between mb-3">
+                <h2 class="dash-card-title mb-0">Chất lượng Đào tạo theo Khối</h2>
+                <span class="badge bg-primary-subtle text-primary rounded-pill px-2.5 py-1 small fw-semibold">Học kỳ I</span>
+            </div>
+
+            <div class="class-card mb-3">
+                <div class="d-flex align-items-center justify-content-between mb-1">
+                    <div class="class-name">Khối 12 (Ôn thi Tốt nghiệp)</div>
+                    <span class="badge bg-success-subtle text-success fw-bold">91.2% Khá/Giỏi</span>
+                </div>
+                <div class="d-flex align-items-center justify-content-between text-muted small mb-2">
+                    <span>413 Học sinh • 12 Lớp</span>
+                    <span>Điểm TB khối: <strong>8.15</strong></span>
+                </div>
+                <div class="progress" style="height: 6px;">
+                    <div class="progress-bar bg-success" style="width: 91%"></div>
+                </div>
+            </div>
+
+            <div class="class-card mb-3">
+                <div class="d-flex align-items-center justify-content-between mb-1">
+                    <div class="class-name">Khối 11</div>
+                    <span class="badge bg-primary-subtle text-primary fw-bold">87.5% Khá/Giỏi</span>
+                </div>
+                <div class="d-flex align-items-center justify-content-between text-muted small mb-2">
+                    <span>415 Học sinh • 12 Lớp</span>
+                    <span>Điểm TB khối: <strong>7.92</strong></span>
+                </div>
+                <div class="progress" style="height: 6px;">
+                    <div class="progress-bar bg-primary" style="width: 87.5%"></div>
+                </div>
+            </div>
+
+            <div class="class-card mb-3">
+                <div class="d-flex align-items-center justify-content-between mb-1">
+                    <div class="class-name">Khối 10</div>
+                    <span class="badge bg-info-subtle text-info fw-bold">86.4% Khá/Giỏi</span>
+                </div>
+                <div class="d-flex align-items-center justify-content-between text-muted small mb-2">
+                    <span>420 Học sinh • 12 Lớp</span>
+                    <span>Điểm TB khối: <strong>7.85</strong></span>
+                </div>
+                <div class="progress" style="height: 6px;">
+                    <div class="progress-bar bg-info" style="width: 86.4%"></div>
+                </div>
+            </div>
+
+            <div class="p-3 bg-light rounded-3 mt-auto">
+                <div class="d-flex justify-content-between align-items-center mb-1">
+                    <span class="small fw-bold text-dark"><i class="bi bi-stars text-warning me-1"></i>Dự báo Tỷ lệ Tốt nghiệp THPT</span>
+                    <span class="small fw-bold text-success">99.5%</span>
+                </div>
+                <div class="small text-muted" style="font-size: 0.78rem;">
+                    02 học sinh Khối 12 đang được bố trí lớp phụ đạo tăng cường môn Toán & Tiếng Anh.
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Column 2: Pending Executive Approvals -->
+    <div class="col-12 col-lg-4">
+        <div class="dash-card h-100">
+            <div class="d-flex align-items-center justify-content-between mb-3">
+                <h2 class="dash-card-title mb-0">Tờ trình Chờ Hiệu Trưởng Duyệt</h2>
+                <a href="#approvals" class="text-primary text-decoration-none small fw-semibold">Xử lý tất cả</a>
+            </div>
+
+            <div class="timeline-container">
+                <div class="timeline-item">
+                    <div class="timeline-dot"></div>
+                    <div class="timeline-content">
+                        <div class="d-flex align-items-center justify-content-between">
+                            <span class="timeline-period">Chốt sổ điểm</span>
+                            <span class="badge bg-danger-subtle text-danger small">Khẩn</span>
+                        </div>
+                        <div class="timeline-subject">Xác nhận khóa bảng điểm Giữa kỳ I Khối 12</div>
+                        <div class="timeline-time"><i class="bi bi-person me-1"></i>Trình bởi: Phòng Học Vụ • Hôm nay</div>
+                    </div>
+                </div>
+
+                <div class="timeline-item">
+                    <div class="timeline-dot"></div>
+                    <div class="timeline-content">
+                        <div class="d-flex align-items-center justify-content-between">
+                            <span class="timeline-period">Hồ sơ chuyển trường</span>
+                            <span class="badge bg-warning-subtle text-warning small">Chờ ký</span>
+                        </div>
+                        <div class="timeline-subject">Đơn xin chuyển trường của HS Lê Minh Khôi (11B2)</div>
+                        <div class="timeline-time"><i class="bi bi-clock me-1"></i>Trình bởi: Cán bộ Học vụ • Hôm qua</div>
+                    </div>
+                </div>
+
+                <div class="timeline-item">
+                    <div class="timeline-dot"></div>
+                    <div class="timeline-content">
+                        <div class="d-flex align-items-center justify-content-between">
+                            <span class="timeline-period">Kế hoạch chuyên môn</span>
+                            <span class="badge bg-primary-subtle text-primary small">Tờ trình</span>
+                        </div>
+                        <div class="timeline-subject">Đề án tổ chức kỳ thi thử THPT Quốc gia lần 1</div>
+                        <div class="timeline-time"><i class="bi bi-clock me-1"></i>Trình bởi: Tổ Toán - Tự nhiên • 24/10</div>
+                    </div>
+                </div>
+
+                <div class="timeline-item">
+                    <div class="timeline-dot"></div>
+                    <div class="timeline-content">
+                        <div class="d-flex align-items-center justify-content-between">
+                            <span class="timeline-period">Nhân sự & Nghỉ phép</span>
+                            <span class="badge bg-info-subtle text-info small">2 Đơn</span>
+                        </div>
+                        <div class="timeline-subject">Duyệt đơn xin nghỉ phép công tác của 02 Giáo viên</div>
+                        <div class="timeline-time"><i class="bi bi-clock me-1"></i>Đã bố trí giáo viên dạy thay</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Column 3: Department Evaluation & Faculty Overview -->
+    <div class="col-12 col-lg-4">
+        <div class="dash-card h-100">
+            <div class="d-flex align-items-center justify-content-between mb-3">
+                <h2 class="dash-card-title mb-0">Thi đua Các Tổ Chuyên Môn</h2>
+                <span class="badge bg-success-subtle text-success small fw-semibold">Tháng 10</span>
+            </div>
+
+            <div class="mb-3">
+                <div class="d-flex justify-content-between align-items-center mb-1">
+                    <span class="small fw-semibold text-dark">Tổ Toán - Tin học (24 GV)</span>
+                    <span class="small fw-bold text-primary">96 / 100 điểm</span>
+                </div>
+                <div class="progress" style="height: 8px;">
+                    <div class="progress-bar bg-primary" style="width: 96%"></div>
+                </div>
+            </div>
+
+            <div class="mb-3">
+                <div class="d-flex justify-content-between align-items-center mb-1">
+                    <span class="small fw-semibold text-dark">Tổ Khoa học Tự nhiên (22 GV)</span>
+                    <span class="small fw-bold text-success">94 / 100 điểm</span>
+                </div>
+                <div class="progress" style="height: 8px;">
+                    <div class="progress-bar bg-success" style="width: 94%"></div>
+                </div>
+            </div>
+
+            <div class="mb-3">
+                <div class="d-flex justify-content-between align-items-center mb-1">
+                    <span class="small fw-semibold text-dark">Tổ Khoa học Xã hội (22 GV)</span>
+                    <span class="small fw-bold text-info">92 / 100 điểm</span>
+                </div>
+                <div class="progress" style="height: 8px;">
+                    <div class="progress-bar bg-info" style="width: 92%"></div>
+                </div>
+            </div>
+
+            <div class="mb-4">
+                <div class="d-flex justify-content-between align-items-center mb-1">
+                    <span class="small fw-semibold text-dark">Tổ Ngoại ngữ - Năng khiếu (18 GV)</span>
+                    <span class="small fw-bold text-warning">95 / 100 điểm</span>
+                </div>
+                <div class="progress" style="height: 8px;">
+                    <div class="progress-bar bg-warning" style="width: 95%"></div>
+                </div>
+            </div>
+
+            <hr class="my-3 text-muted opacity-25">
+
+            <div class="row g-2 text-center small">
+                <div class="col-4">
+                    <div class="p-2 border rounded-2 bg-light">
+                        <div class="fw-bold text-primary fs-6">86</div>
+                        <div class="text-muted" style="font-size: 0.72rem;">Giáo viên</div>
+                    </div>
+                </div>
+                <div class="col-4">
+                    <div class="p-2 border rounded-2 bg-light">
+                        <div class="fw-bold text-success fs-6">14</div>
+                        <div class="text-muted" style="font-size: 0.72rem;">CB Học vụ</div>
+                    </div>
+                </div>
+                <div class="col-4">
+                    <div class="p-2 border rounded-2 bg-light">
+                        <div class="fw-bold text-dark fs-6">100%</div>
+                        <div class="text-muted" style="font-size: 0.72rem;">Đạt chuẩn</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- ==========================================
+     4. BOTTOM ROW: DIRECTIVES & EXECUTIVE ACTIONS
+     ========================================== -->
+<div class="row g-4">
+    <!-- Principal Directives -->
+    <div class="col-12 col-lg-7">
+        <div class="dash-card h-100">
+            <div class="d-flex align-items-center justify-content-between mb-3">
+                <h2 class="dash-card-title mb-0">Chỉ đạo & Nghị quyết Ban Giám Hiệu</h2>
+                <a href="#directives" class="text-primary text-decoration-none small fw-semibold">Ban hành mới</a>
+            </div>
+
+            <div class="announcement-item">
+                <div class="announcement-badge badge-blue">Quyết định</div>
+                <div class="announcement-content">
+                    <div class="announcement-title">Triển khai đánh giá định kỳ Học kỳ I và kế hoạch bồi dưỡng Học sinh Giỏi cấp Thành phố</div>
+                    <div class="announcement-date"><i class="bi bi-calendar3 me-1"></i>Ban hành ngày 20/10/2024 • Hiệu lực toàn trường</div>
+                </div>
+            </div>
+
+            <div class="announcement-item">
+                <div class="announcement-badge badge-green">Hội đồng</div>
+                <div class="announcement-content">
+                    <div class="announcement-title">Họp giao ban Hội đồng Sư phạm & Các Tổ trưởng chuyên môn tháng 11</div>
+                    <div class="announcement-date"><i class="bi bi-calendar3 me-1"></i>08:00 Thứ Hai, ngày 04/11/2024 - Phòng Họp BGH</div>
+                </div>
+            </div>
+
+            <div class="announcement-item">
+                <div class="announcement-badge badge-amber">Kiểm định</div>
+                <div class="announcement-content">
+                    <div class="announcement-title">Rà soát tiêu chuẩn Trường Chuẩn Quốc Gia và an toàn trường học</div>
+                    <div class="announcement-date"><i class="bi bi-calendar3 me-1"></i>Báo cáo trước ngày 15/11/2024</div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Executive Quick Actions -->
+    <div class="col-12 col-lg-5">
+        <div class="dash-card h-100">
+            <h2 class="dash-card-title mb-3">Thao tác Điều hành Nhanh</h2>
+            <div class="row g-2">
+                <div class="col-6">
+                    <a href="#approve-requests" class="quick-action-btn">
+                        <i class="bi bi-file-earmark-check-fill"></i>
+                        <span>Duyệt Tờ Trình</span>
+                    </a>
+                </div>
+                <div class="col-6">
+                    <a href="#finalize-scores" class="quick-action-btn">
+                        <i class="bi bi-lock-fill"></i>
+                        <span>Chốt Bảng Điểm</span>
+                    </a>
+                </div>
+                <div class="col-6">
+                    <a href="#school-reports" class="quick-action-btn">
+                        <i class="bi bi-bar-chart-steps"></i>
+                        <span>Báo Cáo Toàn Trường</span>
+                    </a>
+                </div>
+                <div class="col-6">
+                    <a href="#issue-notice" class="quick-action-btn">
+                        <i class="bi bi-megaphone-fill"></i>
+                        <span>Ra Thông Báo BGH</span>
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>

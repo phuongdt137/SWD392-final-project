@@ -1,0 +1,353 @@
+@model HSMS.MVC.DTOs.Auth.LoginResponseDto?
+
+@{
+    ViewData["Title"] = "Parent Dashboard - High School Management System";
+    Layout = "_DashboardLayout";
+
+    var displayName = Model?.FullName ?? Model?.Username ?? "Phụ huynh";
+}
+
+<!-- ==========================================
+     1. WELCOME BANNER (PARENT)
+     ========================================== -->
+<div class="welcome-banner d-flex flex-column flex-lg-row align-items-lg-center justify-content-between gap-4">
+    <div>
+        <div class="d-flex align-items-center gap-3 mb-2 flex-wrap">
+            <h1 class="welcome-title mb-0">Cổng Thông Tin Phụ Huynh</h1>
+            <!-- Child Selector Pill -->
+            <div class="dropdown">
+                <button class="btn btn-sm btn-light dropdown-toggle rounded-pill px-3 py-1 shadow-sm border fw-semibold text-primary" type="button" data-bs-toggle="dropdown">
+                    <i class="bi bi-person-fill me-1"></i>Con: Nguyễn Hoàng Long (Lớp 10A1)
+                </button>
+                <ul class="dropdown-menu shadow border-0 rounded-3">
+                    <li><h6 class="dropdown-header">Danh sách con em theo học</h6></li>
+                    <li><a class="dropdown-item active" href="#">Nguyễn Hoàng Long (10A1 - Mã HS2024001)</a></li>
+                </ul>
+            </div>
+        </div>
+        <p class="welcome-subtitle">
+            Kính chào <strong>@displayName</strong>! Theo dõi kết quả học tập, tình trạng chuyên cần và trao đổi trực tiếp với Giáo viên chủ nhiệm.
+        </p>
+    </div>
+
+    <div class="d-flex align-items-center gap-3">
+        <div class="d-none d-md-block text-end">
+            <span style="font-family: 'Caveat', cursive; font-size: 1.35rem; color: #2563EB; font-weight: 700; line-height: 1.1; display: block;">
+                Family & School Partnership<br>For Every Child's Growth
+            </span>
+        </div>
+        <div class="welcome-quote-card d-none d-sm-block">
+            "Đồng hành cùng sự trưởng thành của con."
+        </div>
+    </div>
+</div>
+
+<!-- ==========================================
+     2. 4 TOP KPI STAT CARDS
+     ========================================== -->
+<div class="row g-3 mb-4">
+    <!-- Today Attendance -->
+    <div class="col-12 col-sm-6 col-xl-3">
+        <div class="kpi-card">
+            <div class="d-flex align-items-center">
+                <div class="kpi-icon-wrap kpi-icon-green">
+                    <i class="bi bi-check-circle-fill"></i>
+                </div>
+                <div class="kpi-content">
+                    <div class="kpi-title">Chuyên cần hôm nay</div>
+                    <div class="kpi-value text-success">Có mặt</div>
+                    <div class="kpi-subtext">Đã điểm danh lúc: <strong>07:22</strong></div>
+                </div>
+            </div>
+            <div class="kpi-arrow-btn">
+                <i class="bi bi-chevron-right"></i>
+            </div>
+        </div>
+    </div>
+
+    <!-- GPA -->
+    <div class="col-12 col-sm-6 col-xl-3">
+        <div class="kpi-card">
+            <div class="d-flex align-items-center">
+                <div class="kpi-icon-wrap kpi-icon-blue">
+                    <i class="bi bi-award-fill"></i>
+                </div>
+                <div class="kpi-content">
+                    <div class="kpi-title">Điểm TB Học kỳ I</div>
+                    <div class="kpi-value">8.4 <span class="fs-6 text-success fw-bold">/10</span></div>
+                    <div class="kpi-subtext">Xếp loại: <strong>Học sinh Giỏi</strong></div>
+                </div>
+            </div>
+            <div class="kpi-arrow-btn">
+                <i class="bi bi-chevron-right"></i>
+            </div>
+        </div>
+    </div>
+
+    <!-- Conduct -->
+    <div class="col-12 col-sm-6 col-xl-3">
+        <div class="kpi-card">
+            <div class="d-flex align-items-center">
+                <div class="kpi-icon-wrap kpi-icon-purple">
+                    <i class="bi bi-star-fill"></i>
+                </div>
+                <div class="kpi-content">
+                    <div class="kpi-title">Hạnh kiểm & Rèn luyện</div>
+                    <div class="kpi-value">Tốt</div>
+                    <div class="kpi-subtext">Chấp hành tốt nội quy trường</div>
+                </div>
+            </div>
+            <div class="kpi-arrow-btn">
+                <i class="bi bi-chevron-right"></i>
+            </div>
+        </div>
+    </div>
+
+    <!-- Teacher Notice -->
+    <div class="col-12 col-sm-6 col-xl-3">
+        <div class="kpi-card">
+            <div class="d-flex align-items-center">
+                <div class="kpi-icon-wrap kpi-icon-amber">
+                    <i class="bi bi-chat-dots-fill"></i>
+                </div>
+                <div class="kpi-content">
+                    <div class="kpi-title">Tin nhắn từ GVCN</div>
+                    <div class="kpi-value">1</div>
+                    <div class="kpi-subtext">Cô Hà (GVCN Lớp 10A1)</div>
+                </div>
+            </div>
+            <div class="kpi-arrow-btn">
+                <i class="bi bi-chevron-right"></i>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- ==========================================
+     3. 3-COLUMN MAIN CONTENT SECTION
+     ========================================== -->
+<div class="row g-4 mb-4">
+    <!-- Column 1: Child's Daily Schedule -->
+    <div class="col-12 col-lg-4">
+        <div class="dash-card h-100">
+            <div class="d-flex align-items-center justify-content-between mb-3">
+                <h2 class="dash-card-title mb-0">Thời Khóa Biểu Của Con</h2>
+                <span class="badge bg-success-subtle text-success rounded-pill px-2.5 py-1 small fw-semibold">Đang học buổi sáng</span>
+            </div>
+
+            <div class="timeline-container">
+                <div class="timeline-item">
+                    <div class="timeline-dot"></div>
+                    <div class="timeline-content">
+                        <div class="d-flex align-items-center justify-content-between">
+                            <span class="timeline-period">Tiết 1: Toán học</span>
+                            <span class="timeline-room">P.201</span>
+                        </div>
+                        <div class="timeline-subject">Đại số (Thầy Tuấn)</div>
+                        <div class="timeline-time"><i class="bi bi-clock me-1"></i>07:30 - 08:15</div>
+                    </div>
+                </div>
+
+                <div class="timeline-item">
+                    <div class="timeline-dot"></div>
+                    <div class="timeline-content">
+                        <div class="d-flex align-items-center justify-content-between">
+                            <span class="timeline-period">Tiết 2: Ngữ văn</span>
+                            <span class="timeline-room">P.201</span>
+                        </div>
+                        <div class="timeline-subject">Văn học Việt Nam (Cô Lan)</div>
+                        <div class="timeline-time"><i class="bi bi-clock me-1"></i>08:20 - 09:05</div>
+                    </div>
+                </div>
+
+                <div class="timeline-item">
+                    <div class="timeline-dot"></div>
+                    <div class="timeline-content">
+                        <div class="d-flex align-items-center justify-content-between">
+                            <span class="timeline-period">Tiết 3: Tiếng Anh</span>
+                            <span class="timeline-room">Lab 1</span>
+                        </div>
+                        <div class="timeline-subject">Listening & Speaking (Thầy Minh)</div>
+                        <div class="timeline-time"><i class="bi bi-clock me-1"></i>09:20 - 10:05</div>
+                    </div>
+                </div>
+
+                <div class="timeline-item">
+                    <div class="timeline-dot"></div>
+                    <div class="timeline-content">
+                        <div class="d-flex align-items-center justify-content-between">
+                            <span class="timeline-period">Tiết 4: Vật lý</span>
+                            <span class="timeline-room">P.201</span>
+                        </div>
+                        <div class="timeline-subject">Dao động cơ (Thầy Nam)</div>
+                        <div class="timeline-time"><i class="bi bi-clock me-1"></i>10:10 - 10:55</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Column 2: Recent Academic Results -->
+    <div class="col-12 col-lg-4">
+        <div class="dash-card h-100">
+            <div class="d-flex align-items-center justify-content-between mb-3">
+                <h2 class="dash-card-title mb-0">Điểm Đánh Giá Gần Nhất</h2>
+                <a href="#scores" class="text-primary text-decoration-none small fw-semibold">Xem chi tiết</a>
+            </div>
+
+            <div class="class-card mb-3">
+                <div class="d-flex align-items-center justify-content-between mb-1">
+                    <div class="class-name">Toán học</div>
+                    <span class="badge bg-success-subtle text-success fs-6 fw-bold">9.0</span>
+                </div>
+                <div class="d-flex align-items-center justify-content-between text-muted small">
+                    <span>Kiểm tra 15 phút</span>
+                    <span>Đánh giá: Rất tốt</span>
+                </div>
+            </div>
+
+            <div class="class-card mb-3">
+                <div class="d-flex align-items-center justify-content-between mb-1">
+                    <div class="class-name">Vật lý</div>
+                    <span class="badge bg-primary-subtle text-primary fs-6 fw-bold">8.5</span>
+                </div>
+                <div class="d-flex align-items-center justify-content-between text-muted small">
+                    <span>Kiểm tra 1 tiết</span>
+                    <span>Đánh giá: Tốt</span>
+                </div>
+            </div>
+
+            <div class="class-card mb-3">
+                <div class="d-flex align-items-center justify-content-between mb-1">
+                    <div class="class-name">Tiếng Anh</div>
+                    <span class="badge bg-primary-subtle text-primary fs-6 fw-bold">8.8</span>
+                </div>
+                <div class="d-flex align-items-center justify-content-between text-muted small">
+                    <span>Kiểm tra giữa kỳ</span>
+                    <span>Đánh giá: Tốt</span>
+                </div>
+            </div>
+
+            <div class="class-card mb-3">
+                <div class="d-flex align-items-center justify-content-between mb-1">
+                    <div class="class-name">Hóa học</div>
+                    <span class="badge bg-warning-subtle text-warning fs-6 fw-bold">7.8</span>
+                </div>
+                <div class="d-flex align-items-center justify-content-between text-muted small">
+                    <span>Kiểm tra thực hành</span>
+                    <span>Cần cải thiện tốc độ</span>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Column 3: Homeroom Teacher Info & Feedback -->
+    <div class="col-12 col-lg-4">
+        <div class="dash-card h-100">
+            <div class="d-flex align-items-center justify-content-between mb-3">
+                <h2 class="dash-card-title mb-0">Giáo Viên Chủ Nhiệm</h2>
+                <span class="badge bg-primary-subtle text-primary small fw-semibold">Lớp 10A1</span>
+            </div>
+
+            <div class="d-flex align-items-center gap-3 p-3 bg-light rounded-3 mb-3">
+                <div class="user-avatar-circle" style="width: 50px; height: 50px; font-size: 1.25rem;">
+                    H
+                </div>
+                <div>
+                    <div class="fw-bold text-dark">Cô Nguyễn Thu Hà</div>
+                    <div class="small text-muted">Bộ môn: Toán học</div>
+                    <div class="small text-primary fw-medium"><i class="bi bi-telephone-fill me-1"></i>0912.345.678</div>
+                </div>
+            </div>
+
+            <div class="p-3 border rounded-3 bg-white mb-3">
+                <div class="d-flex align-items-center justify-content-between mb-2">
+                    <span class="fw-semibold small text-dark"><i class="bi bi-chat-quote me-1 text-primary"></i>Nhận xét tháng 10:</span>
+                    <span class="text-muted" style="font-size: 0.75rem;">24/10/2024</span>
+                </div>
+                <p class="small text-muted mb-0">
+                    "Em Long đi học đầy đủ, đúng giờ, hăng hái phát biểu xây dựng bài. Gia đình nhắc nhở em chuẩn bị kỹ hơn phần bài tập Hóa học nhé."
+                </p>
+            </div>
+
+            <div class="mt-auto">
+                <a href="#chat-teacher" class="btn btn-outline-primary w-100 rounded-pill py-2 small fw-semibold d-flex align-items-center justify-content-center gap-2">
+                    <i class="bi bi-chat-dots-fill"></i>
+                    <span>Nhắn tin trao đổi với Cô Hà</span>
+                </a>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- ==========================================
+     4. BOTTOM ROW: NOTICES & QUICK ACTIONS
+     ========================================== -->
+<div class="row g-4">
+    <!-- School Notices -->
+    <div class="col-12 col-lg-7">
+        <div class="dash-card h-100">
+            <div class="d-flex align-items-center justify-content-between mb-3">
+                <h2 class="dash-card-title mb-0">Thông Báo Từ Nhà Trường</h2>
+                <a href="#notices" class="text-primary text-decoration-none small fw-semibold">Xem tất cả</a>
+            </div>
+
+            <div class="announcement-item">
+                <div class="announcement-badge badge-blue">Họp PH</div>
+                <div class="announcement-content">
+                    <div class="announcement-title">Kế hoạch Họp phụ huynh định kỳ Giữa Học kỳ I năm học 2024 - 2025</div>
+                    <div class="announcement-date"><i class="bi bi-calendar3 me-1"></i>Chủ Nhật, ngày 10/11/2024 - Phòng 201</div>
+                </div>
+            </div>
+
+            <div class="announcement-item">
+                <div class="announcement-badge badge-green">Ngoại khóa</div>
+                <div class="announcement-content">
+                    <div class="announcement-title">Chương trình tham quan trải nghiệm lịch sử - văn hóa cho học sinh Khối 10</div>
+                    <div class="announcement-date"><i class="bi bi-calendar3 me-1"></i>Hạn đăng ký: Trước ngày 05/11/2024</div>
+                </div>
+            </div>
+
+            <div class="announcement-item">
+                <div class="announcement-badge badge-amber">Y tế học đường</div>
+                <div class="announcement-content">
+                    <div class="announcement-title">Lịch khám sức khỏe định kỳ đầu năm học cho học sinh toàn trường</div>
+                    <div class="announcement-date"><i class="bi bi-calendar3 me-1"></i>Ngày 02/11/2024 tại Phòng Y tế trường</div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Quick Actions (Parent) -->
+    <div class="col-12 col-lg-5">
+        <div class="dash-card h-100">
+            <h2 class="dash-card-title mb-3">Thao Tác Phụ Huynh Nhanh</h2>
+            <div class="row g-2">
+                <div class="col-6">
+                    <a href="#leave-request" class="quick-action-btn">
+                        <i class="bi bi-envelope-paper-fill"></i>
+                        <span>Đơn Xin Nghỉ Phép</span>
+                    </a>
+                </div>
+                <div class="col-6">
+                    <a href="#scores" class="quick-action-btn">
+                        <i class="bi bi-journal-check"></i>
+                        <span>Xem Bảng Điểm Con</span>
+                    </a>
+                </div>
+                <div class="col-6">
+                    <a href="#teacher-contact" class="quick-action-btn">
+                        <i class="bi bi-person-lines-fill"></i>
+                        <span>Liên Hệ GVCN</span>
+                    </a>
+                </div>
+                <div class="col-6">
+                    <a href="#tuition" class="quick-action-btn">
+                        <i class="bi bi-cash-stack"></i>
+                        <span>Tra Cứu Học Phí</span>
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>

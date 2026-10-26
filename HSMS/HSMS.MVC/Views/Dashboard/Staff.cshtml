@@ -1,0 +1,381 @@
+@model HSMS.MVC.DTOs.Auth.LoginResponseDto?
+
+@{
+    ViewData["Title"] = "Staff Dashboard - High School Management System";
+    Layout = "_DashboardLayout";
+
+    var displayName = Model?.FullName ?? Model?.Username ?? "Cán bộ học vụ";
+}
+
+<!-- ==========================================
+     1. WELCOME BANNER (STAFF)
+     ========================================== -->
+<div class="welcome-banner d-flex flex-column flex-lg-row align-items-lg-center justify-content-between gap-4">
+    <div>
+        <h1 class="welcome-title">Staff & Academic Affairs Dashboard</h1>
+        <p class="welcome-subtitle">
+            Chào mừng trở lại, <strong>@displayName</strong>! Bảng tổng quan điều hành học vụ, hồ sơ học sinh và kế hoạch đào tạo toàn trường.
+        </p>
+    </div>
+
+    <div class="d-flex align-items-center gap-3">
+        <div class="d-none d-md-block text-end">
+            <span style="font-family: 'Caveat', cursive; font-size: 1.35rem; color: #2563EB; font-weight: 700; line-height: 1.1; display: block;">
+                Excellence in Academic<br>Administration & Care
+            </span>
+        </div>
+        <div class="welcome-quote-card d-none d-sm-block">
+            "Quản trị vững chắc, trường học vươn xa."
+        </div>
+    </div>
+</div>
+
+<!-- ==========================================
+     2. 4 TOP KPI STAT CARDS
+     ========================================== -->
+<div class="row g-3 mb-4">
+    <!-- Total Students -->
+    <div class="col-12 col-sm-6 col-xl-3">
+        <div class="kpi-card">
+            <div class="d-flex align-items-center">
+                <div class="kpi-icon-wrap kpi-icon-blue">
+                    <i class="bi bi-people-fill"></i>
+                </div>
+                <div class="kpi-content">
+                    <div class="kpi-title">Tổng số Học sinh</div>
+                    <div class="kpi-value">1,248</div>
+                    <div class="kpi-subtext">36 lớp đang hoạt động</div>
+                </div>
+            </div>
+            <div class="kpi-arrow-btn">
+                <i class="bi bi-chevron-right"></i>
+            </div>
+        </div>
+    </div>
+
+    <!-- Active Teachers -->
+    <div class="col-12 col-sm-6 col-xl-3">
+        <div class="kpi-card">
+            <div class="d-flex align-items-center">
+                <div class="kpi-icon-wrap kpi-icon-green">
+                    <i class="bi bi-person-badge-fill"></i>
+                </div>
+                <div class="kpi-content">
+                    <div class="kpi-title">Đội ngũ Giáo viên</div>
+                    <div class="kpi-value">86</div>
+                    <div class="kpi-subtext">100% đã phân công TKB</div>
+                </div>
+            </div>
+            <div class="kpi-arrow-btn">
+                <i class="bi bi-chevron-right"></i>
+            </div>
+        </div>
+    </div>
+
+    <!-- Active Classes -->
+    <div class="col-12 col-sm-6 col-xl-3">
+        <div class="kpi-card">
+            <div class="d-flex align-items-center">
+                <div class="kpi-icon-wrap kpi-icon-purple">
+                    <i class="bi bi-building"></i>
+                </div>
+                <div class="kpi-content">
+                    <div class="kpi-title">Quy mô Lớp học</div>
+                    <div class="kpi-value">36</div>
+                    <div class="kpi-subtext">Khối 10, 11 và 12</div>
+                </div>
+            </div>
+            <div class="kpi-arrow-btn">
+                <i class="bi bi-chevron-right"></i>
+            </div>
+        </div>
+    </div>
+
+    <!-- Pending Requests -->
+    <div class="col-12 col-sm-6 col-xl-3">
+        <div class="kpi-card">
+            <div class="d-flex align-items-center">
+                <div class="kpi-icon-wrap kpi-icon-amber">
+                    <i class="bi bi-envelope-paper-fill"></i>
+                </div>
+                <div class="kpi-content">
+                    <div class="kpi-title">Hồ sơ chờ phê duyệt</div>
+                    <div class="kpi-value">7</div>
+                    <div class="kpi-subtext">Đơn nghỉ phép & chuyển lớp</div>
+                </div>
+            </div>
+            <div class="kpi-arrow-btn">
+                <i class="bi bi-chevron-right"></i>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- ==========================================
+     3. 3-COLUMN MAIN CONTENT SECTION
+     ========================================== -->
+<div class="row g-4 mb-4">
+    <!-- Column 1: Grade Level Overview -->
+    <div class="col-12 col-lg-4">
+        <div class="dash-card h-100">
+            <div class="d-flex align-items-center justify-content-between mb-3">
+                <h2 class="dash-card-title mb-0">Cơ cấu Học sinh các Khối</h2>
+                <span class="badge bg-primary-subtle text-primary rounded-pill px-2.5 py-1 small fw-semibold">Năm học 2024-2025</span>
+            </div>
+
+            <div class="class-card mb-3">
+                <div class="d-flex align-items-center justify-content-between mb-2">
+                    <div class="class-name">Khối 10 (Tuyển sinh mới)</div>
+                    <span class="badge bg-success-subtle text-success fw-bold">12 Lớp</span>
+                </div>
+                <div class="d-flex align-items-center justify-content-between text-muted small">
+                    <span><i class="bi bi-people me-1"></i> 420 Học sinh</span>
+                    <span>Sĩ số TB: 35 HS/lớp</span>
+                </div>
+                <div class="progress mt-2" style="height: 6px;">
+                    <div class="progress-bar bg-primary" role="progressbar" style="width: 100%"></div>
+                </div>
+            </div>
+
+            <div class="class-card mb-3">
+                <div class="d-flex align-items-center justify-content-between mb-2">
+                    <div class="class-name">Khối 11</div>
+                    <span class="badge bg-primary-subtle text-primary fw-bold">12 Lớp</span>
+                </div>
+                <div class="d-flex align-items-center justify-content-between text-muted small">
+                    <span><i class="bi bi-people me-1"></i> 415 Học sinh</span>
+                    <span>Sĩ số TB: 34.5 HS/lớp</span>
+                </div>
+                <div class="progress mt-2" style="height: 6px;">
+                    <div class="progress-bar bg-info" role="progressbar" style="width: 98%"></div>
+                </div>
+            </div>
+
+            <div class="class-card mb-3">
+                <div class="d-flex align-items-center justify-content-between mb-2">
+                    <div class="class-name">Khối 12 (Tốt nghiệp)</div>
+                    <span class="badge bg-warning-subtle text-warning fw-bold">12 Lớp</span>
+                </div>
+                <div class="d-flex align-items-center justify-content-between text-muted small">
+                    <span><i class="bi bi-people me-1"></i> 413 Học sinh</span>
+                    <span>Sĩ số TB: 34.4 HS/lớp</span>
+                </div>
+                <div class="progress mt-2" style="height: 6px;">
+                    <div class="progress-bar bg-warning" role="progressbar" style="width: 98%"></div>
+                </div>
+            </div>
+
+            <div class="p-3 bg-light rounded-3 mt-auto">
+                <div class="d-flex justify-content-between align-items-center mb-1">
+                    <span class="small fw-semibold text-dark">Tiến độ Học kỳ I</span>
+                    <span class="small fw-bold text-primary">68%</span>
+                </div>
+                <div class="progress" style="height: 8px;">
+                    <div class="progress-bar bg-primary progress-bar-striped progress-bar-animated" style="width: 68%"></div>
+                </div>
+                <div class="d-flex justify-content-between text-muted mt-2 small" style="font-size: 0.75rem;">
+                    <span>Bắt đầu: 05/09/2024</span>
+                    <span>Kết thúc dự kiến: 15/01/2025</span>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Column 2: Recent Academic Affairs Logs -->
+    <div class="col-12 col-lg-4">
+        <div class="dash-card h-100">
+            <div class="d-flex align-items-center justify-content-between mb-3">
+                <h2 class="dash-card-title mb-0">Hoạt động Học vụ Gần đây</h2>
+                <a href="#activities" class="text-primary text-decoration-none small fw-semibold">Xem tất cả</a>
+            </div>
+
+            <div class="timeline-container">
+                <div class="timeline-item">
+                    <div class="timeline-dot"></div>
+                    <div class="timeline-content">
+                        <div class="d-flex align-items-center justify-content-between">
+                            <span class="timeline-period">Tuyển sinh & Phân lớp</span>
+                            <span class="timeline-room">Khối 10</span>
+                        </div>
+                        <div class="timeline-subject">Hoàn tất xếp lớp 10A1 - 10A12</div>
+                        <div class="timeline-time"><i class="bi bi-clock me-1"></i>Hôm nay, 08:30</div>
+                    </div>
+                </div>
+
+                <div class="timeline-item">
+                    <div class="timeline-dot"></div>
+                    <div class="timeline-content">
+                        <div class="d-flex align-items-center justify-content-between">
+                            <span class="timeline-period">Thời khóa biểu</span>
+                            <span class="timeline-room">Phòng 204</span>
+                        </div>
+                        <div class="timeline-subject">Điều chỉnh TKB môn Vật lý cho Thầy Nam</div>
+                        <div class="timeline-time"><i class="bi bi-clock me-1"></i>Hôm qua, 15:45</div>
+                    </div>
+                </div>
+
+                <div class="timeline-item">
+                    <div class="timeline-dot"></div>
+                    <div class="timeline-content">
+                        <div class="d-flex align-items-center justify-content-between">
+                            <span class="timeline-period">Sổ điểm định kỳ</span>
+                            <span class="timeline-room">Toàn trường</span>
+                        </div>
+                        <div class="timeline-subject">Mở cổng nhập điểm thi Giữa kỳ I cho GV</div>
+                        <div class="timeline-time"><i class="bi bi-clock me-1"></i>24/10/2024, 09:00</div>
+                    </div>
+                </div>
+
+                <div class="timeline-item">
+                    <div class="timeline-dot"></div>
+                    <div class="timeline-content">
+                        <div class="d-flex align-items-center justify-content-between">
+                            <span class="timeline-period">Hồ sơ học sinh</span>
+                            <span class="timeline-room">Đã duyệt</span>
+                        </div>
+                        <div class="timeline-subject">Tiếp nhận hồ sơ chuyển trường của 02 học sinh</div>
+                        <div class="timeline-time"><i class="bi bi-clock me-1"></i>23/10/2024, 14:15</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Column 3: School Attendance & Rooms Analytics -->
+    <div class="col-12 col-lg-4">
+        <div class="dash-card h-100">
+            <div class="d-flex align-items-center justify-content-between mb-3">
+                <h2 class="dash-card-title mb-0">Tỷ lệ Chuyên cần Toàn trường</h2>
+                <span class="badge bg-success-subtle text-success small fw-semibold">Hôm nay</span>
+            </div>
+
+            <!-- Donut Attendance Chart Simulation -->
+            <div class="attendance-donut-wrap mb-4">
+                <div class="donut-chart-container">
+                    <svg viewBox="0 0 36 36" class="donut-svg">
+                        <path class="donut-ring"
+                              d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831" />
+                        <path class="donut-segment"
+                              stroke-dasharray="96.4, 100"
+                              d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831" />
+                    </svg>
+                    <div class="donut-center-text">
+                        <div class="donut-percentage">96.4%</div>
+                        <div class="donut-label">Có mặt</div>
+                    </div>
+                </div>
+
+                <div class="d-flex justify-content-center gap-4 mt-3">
+                    <div class="d-flex align-items-center gap-2 small">
+                        <span style="width: 10px; height: 10px; border-radius: 50%; background-color: #2563EB;"></span>
+                        <span class="text-muted">Đi học: <strong>1,203</strong></span>
+                    </div>
+                    <div class="d-flex align-items-center gap-2 small">
+                        <span style="width: 10px; height: 10px; border-radius: 50%; background-color: #E2E8F0;"></span>
+                        <span class="text-muted">Vắng: <strong>45</strong></span>
+                    </div>
+                </div>
+            </div>
+
+            <hr class="my-3 text-muted opacity-25">
+
+            <!-- Room Utilization Status -->
+            <div>
+                <div class="d-flex align-items-center justify-content-between mb-2">
+                    <span class="fw-semibold small text-dark">Tình trạng Phòng học & Thực hành</span>
+                    <span class="small text-muted">36 / 40 Phòng</span>
+                </div>
+                <div class="progress mb-3" style="height: 10px; border-radius: 6px;">
+                    <div class="progress-bar bg-success" style="width: 90%" title="Đang sử dụng"></div>
+                    <div class="progress-bar bg-secondary-subtle" style="width: 10%" title="Còn trống"></div>
+                </div>
+                <div class="row g-2 text-center small text-muted">
+                    <div class="col-6">
+                        <div class="p-2 border rounded-2 bg-white">
+                            <div class="fw-bold text-success fs-6">36</div>
+                            <div style="font-size: 0.75rem;">Phòng đang học</div>
+                        </div>
+                    </div>
+                    <div class="col-6">
+                        <div class="p-2 border rounded-2 bg-white">
+                            <div class="fw-bold text-primary fs-6">04</div>
+                            <div style="font-size: 0.75rem;">Phòng trống / Lab</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- ==========================================
+     4. BOTTOM ROW: ANNOUNCEMENTS & QUICK ACTIONS
+     ========================================== -->
+<div class="row g-4">
+    <!-- Announcements -->
+    <div class="col-12 col-lg-7">
+        <div class="dash-card h-100">
+            <div class="d-flex align-items-center justify-content-between mb-3">
+                <h2 class="dash-card-title mb-0">Thông báo Học vụ & Nội bộ</h2>
+                <a href="#announcements" class="text-primary text-decoration-none small fw-semibold">Xem bảng tin</a>
+            </div>
+
+            <div class="announcement-item">
+                <div class="announcement-badge badge-blue">Kế hoạch</div>
+                <div class="announcement-content">
+                    <div class="announcement-title">Kế hoạch kiểm tra định kỳ Giữa Học kỳ I năm học 2024-2025</div>
+                    <div class="announcement-date"><i class="bi bi-calendar3 me-1"></i>Hạn hoàn tất nhập điểm: 30/11/2024</div>
+                </div>
+            </div>
+
+            <div class="announcement-item">
+                <div class="announcement-badge badge-green">Tập huấn</div>
+                <div class="announcement-content">
+                    <div class="announcement-title">Tập huấn số hóa hồ sơ học sinh và học bạ điện tử Bộ Giáo Dục</div>
+                    <div class="announcement-date"><i class="bi bi-calendar3 me-1"></i>Thứ Sáu tuần này, Hội trường A</div>
+                </div>
+            </div>
+
+            <div class="announcement-item">
+                <div class="announcement-badge badge-amber">Cơ sở vật chất</div>
+                <div class="announcement-content">
+                    <div class="announcement-title">Bảo trì hệ thống máy tính Phòng Lab Tin học 1 và 2</div>
+                    <div class="announcement-date"><i class="bi bi-calendar3 me-1"></i>Chủ Nhật, ngày 27/10/2024</div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Quick Actions (Staff) -->
+    <div class="col-12 col-lg-5">
+        <div class="dash-card h-100">
+            <h2 class="dash-card-title mb-3">Thao tác Học vụ Nhanh</h2>
+            <div class="row g-2">
+                <div class="col-6">
+                    <a href="#add-student" class="quick-action-btn">
+                        <i class="bi bi-person-plus-fill"></i>
+                        <span>Thêm Học Sinh</span>
+                    </a>
+                </div>
+                <div class="col-6">
+                    <a href="#add-teacher" class="quick-action-btn">
+                        <i class="bi bi-person-badge-fill"></i>
+                        <span>Tiếp Nhận GV</span>
+                    </a>
+                </div>
+                <div class="col-6">
+                    <a href="#timetable" class="quick-action-btn">
+                        <i class="bi bi-calendar-range-fill"></i>
+                        <span>Xếp Thời Khóa Biểu</span>
+                    </a>
+                </div>
+                <div class="col-6">
+                    <a href="#assign-teaching" class="quick-action-btn">
+                        <i class="bi bi-diagram-3-fill"></i>
+                        <span>Phân Công Dạy</span>
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>

@@ -6,28 +6,111 @@ namespace HSMS.MVC.Controllers;
 
 public class DashboardController : Controller
 {
-    [HttpGet]
-    public IActionResult Index()
+    private readonly ILogger<DashboardController> _logger;
+
+    public DashboardController(ILogger<DashboardController> logger)
+    {
+        _logger = logger;
+    }
+
+    private LoginResponseDto? GetCurrentUser()
     {
         var userJson = HttpContext.Session.GetString(AuthController.SessionUserKey);
         if (string.IsNullOrEmpty(userJson))
         {
-            return RedirectToAction("Login", "Auth", new { returnUrl = "/Dashboard" });
+            return null;
         }
 
         try
         {
-            var user = JsonSerializer.Deserialize<LoginResponseDto>(userJson);
-            if (user == null)
-            {
-                return RedirectToAction("Login", "Auth");
-            }
-
-            return View(user);
+            return JsonSerializer.Deserialize<LoginResponseDto>(userJson);
         }
-        catch
+        catch (Exception ex)
         {
-            return RedirectToAction("Login", "Auth");
+            _logger.LogError(ex, "Lỗi giải mã JSON thông tin người dùng từ Session: {UserJson}", userJson);
+            return null;
         }
+    }
+
+    [HttpGet]
+    public IActionResult Index()
+    {
+        var user = GetCurrentUser();
+        if (user == null)
+        {
+            return RedirectToAction("Login", "Auth", new { returnUrl = "/Dashboard" });
+        }
+
+        var primaryRole = user.Roles.FirstOrDefault()?.ToUpper();
+
+        return primaryRole switch
+        {
+            "PRINCIPAL" => RedirectToAction(nameof(Principal)),
+            "STAFF" => RedirectToAction(nameof(Staff)),
+            "TEACHER" => RedirectToAction(nameof(Teacher)),
+            "STUDENT" => RedirectToAction(nameof(Student)),
+            "PARENT" => RedirectToAction(nameof(Parent)),
+            _ => RedirectToAction(nameof(Staff))
+        };
+    }
+
+    [HttpGet]
+    public IActionResult Principal()
+    {
+        var user = GetCurrentUser();
+        if (user == null)
+        {
+            return RedirectToAction("Login", "Auth", new { returnUrl = "/Dashboard/Principal" });
+        }
+
+        return View(user);
+    }
+
+    [HttpGet]
+    public IActionResult Staff()
+    {
+        var user = GetCurrentUser();
+        if (user == null)
+        {
+            return RedirectToAction("Login", "Auth", new { returnUrl = "/Dashboard/Staff" });
+        }
+
+        return View(user);
+    }
+
+    [HttpGet]
+    public IActionResult Teacher()
+    {
+        var user = GetCurrentUser();
+        if (user == null)
+        {
+            return RedirectToAction("Login", "Auth", new { returnUrl = "/Dashboard/Teacher" });
+        }
+
+        return View(user);
+    }
+
+    [HttpGet]
+    public IActionResult Student()
+    {
+        var user = GetCurrentUser();
+        if (user == null)
+        {
+            return RedirectToAction("Login", "Auth", new { returnUrl = "/Dashboard/Student" });
+        }
+
+        return View(user);
+    }
+
+    [HttpGet]
+    public IActionResult Parent()
+    {
+        var user = GetCurrentUser();
+        if (user == null)
+        {
+            return RedirectToAction("Login", "Auth", new { returnUrl = "/Dashboard/Parent" });
+        }
+
+        return View(user);
     }
 }

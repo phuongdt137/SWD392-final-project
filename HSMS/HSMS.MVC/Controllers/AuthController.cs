@@ -219,7 +219,36 @@ public class AuthController : Controller
 
     private IActionResult RedirectToRoleDashboard(IReadOnlyList<string> roles)
     {
+        if (roles == null || roles.Count == 0)
+        {
+            return RedirectToAction("Index", "Dashboard");
+        }
+
+        if (roles.Contains("PRINCIPAL"))
+        {
+            return RedirectToAction("Principal", "Dashboard");
+        }
+
+        if (roles.Contains("STAFF"))
+        {
+            return RedirectToAction("Staff", "Dashboard");
+        }
+
+        if (roles.Contains("TEACHER"))
+        {
+            return RedirectToAction("Teacher", "Dashboard");
+        }
+
+        if (roles.Contains("STUDENT"))
+        {
+            return RedirectToAction("Student", "Dashboard");
+        }
+
+        if (roles.Contains("PARENT"))
+        {
+            return RedirectToAction("Parent", "Dashboard");
+        }
+
         return RedirectToAction("Index", "Dashboard");
     }
 }
-

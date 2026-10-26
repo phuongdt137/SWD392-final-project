@@ -14,16 +14,18 @@
     catch { }
 
     var displayName = currentUser?.FullName ?? currentUser?.Username ?? "User";
-    var primaryRole = currentUser?.Roles?.FirstOrDefault() ?? "Staff";
+    var primaryRole = (currentUser?.Roles?.FirstOrDefault() ?? "STAFF").ToUpper();
     var roleDisplayName = primaryRole switch
     {
-        "ADMIN" => "Administrator",
-        "TEACHER" => "Teacher",
-        "STUDENT" => "Student",
-        "PARENT" => "Parent",
-        "STAFF" => "Staff",
+        "PRINCIPAL" => "Hiệu trưởng",
+        "STAFF" => "Nhân viên học vụ",
+        "TEACHER" => "Giáo viên",
+        "STUDENT" => "Học sinh",
+        "PARENT" => "Phụ huynh",
         _ => primaryRole
     };
+
+    var currentAction = ViewContext.RouteData.Values["action"]?.ToString() ?? "Index";
 }
 <!DOCTYPE html>
 <html lang="en">
@@ -58,49 +60,185 @@
                 </div>
             </a>
 
-            <!-- Navigation Menu -->
+            <!-- Navigation Menu by Role -->
             <nav class="sidebar-nav">
-                <a asp-controller="Dashboard" asp-action="Index" class="sidebar-link active">
-                    <i class="bi bi-grid-1x2-fill"></i>
-                    <span>Dashboard</span>
-                </a>
-                <a href="#classes" class="sidebar-link">
-                    <i class="bi bi-people-fill"></i>
-                    <span>My Classes</span>
-                </a>
-                <a href="#students" class="sidebar-link">
-                    <i class="bi bi-person-badge"></i>
-                    <span>Students</span>
-                </a>
-                <a href="#attendance" class="sidebar-link">
-                    <i class="bi bi-calendar-check"></i>
-                    <span>Attendance</span>
-                </a>
-                <a href="#grades" class="sidebar-link">
-                    <i class="bi bi-card-checklist"></i>
-                    <span>Grades</span>
-                </a>
-                <a href="#assignments" class="sidebar-link">
-                    <i class="bi bi-journal-text"></i>
-                    <span>Assignments</span>
-                </a>
-                <a href="#schedule" class="sidebar-link">
-                    <i class="bi bi-calendar3"></i>
-                    <span>Schedule</span>
-                </a>
-                <a href="#messages" class="sidebar-link">
-                    <i class="bi bi-chat-dots-fill"></i>
-                    <span>Messages</span>
-                    <span class="sidebar-badge">3</span>
-                </a>
-                <a href="#reports" class="sidebar-link">
-                    <i class="bi bi-bar-chart-line-fill"></i>
-                    <span>Reports</span>
-                </a>
-                <a href="#settings" class="sidebar-link">
-                    <i class="bi bi-gear-fill"></i>
-                    <span>Settings</span>
-                </a>
+                @if (primaryRole == "PRINCIPAL")
+                {
+                    <a asp-controller="Dashboard" asp-action="Principal" class="sidebar-link @(currentAction == "Principal" || currentAction == "Index" ? "active" : "")">
+                        <i class="bi bi-grid-1x2-fill"></i>
+                        <span>Điều hành (Principal)</span>
+                    </a>
+                    <a href="#approvals" class="sidebar-link">
+                        <i class="bi bi-file-earmark-check-fill"></i>
+                        <span>Phê duyệt & Tờ trình</span>
+                        <span class="sidebar-badge">5</span>
+                    </a>
+                    <a href="#academic-oversight" class="sidebar-link">
+                        <i class="bi bi-mortarboard"></i>
+                        <span>Giám sát Đào tạo</span>
+                    </a>
+                    <a href="#staff-directory" class="sidebar-link">
+                        <i class="bi bi-person-workspace"></i>
+                        <span>Nhân sự & Giáo viên</span>
+                    </a>
+                    <a href="#student-quality" class="sidebar-link">
+                        <i class="bi bi-people-fill"></i>
+                        <span>Chất lượng Học sinh</span>
+                    </a>
+                    <a href="#executive-reports" class="sidebar-link">
+                        <i class="bi bi-graph-up-arrow"></i>
+                        <span>Thống kê Chiến lược</span>
+                    </a>
+                    <a href="#school-directives" class="sidebar-link">
+                        <i class="bi bi-megaphone-fill"></i>
+                        <span>Chỉ đạo Ban Giám Hiệu</span>
+                    </a>
+                    <a href="#school-policies" class="sidebar-link">
+                        <i class="bi bi-shield-check"></i>
+                        <span>Quy chế & Cấu hình</span>
+                    </a>
+                }
+                else if (primaryRole == "STAFF")
+                {
+                    <a asp-controller="Dashboard" asp-action="Staff" class="sidebar-link @(currentAction == "Staff" || currentAction == "Index" ? "active" : "")">
+                        <i class="bi bi-grid-1x2-fill"></i>
+                        <span>Tổng quan (Staff)</span>
+                    </a>
+                    <a href="#students" class="sidebar-link">
+                        <i class="bi bi-people-fill"></i>
+                        <span>Quản lý Học sinh</span>
+                    </a>
+                    <a href="#teachers" class="sidebar-link">
+                        <i class="bi bi-person-badge"></i>
+                        <span>Quản lý Giáo viên</span>
+                    </a>
+                    <a href="#classes" class="sidebar-link">
+                        <i class="bi bi-building"></i>
+                        <span>Lớp học & Khối</span>
+                    </a>
+                    <a href="#subjects" class="sidebar-link">
+                        <i class="bi bi-journal-bookmark-fill"></i>
+                        <span>Môn học</span>
+                    </a>
+                    <a href="#timetable" class="sidebar-link">
+                        <i class="bi bi-calendar3"></i>
+                        <span>Thời khóa biểu</span>
+                    </a>
+                    <a href="#reports" class="sidebar-link">
+                        <i class="bi bi-bar-chart-line-fill"></i>
+                        <span>Báo cáo & Thống kê</span>
+                    </a>
+                    <a href="#settings" class="sidebar-link">
+                        <i class="bi bi-gear-fill"></i>
+                        <span>Cấu hình Năm học</span>
+                    </a>
+                }
+                else if (primaryRole == "TEACHER")
+                {
+                    <a asp-controller="Dashboard" asp-action="Teacher" class="sidebar-link @(currentAction == "Teacher" || currentAction == "Index" ? "active" : "")">
+                        <i class="bi bi-grid-1x2-fill"></i>
+                        <span>Dashboard</span>
+                    </a>
+                    <a href="#classes" class="sidebar-link">
+                        <i class="bi bi-people-fill"></i>
+                        <span>Lớp của tôi</span>
+                    </a>
+                    <a href="#students" class="sidebar-link">
+                        <i class="bi bi-person-badge"></i>
+                        <span>Học sinh</span>
+                    </a>
+                    <a href="#attendance" class="sidebar-link">
+                        <i class="bi bi-calendar-check"></i>
+                        <span>Điểm danh</span>
+                    </a>
+                    <a href="#grades" class="sidebar-link">
+                        <i class="bi bi-card-checklist"></i>
+                        <span>Sổ điểm</span>
+                    </a>
+                    <a href="#assignments" class="sidebar-link">
+                        <i class="bi bi-journal-text"></i>
+                        <span>Bài tập & Đánh giá</span>
+                    </a>
+                    <a href="#schedule" class="sidebar-link">
+                        <i class="bi bi-calendar3"></i>
+                        <span>Lịch dạy</span>
+                    </a>
+                    <a href="#messages" class="sidebar-link">
+                        <i class="bi bi-chat-dots-fill"></i>
+                        <span>Tin nhắn</span>
+                        <span class="sidebar-badge">3</span>
+                    </a>
+                    <a href="#leaves" class="sidebar-link">
+                        <i class="bi bi-envelope-paper"></i>
+                        <span>Đơn xin nghỉ phép</span>
+                    </a>
+                }
+                else if (primaryRole == "STUDENT")
+                {
+                    <a asp-controller="Dashboard" asp-action="Student" class="sidebar-link @(currentAction == "Student" || currentAction == "Index" ? "active" : "")">
+                        <i class="bi bi-grid-1x2-fill"></i>
+                        <span>Dashboard</span>
+                    </a>
+                    <a href="#timetable" class="sidebar-link">
+                        <i class="bi bi-calendar3"></i>
+                        <span>Thời khóa biểu</span>
+                    </a>
+                    <a href="#scores" class="sidebar-link">
+                        <i class="bi bi-award-fill"></i>
+                        <span>Bảng điểm & Học tập</span>
+                    </a>
+                    <a href="#attendance" class="sidebar-link">
+                        <i class="bi bi-calendar-check"></i>
+                        <span>Điểm danh cá nhân</span>
+                    </a>
+                    <a href="#conduct" class="sidebar-link">
+                        <i class="bi bi-star-fill"></i>
+                        <span>Đánh giá rèn luyện</span>
+                    </a>
+                    <a href="#leaves" class="sidebar-link">
+                        <i class="bi bi-file-earmark-text"></i>
+                        <span>Đơn xin nghỉ</span>
+                    </a>
+                    <a href="#notifications" class="sidebar-link">
+                        <i class="bi bi-bell-fill"></i>
+                        <span>Thông báo lớp</span>
+                        <span class="sidebar-badge">2</span>
+                    </a>
+                }
+                else if (primaryRole == "PARENT")
+                {
+                    <a asp-controller="Dashboard" asp-action="Parent" class="sidebar-link @(currentAction == "Parent" || currentAction == "Index" ? "active" : "")">
+                        <i class="bi bi-grid-1x2-fill"></i>
+                        <span>Dashboard</span>
+                    </a>
+                    <a href="#children" class="sidebar-link">
+                        <i class="bi bi-person-hearts"></i>
+                        <span>Hồ sơ con cái</span>
+                    </a>
+                    <a href="#scores" class="sidebar-link">
+                        <i class="bi bi-award-fill"></i>
+                        <span>Kết quả học tập</span>
+                    </a>
+                    <a href="#attendance" class="sidebar-link">
+                        <i class="bi bi-calendar-check"></i>
+                        <span>Chuyên cần hàng ngày</span>
+                    </a>
+                    <a href="#leave-request" class="sidebar-link">
+                        <i class="bi bi-envelope-paper"></i>
+                        <span>Đơn xin nghỉ phép</span>
+                    </a>
+                    <a href="#messages" class="sidebar-link">
+                        <i class="bi bi-chat-dots-fill"></i>
+                        <span>Liên lạc GVCN</span>
+                    </a>
+                }
+                else
+                {
+                    <a asp-controller="Dashboard" asp-action="Index" class="sidebar-link active">
+                        <i class="bi bi-grid-1x2-fill"></i>
+                        <span>Dashboard</span>
+                    </a>
+                }
             </nav>
 
             <!-- Bottom Motivation Banner -->
@@ -121,7 +259,7 @@
                     </button>
                     <div class="topbar-search-wrap">
                         <i class="bi bi-search topbar-search-icon"></i>
-                        <input type="text" class="topbar-search-input" placeholder="Search students, classes, assignments..." />
+                        <input type="text" class="topbar-search-input" placeholder="Tìm kiếm học sinh, lớp học, giáo viên..." />
                     </div>
                 </div>
 
@@ -150,7 +288,7 @@
                                 <div class="user-role">@roleDisplayName</div>
                             </div>
                         </button>
-                        <ul class="dropdown-menu dropdown-menu-end shadow border-0 rounded-3 mt-2" aria-labelledby="userMenuButton" style="min-width: 220px;">
+                        <ul class="dropdown-menu dropdown-menu-end shadow border-0 rounded-3 mt-2" aria-labelledby="userMenuButton" style="min-width: 230px;">
                             <li class="px-3 py-2 border-bottom">
                                 <div class="fw-bold text-dark text-truncate">@displayName</div>
                                 <div class="small text-muted text-truncate">@(currentUser?.Email ?? "")</div>
@@ -200,4 +338,3 @@
     @await RenderSectionAsync("Scripts", required: false)
 </body>
 </html>
-
