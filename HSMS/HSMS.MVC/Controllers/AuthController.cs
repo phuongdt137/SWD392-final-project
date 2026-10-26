@@ -4,6 +4,7 @@ using HSMS.MVC.Common;
 using HSMS.MVC.DTOs.Auth;
 using HSMS.MVC.Service;
 using HSMS.MVC.ViewModels.Auth;
+using Microsoft.AspNetCore.Authentication;
 
 namespace HSMS.MVC.Controllers;
 
@@ -49,6 +50,11 @@ public class AuthController : Controller
 
         var userJson = JsonSerializer.Serialize(result.Data);
         HttpContext.Session.SetString(SessionUserKey, userJson);
+        await HttpContext.SignInAsync(UserPrincipal.Create(result.Data), new AuthenticationProperties
+        {
+            IsPersistent = model.RememberMe,
+            ExpiresUtc = DateTimeOffset.UtcNow.AddHours(2)
+        });
 
         if (!string.IsNullOrWhiteSpace(model.ReturnUrl) 
             && Url.IsLocalUrl(model.ReturnUrl)
@@ -62,8 +68,9 @@ public class AuthController : Controller
 
     [HttpPost]
     [ValidateAntiForgeryToken]
-    public IActionResult Logout()
+    public async Task<IActionResult> Logout()
     {
+        await HttpContext.SignOutAsync();
         HttpContext.Session.Clear();
         return RedirectToAction("Index", "Home");
     }
@@ -71,8 +78,7 @@ public class AuthController : Controller
     [HttpGet]
     public IActionResult LogoutRedirect()
     {
-        HttpContext.Session.Clear();
-        return RedirectToAction("Index", "Home");
+        return RedirectToAction(nameof(Login));
     }
 
     [HttpGet]
@@ -192,6 +198,7 @@ public class AuthController : Controller
 
     private LoginResponseDto? GetCurrentUserFromSession()
     {
+        if (User.Identity?.IsAuthenticated != true) return null;
         var userJson = HttpContext.Session.GetString(SessionUserKey);
         if (string.IsNullOrEmpty(userJson))
             return null;
@@ -224,6 +231,7 @@ public class AuthController : Controller
             return RedirectToAction("Index", "Dashboard");
         }
 
+        if (roles.Contains("ADMIN")) return RedirectToAction("Index", "Attendance");
         if (roles.Contains("PRINCIPAL"))
         {
             return RedirectToAction("Principal", "Dashboard");

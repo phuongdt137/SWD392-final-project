@@ -1,25 +1,49 @@
 using System.Globalization;
+using HSMS.MVC.Common;
+using HSMS.MVC.DTOs.Notifications;
 using HSMS.MVC.Models;
 using HSMS.MVC.Repositories.Interfaces;
 
 namespace HSMS.MVC.Service;
 
-/// <summary>
-/// Thực thi gửi thông báo điểm số bằng cách ghi thực thể Notification cho học sinh và phụ huynh.
-/// </summary>
-public class NotificationService : INotificationService
+public sealed class NotificationService : INotificationService
 {
+    private readonly INotificationRepository _repo;
+    private readonly ICurrentUserService _current;
     private readonly IGenericRepository<Notification> _notificationRepository;
     private readonly ILogger<NotificationService> _logger;
 
     public NotificationService(
+        INotificationRepository repo,
+        ICurrentUserService current,
         IGenericRepository<Notification> notificationRepository,
         ILogger<NotificationService> logger)
     {
+        _repo = repo;
+        _current = current;
         _notificationRepository = notificationRepository;
         _logger = logger;
     }
 
+    public async Task<ServiceResult<NotificationFeed>> FeedAsync(CancellationToken ct = default)
+    {
+        var user = await _current.GetAsync(ct);
+        return user == null
+            ? ServiceResult<NotificationFeed>.Failed(AuthErrors.MissingCredentials)
+            : ServiceResult<NotificationFeed>.Success(await _repo.FeedAsync(user.UserId, ct));
+    }
+
+    public async Task<ServiceResult> ReadAsync(long id, CancellationToken ct = default)
+    {
+        var user = await _current.GetAsync(ct);
+        if (user == null) return ServiceResult.Unauthorized();
+        return await _repo.ReadAsync(user.UserId, id, ct) ? ServiceResult.Success() : ServiceResult.NotFound();
+    }
+
+    /// <summary>
+    /// Gửi thông báo cho học sinh và phụ huynh khi điểm bị thay đổi.
+    /// Lỗi gửi thông báo không làm thất bại thao tác cập nhật điểm.
+    /// </summary>
     public async Task NotifyScoreChangedAsync(StudentScore score, decimal? oldScore, long senderUserId)
     {
         try

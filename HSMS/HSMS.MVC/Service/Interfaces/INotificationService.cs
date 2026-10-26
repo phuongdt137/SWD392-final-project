@@ -1,12 +1,14 @@
+using HSMS.MVC.Common;
+using HSMS.MVC.DTOs.Notifications;
 using HSMS.MVC.Models;
 
 namespace HSMS.MVC.Service;
 
-/// <summary>
-/// Giao diện gửi thông báo liên quan đến điểm số.
-/// </summary>
 public interface INotificationService
 {
+    Task<ServiceResult<NotificationFeed>> FeedAsync(CancellationToken ct = default);
+    Task<ServiceResult> ReadAsync(long id, CancellationToken ct = default);
+
     /// <summary>
     /// Gửi thông báo cho học sinh và phụ huynh khi điểm bị thay đổi.
     /// Lỗi gửi thông báo không làm thất bại thao tác cập nhật điểm.

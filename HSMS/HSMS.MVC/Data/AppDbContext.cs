@@ -3,7 +3,7 @@ using HSMS.MVC.Models;
 
 namespace HSMS.MVC.Data;
 
-public class AppDbContext : DbContext
+public partial class AppDbContext : DbContext
 {
     public AppDbContext(DbContextOptions<AppDbContext> options) : base(options)
     {
@@ -42,6 +42,7 @@ public class AppDbContext : DbContext
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
         base.OnModelCreating(modelBuilder);
+        ConfigureAttendance(modelBuilder);
 
         // ============================================================
         // 1. ROLE
@@ -63,8 +64,8 @@ public class AppDbContext : DbContext
                 new Role(1, "STUDENT", "Student", "High school student", true, new DateTime(2026, 1, 1, 0, 0, 0, DateTimeKind.Utc)),
                 new Role(2, "PARENT", "Parent", "Parent or guardian of student", true, new DateTime(2026, 1, 1, 0, 0, 0, DateTimeKind.Utc)),
                 new Role(3, "TEACHER", "Teacher", "School teacher", true, new DateTime(2026, 1, 1, 0, 0, 0, DateTimeKind.Utc)),
-                new Role(4, "STAFF", "Staff", "School staff", true, new DateTime(2026, 1, 1, 0, 0, 0, DateTimeKind.Utc)),
-                new Role(5, "PRINCIPAL", "Principal", "School principal", true, new DateTime(2026, 1, 1, 0, 0, 0, DateTimeKind.Utc))
+                new Role(4, "ADMIN", "Administrator", "System administrator", true, new DateTime(2026, 1, 1, 0, 0, 0, DateTimeKind.Utc)),
+                new Role(5, "STAFF", "Staff", "School staff", true, new DateTime(2026, 1, 1, 0, 0, 0, DateTimeKind.Utc))
             );
         });
 

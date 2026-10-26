@@ -4,6 +4,7 @@
     ViewData["Title"] = "Staff Dashboard - High School Management System";
     Layout = "_DashboardLayout";
 
+    var attendance = ViewData["AttendanceSummary"] as HSMS.MVC.DTOs.Attendance.AttendanceSummary ?? new(0, 0, 0, 0);
     var displayName = Model?.FullName ?? Model?.Username ?? "Cán bộ học vụ";
 }
 
@@ -249,33 +250,7 @@
                 <span class="badge bg-success-subtle text-success small fw-semibold">Hôm nay</span>
             </div>
 
-            <!-- Donut Attendance Chart Simulation -->
-            <div class="attendance-donut-wrap mb-4">
-                <div class="donut-chart-container">
-                    <svg viewBox="0 0 36 36" class="donut-svg">
-                        <path class="donut-ring"
-                              d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831" />
-                        <path class="donut-segment"
-                              stroke-dasharray="96.4, 100"
-                              d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831" />
-                    </svg>
-                    <div class="donut-center-text">
-                        <div class="donut-percentage">96.4%</div>
-                        <div class="donut-label">Có mặt</div>
-                    </div>
-                </div>
-
-                <div class="d-flex justify-content-center gap-4 mt-3">
-                    <div class="d-flex align-items-center gap-2 small">
-                        <span style="width: 10px; height: 10px; border-radius: 50%; background-color: #2563EB;"></span>
-                        <span class="text-muted">Đi học: <strong>1,203</strong></span>
-                    </div>
-                    <div class="d-flex align-items-center gap-2 small">
-                        <span style="width: 10px; height: 10px; border-radius: 50%; background-color: #E2E8F0;"></span>
-                        <span class="text-muted">Vắng: <strong>45</strong></span>
-                    </div>
-                </div>
-            </div>
+            <partial name="_AttendanceSummary" model="attendance" />
 
             <hr class="my-3 text-muted opacity-25">
 

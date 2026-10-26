@@ -4,6 +4,7 @@
     ViewData["Title"] = "Teacher Dashboard - High School Management System";
     Layout = "_DashboardLayout";
 
+    var attendance = ViewData["AttendanceSummary"] as HSMS.MVC.DTOs.Attendance.AttendanceSummary ?? new(0, 0, 0, 0);
     var displayName = Model?.FullName ?? Model?.Username ?? "Giáo viên";
     var dashboardTitle = "Teacher Dashboard";
 }
@@ -62,9 +63,9 @@
                     <i class="bi bi-people-fill"></i>
                 </div>
                 <div class="kpi-content">
-                    <div class="kpi-title">Pending Attendance</div>
-                    <div class="kpi-value">2</div>
-                    <div class="kpi-subtext">classes remaining</div>
+                    <div class="kpi-title">Tiết còn thiếu điểm danh</div>
+                    <div class="kpi-value">@attendance.Pending</div>
+                    <div class="kpi-subtext">Tiết đã đến giờ nhưng chưa đủ kết quả</div>
                 </div>
             </div>
             <div class="kpi-arrow-btn">
@@ -255,54 +256,7 @@
     <!-- COLUMN 3: Attendance & Performance Charts -->
     <div class="col-12 col-lg-4 d-flex flex-column gap-4">
         <!-- Attendance Overview -->
-        <div class="dash-card flex-1">
-            <div class="dash-card-header mb-2">
-                <h3 class="dash-card-title">
-                    <i class="bi bi-pie-chart-fill text-primary"></i>
-                    <span>Attendance Overview</span>
-                </h3>
-                <select class="form-select form-select-sm" style="width: auto; font-size: 0.8rem; border-radius: 8px;">
-                    <option>This Week</option>
-                    <option>This Month</option>
-                </select>
-            </div>
-
-            <div class="d-flex align-items-center justify-content-around py-2">
-                <!-- SVG Donut Chart -->
-                <div style="position: relative; width: 110px; height: 110px;">
-                    <svg viewBox="0 0 36 36" style="width: 100%; height: 100%; transform: rotate(-90deg);">
-                        <path d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831" fill="none" stroke="#E2E8F0" stroke-width="4.2" />
-                        <path d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831" fill="none" stroke="#10B981" stroke-width="4.2" stroke-dasharray="92, 100" />
-                    </svg>
-                    <div style="position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); text-align: center;">
-                        <div style="font-weight: 800; font-size: 1.25rem; line-height: 1; color: #0F172A;">92%</div>
-                        <div style="font-size: 0.65rem; color: #64748B;">Overall</div>
-                    </div>
-                </div>
-
-                <!-- Legend -->
-                <div class="small">
-                    <div class="d-flex align-items-center gap-2 mb-1">
-                        <span style="width: 8px; height: 8px; border-radius: 50%; background: #10B981;"></span>
-                        <span class="text-muted" style="min-width: 50px;">Present</span>
-                        <strong class="text-dark">248</strong>
-                        <span class="text-muted small">(92%)</span>
-                    </div>
-                    <div class="d-flex align-items-center gap-2 mb-1">
-                        <span style="width: 8px; height: 8px; border-radius: 50%; background: #3B82F6;"></span>
-                        <span class="text-muted" style="min-width: 50px;">Absent</span>
-                        <strong class="text-dark">18</strong>
-                        <span class="text-muted small">(6%)</span>
-                    </div>
-                    <div class="d-flex align-items-center gap-2">
-                        <span style="width: 8px; height: 8px; border-radius: 50%; background: #CBD5E1;"></span>
-                        <span class="text-muted" style="min-width: 50px;">Late</span>
-                        <strong class="text-dark">6</strong>
-                        <span class="text-muted small">(2%)</span>
-                    </div>
-                </div>
-            </div>
-        </div>
+        <div class="dash-card"><h3 class="h6">Chuyên cần hôm nay</h3><partial name="_AttendanceSummary" model="attendance" /></div>
 
         <!-- Student Performance Bar Chart -->
         <div class="dash-card flex-1">
@@ -423,7 +377,7 @@
 
             <div class="quick-actions-grid">
                 <!-- Action 1: Take Attendance -->
-                <a href="#attendance" class="action-tile">
+                <a asp-controller="Attendance" asp-action="Index" class="action-tile">
                     <div class="action-icon" style="background: linear-gradient(135deg, #3B82F6 0%, #1D4ED8 100%);">
                         <i class="bi bi-calendar-check"></i>
                     </div>
