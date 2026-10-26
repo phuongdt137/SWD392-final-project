@@ -4,6 +4,7 @@
     ViewData["Title"] = "Principal Dashboard - High School Management System";
     Layout = "_DashboardLayout";
 
+    var attendance = ViewData["AttendanceSummary"] as HSMS.MVC.DTOs.Attendance.AttendanceSummary ?? new(0, 0, 0, 0);
     var displayName = Model?.FullName ?? Model?.Username ?? "Hiệu trưởng";
 }
 
@@ -67,8 +68,8 @@
                 </div>
                 <div class="kpi-content">
                     <div class="kpi-title">Nề nếp & Chuyên cần</div>
-                    <div class="kpi-value">97.2%</div>
-                    <div class="kpi-subtext">1,213 / 1,248 HS có mặt hôm nay</div>
+                    <div class="kpi-value">@(attendance.Rate.HasValue ? attendance.Rate + "%" : "—")</div>
+                    <div class="kpi-subtext">@(attendance.Present + attendance.Late) / @attendance.Recorded lượt tham dự hôm nay</div>
                 </div>
             </div>
             <div class="kpi-arrow-btn">
@@ -105,7 +106,7 @@
                 </div>
                 <div class="kpi-content">
                     <div class="kpi-title">Tiến độ Chương trình</div>
-                    <div class="kpi-value">98.5%</div>
+                    <div class="kpi-value">@(attendance.Rate.HasValue ? attendance.Rate + "%" : "—")</div>
                     <div class="kpi-subtext">86/86 GV bám sát phân phối CT</div>
                 </div>
             </div>

@@ -1,0 +1,74 @@
+@using HSMS.MVC.Common
+@model HSMS.MVC.ViewModels.Attendance.AttendanceSheet
+@{
+    Layout = "_DashboardLayout"; ViewData["Title"] = "Bảng điểm danh";
+    var e = Model.Entry;
+    var cutoff = SchoolTime.LockUtc(Model.Date).ToString("yyyy-MM-ddTHH:mm:ssZ");
+    var returnUrl = ViewData["AttendanceReturnUrl"] as string ?? Url.Action("Index", new { date = Model.Date.ToString("yyyy-MM-dd") });
+}
+<div class="attendance-page">
+    <a href="@returnUrl" class="text-decoration-none">← Lịch điểm danh</a>
+    <h1 class="h3 fw-bold mt-3">@e.TeachingAssignment.Class.ClassName · @e.TeachingAssignment.Subject.SubjectName</h1>
+    <p class="text-muted">@Model.Date.ToString("dd/MM/yyyy") · Tiết @e.TimeSlot.PeriodNo · @e.TimeSlot.StartTime.ToString(@"hh\:mm") · @e.TeachingAssignment.Employee.FullName</p>
+    @if (Model.CanEditAfterDeadline)
+    {
+        <p class="small text-primary">Quyền quản trị / học vụ: được ghi/sửa ngày đã qua sau 00:00. Thay đổi kết quả đã lưu cần lý do và được ghi nhật ký.</p>
+    }
+    else
+    {
+        <p class="small">Hạn ghi/sửa của giáo viên: <strong>00:00 @Model.Date.AddDays(1).ToString("dd/MM/yyyy")</strong> (giờ Việt Nam).</p>
+    }
+    <p class="small text-muted">Kết quả chưa chọn không được coi là có mặt hay vắng.</p>
+    @if (TempData["SuccessMessage"] is string success) { <div class="alert alert-success" role="status">@success</div> }
+    @if (TempData["WarningMessage"] is string warning) { <div class="alert alert-warning">@warning</div> }
+    <div asp-validation-summary="All" class="text-danger" role="alert"></div>
+    @if (!Model.CanWrite) { <div class="alert alert-info">@Model.ReadOnlyReason</div> }
+    @if (Model.Attempt != null) { <p><a asp-action="Mark" asp-route-timetableEntryId="@e.Id" asp-route-date="@Model.Date.ToString("yyyy-MM-dd")" asp-route-returnUrl="@returnUrl">Tải lại dữ liệu hiện hành</a> để đối chiếu nếu có xung đột.</p> }
+    <div id="attendance-lock-message" class="alert alert-info d-none" role="status">Đã đến hạn khóa. Bảng chuyển sang chế độ chỉ xem.</div>
+    <form asp-action="Save" method="post" id="attendance-form" data-cutoff="@cutoff" data-can-edit-after-deadline="@(Model.CanEditAfterDeadline ? "true" : "false")">
+        <input type="hidden" name="TimetableEntryId" value="@e.Id" />
+        <input type="hidden" name="ReturnUrl" value="@returnUrl" />
+        <input type="hidden" name="Date" value="@Model.Date.ToString("yyyy-MM-dd")" />
+        <input type="hidden" name="RosterToken" value="@(Model.Attempt?.RosterToken ?? Model.RosterToken)" />
+        <fieldset disabled="@(!Model.CanWrite)" id="attendance-fields">
+            <div class="d-flex justify-content-between align-items-center gap-3 mb-3">
+                <span>@Model.Students.Count học sinh</span>
+                @if (Model.CanWrite) { <button type="button" id="mark-present" class="btn btn-outline-success btn-sm">Có mặt cho các dòng chưa chọn</button> }
+            </div>
+            <div class="card border-0 shadow-sm p-3 table-responsive"><table class="table align-middle attendance-table">
+                <thead><tr><th>Học sinh</th><th>Kết quả</th><th>Đơn nghỉ được duyệt</th><th>Ghi chú</th><th></th></tr></thead>
+                <tbody>@for (var i = 0; i < Model.Students.Count; i++) {
+                    var row = Model.Students[i];
+                    var attempted = Model.Attempt?.Rows.FirstOrDefault(x => x.CustomerId == row.Student.Id);
+                    var status = attempted?.Status ?? row.Record?.Status;
+                    var leaveId = attempted != null ? attempted.LeaveRequestId : row.Record?.LeaveRequestId;
+                    var comment = attempted != null ? attempted.Comment : row.Record?.Comment;
+                    var version = attempted != null ? attempted.Version : row.Record?.Version;
+                    <tr data-has-leave="@(row.Leaves.Count > 0 ? "true" : "false")">
+                        <td><strong>@row.Student.FullName</strong><br /><small>@row.Student.StudentCode</small>
+                            <input type="hidden" name="Rows[@i].CustomerId" value="@row.Student.Id" /><input type="hidden" name="Rows[@i].Version" value="@version" /></td>
+                        <td><select name="Rows[@i].Status" class="form-select attendance-status" aria-label="Kết quả của @row.Student.FullName" required>
+                            <option value="">Chưa ghi nhận</option>
+                            @foreach (var s in AttendanceStatuses.All) { <option value="@s" selected="@(status == s)">@AttendanceStatuses.Label(s)</option> }
+                        </select></td>
+                        <td><select name="Rows[@i].LeaveRequestId" class="form-select" aria-label="Đơn nghỉ của @row.Student.FullName">
+                            <option value="">Không áp dụng</option>
+                            @foreach (var leave in row.Leaves) { <option value="@leave.Id" selected="@(leaveId == leave.Id)">#@leave.Id · @leave.Reason</option> }
+                        </select>@if (row.Leaves.Count > 0) { <small class="text-muted">Có đơn nghỉ để đối chiếu; ghi nhận theo thực tế.</small> }</td>
+                        <td><input name="Rows[@i].Comment" value="@comment" class="form-control" maxlength="1000" aria-label="Ghi chú cho @row.Student.FullName" /></td>
+                        <td>@if (row.Record != null) { <a asp-action="Audit" asp-route-id="@row.Record.Id">Nhật ký</a> }</td>
+                    </tr>
+                }</tbody>
+            </table></div>
+            @if (Model.CanWrite) {
+                <div class="mt-3"><label class="form-label" for="reason">Lý do sửa (bắt buộc khi thay đổi kết quả đã lưu)</label><textarea id="reason" name="ChangeReason" maxlength="1000" class="form-control" rows="2">@Model.Attempt?.ChangeReason</textarea></div>
+                <button type="submit" class="btn btn-primary mt-3">Xác nhận lưu cả lớp</button>
+            }
+        </fieldset>
+    </form>
+    @if (Model.HistoricalRecords.Count > 0) {
+        <div class="card p-3 mt-4"><h2 class="h5">Kết quả đã lưu cần đối chiếu danh sách</h2>
+        @foreach (var r in Model.HistoricalRecords) { <p>@r.Customer.FullName · @AttendanceStatuses.Label(r.Status) · <a asp-action="Audit" asp-route-id="@r.Id">Nhật ký</a></p> }</div>
+    }
+</div>
+@section Scripts { <script src="~/js/attendance.js" asp-append-version="true"></script> }

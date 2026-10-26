@@ -4,6 +4,7 @@
     ViewData["Title"] = "Parent Dashboard - High School Management System";
     Layout = "_DashboardLayout";
 
+    var attendance = ViewData["AttendanceSummary"] as HSMS.MVC.DTOs.Attendance.AttendanceSummary ?? new(0, 0, 0, 0);
     var displayName = Model?.FullName ?? Model?.Username ?? "Phụ huynh";
 }
 
@@ -55,8 +56,8 @@
                 </div>
                 <div class="kpi-content">
                     <div class="kpi-title">Chuyên cần hôm nay</div>
-                    <div class="kpi-value text-success">Có mặt</div>
-                    <div class="kpi-subtext">Đã điểm danh lúc: <strong>07:22</strong></div>
+                    <div class="kpi-value text-success">@(attendance.Recorded == 0 ? "Chưa có dữ liệu" : (attendance.Present + attendance.Late) + "/" + attendance.Recorded)</div>
+                    <div class="kpi-subtext">@attendance.Absent tiết vắng · @attendance.Late tiết đi muộn</div>
                 </div>
             </div>
             <div class="kpi-arrow-btn">

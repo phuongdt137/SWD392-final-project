@@ -1,0 +1,16 @@
+@using HSMS.MVC.Common
+@model HSMS.MVC.ViewModels.Attendance.AttendanceAudit
+@{ Layout = "_DashboardLayout"; ViewData["Title"] = "Nhật ký điểm danh"; }
+<div class="attendance-page">
+    <h1 class="h3 fw-bold">Nhật ký điểm danh · @Model.Record.Customer.FullName</h1>
+    <p>@Model.Record.AttendanceDate.ToString("dd/MM/yyyy") · @Model.Record.TimetableEntry.TeachingAssignment.Class.ClassName · @Model.Record.TimetableEntry.TeachingAssignment.Subject.SubjectName · Tiết @Model.Record.TimetableEntry.TimeSlot.PeriodNo</p>
+    <div class="card p-3 border-0 shadow-sm table-responsive"><table class="table align-middle">
+        <thead><tr><th>Thời điểm (VN)</th><th>Người ghi/sửa</th><th>Trước → Sau</th><th>Ghi chú trước → Sau</th><th>Đơn nghỉ trước → Sau</th><th>Lý do</th></tr></thead>
+        <tbody>@foreach (var log in Model.Logs) {
+            <tr><td>@SchoolTime.Local(log.ChangedAt).ToString("dd/MM/yyyy HH:mm:ss")</td><td>@log.ChangedByEmployee.FullName</td>
+                <td>@AttendanceStatuses.Label(log.OldStatus) → @AttendanceStatuses.Label(log.NewStatus)</td><td>@(log.OldComment ?? "—") → @(log.NewComment ?? "—")</td>
+                <td>@(log.OldLeaveRequestId?.ToString() ?? "—") → @(log.NewLeaveRequestId?.ToString() ?? "—")</td><td>@(log.ChangeReason ?? "Ghi nhận lần đầu")</td></tr>
+        }</tbody>
+    </table>@if (Model.Logs.Count == 0) { <p>Chưa có nhật ký cho kết quả được tạo trước khi bật module này.</p> }</div>
+    <a asp-action="History" class="btn btn-outline-primary mt-3">Quay lại tra cứu</a>
+</div>

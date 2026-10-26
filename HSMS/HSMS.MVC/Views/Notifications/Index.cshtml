@@ -1,0 +1,15 @@
+@using HSMS.MVC.Common
+@model HSMS.MVC.DTOs.Notifications.NotificationFeed
+@{ Layout = "_DashboardLayout"; ViewData["Title"] = "Thông báo"; }
+<div class="attendance-page"><h1 class="h3 fw-bold">Thông báo của tôi</h1><p class="text-muted">@Model.Unread thông báo chưa đọc. Hiển thị 100 thông báo gần nhất.</p>
+@if (Model.Items.Count == 0) { <div class="card p-4">Chưa có thông báo.</div> }
+@foreach (var item in Model.Items) {
+    <article class="card p-3 mb-3 @(item.IsRead ? "" : "border-primary")">
+        <div class="d-flex justify-content-between gap-3"><h2 class="h6 fw-bold">@item.Title</h2><small>@SchoolTime.Local(item.SentAt).ToString("dd/MM/yyyy HH:mm")</small></div>
+        <p>@item.Content</p><div class="d-flex gap-3 align-items-center">
+            @if (!string.IsNullOrEmpty(item.Link) && Url.IsLocalUrl(item.Link)) { <a href="@item.Link">Xem chuyên cần</a> }
+            @if (!item.IsRead) { <form asp-action="Read" method="post"><input type="hidden" name="id" value="@item.Id" /><button class="btn btn-sm btn-outline-primary">Đánh dấu đã đọc</button></form> }
+        </div>
+    </article>
+}
+</div>

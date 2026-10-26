@@ -25,7 +25,10 @@
         _ => primaryRole
     };
 
+    var currentController = ViewContext.RouteData.Values["controller"]?.ToString() ?? "";
     var currentAction = ViewContext.RouteData.Values["action"]?.ToString() ?? "Index";
+    var isDashboardPage = string.Equals(currentController, "Dashboard", StringComparison.OrdinalIgnoreCase);
+    var isAttendancePage = string.Equals(currentController, "Attendance", StringComparison.OrdinalIgnoreCase);
 }
 <!DOCTYPE html>
 <html lang="en">
@@ -45,6 +48,7 @@
 
     <!-- Dashboard CSS -->
     <link rel="stylesheet" href="~/css/dashboard.css" asp-append-version="true" />
+    <link rel="stylesheet" href="~/css/attendance.css" asp-append-version="true" />
 </head>
 <body class="dashboard-body-tag">
     <div class="dashboard-wrapper">
@@ -62,9 +66,13 @@
 
             <!-- Navigation Menu by Role -->
             <nav class="sidebar-nav">
+                @if (primaryRole is "ADMIN" or "PRINCIPAL")
+                {
+                    <a asp-controller="Attendance" asp-action="Index" class="sidebar-link @(isAttendancePage ? "active" : "")"><i class="bi bi-calendar-check"></i><span>Điểm danh</span></a>
+                }
                 @if (primaryRole == "PRINCIPAL")
                 {
-                    <a asp-controller="Dashboard" asp-action="Principal" class="sidebar-link @(currentAction == "Principal" || currentAction == "Index" ? "active" : "")">
+                    <a asp-controller="Dashboard" asp-action="Principal" class="sidebar-link @(currentController == "Dashboard" && (currentAction == "Principal" || currentAction == "Index") ? "active" : "")">
                         <i class="bi bi-grid-1x2-fill"></i>
                         <span>Điều hành (Principal)</span>
                     </a>
@@ -100,9 +108,13 @@
                 }
                 else if (primaryRole == "STAFF")
                 {
-                    <a asp-controller="Dashboard" asp-action="Staff" class="sidebar-link @(currentAction == "Staff" || currentAction == "Index" ? "active" : "")">
+                    <a asp-controller="Dashboard" asp-action="Staff" class="sidebar-link @(isDashboardPage ? "active" : "")" aria-current="@(isDashboardPage ? "page" : null)">
                         <i class="bi bi-grid-1x2-fill"></i>
                         <span>Tổng quan (Staff)</span>
+                    </a>
+                    <a asp-controller="Attendance" asp-action="Index" class="sidebar-link @(isAttendancePage ? "active" : "")" aria-current="@(isAttendancePage ? "page" : null)">
+                        <i class="bi bi-calendar-check"></i>
+                        <span>Điểm danh</span>
                     </a>
                     <a href="#students" class="sidebar-link">
                         <i class="bi bi-people-fill"></i>
@@ -135,7 +147,7 @@
                 }
                 else if (primaryRole == "TEACHER")
                 {
-                    <a asp-controller="Dashboard" asp-action="Teacher" class="sidebar-link @(currentAction == "Teacher" || currentAction == "Index" ? "active" : "")">
+                    <a asp-controller="Dashboard" asp-action="Teacher" class="sidebar-link @(currentController == "Dashboard" && (currentAction == "Teacher" || currentAction == "Index") ? "active" : "")">
                         <i class="bi bi-grid-1x2-fill"></i>
                         <span>Dashboard</span>
                     </a>
@@ -147,7 +159,7 @@
                         <i class="bi bi-person-badge"></i>
                         <span>Học sinh</span>
                     </a>
-                    <a href="#attendance" class="sidebar-link">
+                    <a asp-controller="Attendance" asp-action="Index" class="sidebar-link @(currentController == "Attendance" ? "active" : "")">
                         <i class="bi bi-calendar-check"></i>
                         <span>Điểm danh</span>
                     </a>
@@ -175,7 +187,7 @@
                 }
                 else if (primaryRole == "STUDENT")
                 {
-                    <a asp-controller="Dashboard" asp-action="Student" class="sidebar-link @(currentAction == "Student" || currentAction == "Index" ? "active" : "")">
+                    <a asp-controller="Dashboard" asp-action="Student" class="sidebar-link @(currentController == "Dashboard" && (currentAction == "Student" || currentAction == "Index") ? "active" : "")">
                         <i class="bi bi-grid-1x2-fill"></i>
                         <span>Dashboard</span>
                     </a>
@@ -187,7 +199,7 @@
                         <i class="bi bi-award-fill"></i>
                         <span>Bảng điểm & Học tập</span>
                     </a>
-                    <a href="#attendance" class="sidebar-link">
+                    <a asp-controller="Attendance" asp-action="Index" class="sidebar-link @(currentController == "Attendance" ? "active" : "")">
                         <i class="bi bi-calendar-check"></i>
                         <span>Điểm danh cá nhân</span>
                     </a>
@@ -207,7 +219,7 @@
                 }
                 else if (primaryRole == "PARENT")
                 {
-                    <a asp-controller="Dashboard" asp-action="Parent" class="sidebar-link @(currentAction == "Parent" || currentAction == "Index" ? "active" : "")">
+                    <a asp-controller="Dashboard" asp-action="Parent" class="sidebar-link @(currentController == "Dashboard" && (currentAction == "Parent" || currentAction == "Index") ? "active" : "")">
                         <i class="bi bi-grid-1x2-fill"></i>
                         <span>Dashboard</span>
                     </a>
@@ -219,7 +231,7 @@
                         <i class="bi bi-award-fill"></i>
                         <span>Kết quả học tập</span>
                     </a>
-                    <a href="#attendance" class="sidebar-link">
+                    <a asp-controller="Attendance" asp-action="Index" class="sidebar-link @(currentController == "Attendance" ? "active" : "")">
                         <i class="bi bi-calendar-check"></i>
                         <span>Chuyên cần hàng ngày</span>
                     </a>
@@ -234,7 +246,7 @@
                 }
                 else
                 {
-                    <a asp-controller="Dashboard" asp-action="Index" class="sidebar-link active">
+                    <a asp-controller="Dashboard" asp-action="Index" class="sidebar-link @(isDashboardPage ? "active" : "")">
                         <i class="bi bi-grid-1x2-fill"></i>
                         <span>Dashboard</span>
                     </a>
@@ -265,10 +277,10 @@
 
                 <div class="topbar-right">
                     <!-- Notifications -->
-                    <button class="notification-btn" title="Thông báo">
+                    <a asp-controller="Notifications" asp-action="Index" class="notification-btn" title="Thông báo" aria-label="Thông báo">
                         <i class="bi bi-bell"></i>
-                        <span class="notification-badge-dot">5</span>
-                    </button>
+                        <span id="notification-count" class="notification-badge-dot" data-realtime="@(User.IsInRole("PARENT") ? "true" : "false")" hidden>0</span>
+                    </a>
 
                     <!-- User Profile Dropdown -->
                     <div class="dropdown">
@@ -317,6 +329,7 @@
 
             <!-- Main Page Content -->
             <main class="dashboard-content">
+                <div id="notification-live" class="alert alert-info d-none" role="status" aria-live="polite"></div>
                 @RenderBody()
             </main>
         </div>
@@ -325,6 +338,8 @@
     <!-- Scripts -->
     <script src="~/lib/jquery/dist/jquery.min.js"></script>
     <script src="~/lib/bootstrap/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="~/lib/signalr/signalr.min.js" asp-append-version="true"></script>
+    <script src="~/js/notifications.js" asp-append-version="true"></script>
     <script>
         // Sidebar Toggle for Mobile / Responsive
         const sidebarToggle = document.getElementById('sidebarToggle');

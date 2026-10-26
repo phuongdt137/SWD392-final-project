@@ -1,0 +1,8 @@
+@model HSMS.MVC.DTOs.Attendance.AttendanceSummary
+<div class="attendance-stats">
+    <div><strong>@(Model.Rate.HasValue ? Model.Rate.Value.ToString("0.#") + "%" : "—")</strong><span>Tham dự hôm nay · @(Model.Recorded == 0 ? "Chưa có dữ liệu" : Model.Recorded + " lượt đã ghi")</span></div>
+    <div><strong>@Model.Absent</strong><span>Tiết vắng không phép</span></div>
+    <div><strong>@Model.Excused</strong><span>Tiết vắng có phép</span></div>
+    <div><strong>@Model.Late</strong><span>Tiết đi muộn</span></div>
+</div>
+<a asp-controller="Attendance" asp-action="History" class="small d-inline-block mt-2">Tra cứu chuyên cần</a>

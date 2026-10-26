@@ -1,0 +1,77 @@
+@using HSMS.MVC.ViewModels.Attendance
+@using HSMS.MVC.DTOs.Attendance
+@model AttendanceIndex
+@{
+    Layout = "_DashboardLayout"; ViewData["Title"] = "Quản lý điểm danh";
+    var f = Model.Filter;
+    string PageUrl(int page) => Url.Action("Index", new { Date = Model.Date.ToString("yyyy-MM-dd"), f.GradeLevelId, f.ClassId, f.SubjectId, f.TeacherId, f.Status, f.Query, Page = page })!;
+    var returnUrl = PageUrl(f.Page);
+}
+<div class="attendance-page attendance-management">
+    <header class="schedule-heading">
+        <div><h1>Quản lý điểm danh</h1><p>Lọc theo ngày, khối và lớp để tìm nhanh tiết học cần xử lý.</p></div>
+        <a asp-action="History" class="btn btn-outline-primary"><i class="bi bi-clock-history" aria-hidden="true"></i> Tra cứu chuyên cần</a>
+    </header>
+    <form method="get" class="schedule-filters" id="attendance-schedule-filters" data-attendance-filter-form>
+        <div><label for="schedule-date">Ngày học</label><input id="schedule-date" name="Date" type="date" value="@Model.Date.ToString("yyyy-MM-dd")" class="form-control" required /></div>
+        <div><label for="schedule-grade">Khối</label><select id="schedule-grade" name="GradeLevelId" class="form-select" data-reset="ClassId" data-auto-submit="true"><option value="">Tất cả khối</option>
+            @foreach (var c in Model.Choices.Grades) { <option value="@c.Id" selected="@(f.GradeLevelId == c.Id)">@c.Name</option> }</select></div>
+        <div><label for="schedule-class">Lớp</label><select id="schedule-class" name="ClassId" class="form-select"><option value="">Tất cả lớp</option>
+            @foreach (var c in Model.Choices.Classes) { <option value="@c.Id" selected="@(f.ClassId == c.Id)">@c.Name</option> }</select></div>
+        <div><label for="schedule-status">Tình trạng</label><select id="schedule-status" name="Status" class="form-select">
+            <option value="">Tất cả tình trạng</option><option value="COMPLETED" selected="@(f.Status == "COMPLETED")">Đã điểm danh</option><option value="PENDING" selected="@(f.Status == "PENDING")">Chưa điểm danh</option><option value="UPCOMING" selected="@(f.Status == "UPCOMING")">Chưa đến giờ</option><option value="LOCKED" selected="@(f.Status == "LOCKED")">Đã khóa</option>
+        </select></div>
+        <div><label for="schedule-subject">Môn học</label><select id="schedule-subject" name="SubjectId" class="form-select"><option value="">Tất cả môn học</option>
+            @foreach (var c in Model.Choices.Subjects) { <option value="@c.Id" selected="@(f.SubjectId == c.Id)">@c.Name</option> }</select></div>
+        <div><label for="schedule-teacher">Giáo viên</label><select id="schedule-teacher" name="TeacherId" class="form-select"><option value="">Tất cả giáo viên</option>
+            @foreach (var c in Model.Choices.Teachers) { <option value="@c.Id" selected="@(f.TeacherId == c.Id)">@c.Name</option> }</select></div>
+        <div><label for="schedule-query">Từ khóa</label><input id="schedule-query" name="Query" value="@f.Query" maxlength="100" placeholder="Tìm lớp, môn hoặc giáo viên" class="form-control" /></div>
+        <div class="schedule-filter-actions"><button class="btn btn-primary"><i class="bi bi-funnel" aria-hidden="true"></i> Lọc kết quả</button><a asp-action="Index" asp-route-date="@Model.Date.ToString("yyyy-MM-dd")" class="btn btn-outline-secondary">Bỏ lọc</a></div>
+    </form>
+    <div class="attendance-stats schedule-stats">
+        <div><span>Lớp có lịch</span><strong>@Model.Classes</strong></div>
+        <div><span>Tổng số tiết</span><strong>@Model.Total</strong></div>
+        <div><span>Đã điểm danh</span><strong class="text-success">@Model.Completed</strong></div>
+        <div><span>Cần hoàn tất</span><strong class="text-warning">@Model.Pending</strong></div>
+    </div>
+    <section class="schedule-results" aria-labelledby="schedule-results-title">
+        <div class="schedule-results-heading"><h2 id="schedule-results-title">Lịch điểm danh · @Model.Date.ToString("dd/MM/yyyy")</h2><span>@Model.Total tiết phù hợp · @Model.Classes lớp</span></div>
+        @if (Model.Lessons.Count == 0)
+        {
+            <div class="review-empty review-empty-inline"><i class="bi bi-search" aria-hidden="true"></i><h3>Không tìm thấy tiết học phù hợp</h3><p>Hãy đổi ngày học hoặc bỏ bớt bộ lọc để xem các lớp khác.</p></div>
+        }
+        else
+        {
+            <div class="schedule-table-scroll" tabindex="0" role="region" aria-label="Lịch điểm danh theo lớp">
+                <table class="schedule-table">
+                    <thead><tr><th scope="col">Tiết / Giờ học</th><th scope="col">Môn học</th><th scope="col">Giáo viên</th><th scope="col">Phòng</th><th scope="col">Đã ghi nhận</th><th scope="col">Tình trạng</th><th scope="col">Thao tác</th></tr></thead>
+                    @foreach (var group in Model.Lessons.GroupBy(x => x.Entry.TeachingAssignment.ClassId))
+                    {
+                        var classroom = group.First().Entry.TeachingAssignment.Class;
+                        <tbody>
+                            <tr class="schedule-class-heading"><th scope="rowgroup" colspan="7"><i class="bi bi-people" aria-hidden="true"></i><span>@classroom.ClassName</span><small>@classroom.GradeLevel.LevelName · @group.First().Students học sinh</small></th></tr>
+                            @foreach (var row in group)
+                            {
+                                var e = row.Entry;
+                                var badgeClass = row.Status switch { "LOCKED" => "bg-secondary", "UPCOMING" => "bg-info text-dark", "COMPLETED" => "bg-success", _ => "bg-warning text-dark" };
+                                var progress = row.Students == 0 ? 0 : Math.Min(100, (int)(100m * row.Recorded / row.Students));
+                                <tr>
+                                    <td><strong>Tiết @e.TimeSlot.PeriodNo</strong><small>@e.TimeSlot.StartTime.ToString(@"hh\:mm") – @e.TimeSlot.EndTime.ToString(@"hh\:mm")</small></td>
+                                    <td>@e.TeachingAssignment.Subject.SubjectName</td><td>@e.TeachingAssignment.Employee.FullName</td><td>@(e.Room.RoomName ?? e.Room.RoomCode)</td>
+                                    <td><span>@row.Recorded / @row.Students</span><progress class="schedule-progress" max="100" value="@progress" aria-label="Đã ghi nhận @row.Recorded trên @row.Students học sinh"></progress></td>
+                                    <td><span class="badge @badgeClass">@row.StatusLabel</span></td>
+                                    <td><a asp-action="Mark" asp-route-timetableEntryId="@e.Id" asp-route-date="@Model.Date.ToString("yyyy-MM-dd")" asp-route-returnUrl="@returnUrl" class="btn btn-sm @(row.CanWrite ? "btn-primary" : "btn-outline-secondary")">@(row.CanWrite ? (row.Completed ? "Chỉnh sửa" : "Điểm danh") : "Xem bảng")</a></td>
+                                </tr>
+                            }
+                        </tbody>
+                    }
+                </table>
+            </div>
+            <footer class="review-pagination">
+                <span>Hiển thị @((f.Page - 1) * AttendanceScheduleFilter.PageSize + 1)–@Math.Min(f.Page * AttendanceScheduleFilter.PageSize, Model.Total) / @Model.Total tiết · Trang @f.Page/@Model.Pages</span>
+                <partial name="_AttendancePagination" model="@(new AttendancePagination(f.Page, Model.Pages, PageUrl))" />
+            </footer>
+        }
+    </section>
+</div>
+@section Scripts { <script src="~/js/attendance-review.js" asp-append-version="true"></script> }
