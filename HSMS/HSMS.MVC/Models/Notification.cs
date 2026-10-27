@@ -9,14 +9,17 @@ public class Notification
 {
     public long Id { get; private set; }
     public long? SenderId { get; private set; }
+    // Người nhận là User ID để tra cứu hộp thông báo và email, không phải Customer/Employee ID.
     public long RecipientId { get; private set; }
     public string Title { get; private set; } = null!;
     public string Content { get; private set; } = null!;
     public bool IsRead { get; private set; }
     public DateTime SentAt { get; private set; }
     public DateTime? ReadAt { get; private set; }
+    // Liên kết lần thay đổi Attendance; thông báo được lưu cùng transaction với kết quả và audit.
     public long? AttendanceAuditLogId { get; private set; }
     public virtual AttendanceAuditLog? AttendanceAuditLog { get; private set; }
+    // Trạng thái xử lý hàng chờ email khác IsRead; dùng lại các cột gửi nền đã có.
     public DateTime? DispatchedAt { get; private set; }
     public int DeliveryAttempts { get; private set; }
     public DateTime? NextDeliveryAttemptAt { get; private set; }
@@ -50,6 +53,7 @@ public class Notification
         SentAt = DateTime.UtcNow;
     }
 
+    // Chỉ cập nhật trạng thái entity; SMTP được xử lý bởi dispatcher sau commit.
     public bool SendNotification()
     {
         SentAt = DateTime.UtcNow;
@@ -57,6 +61,7 @@ public class Notification
         return true;
     }
 
+    // Chỉ đánh dấu đã đọc khi thao tác trong ứng dụng, không phụ thuộc gửi/đọc email.
     public bool MarkAsRead()
     {
         IsRead = true;
@@ -64,15 +69,18 @@ public class Notification
         return true;
     }
 
+    // Gắn nguồn thay đổi và lịch gửi đầu tiên; Navigation cho phép EF nối audit mới chưa có ID.
     public void AttachAttendance(AttendanceAuditLog audit, string link, DateTime utcNow)
     {
         AttendanceAuditLog = audit; AttendanceAuditLogId = audit.Id;
         Link = link; SentAt = utcNow; NextDeliveryAttemptAt = utcNow;
     }
+    // Kết thúc xử lý hàng chờ (đã gửi hoặc không còn được nhận); MessageLog lưu kết quả chi tiết.
     public void Delivered(DateTime utcNow)
     {
         DispatchedAt = utcNow; DeliveryAttempts++; NextDeliveryAttemptAt = null;
     }
+    // Lỗi gửi được hẹn lại theo thời gian tăng dần, tối đa một giờ giữa các lần thử.
     public void RetryLater(DateTime utcNow)
     {
         DeliveryAttempts++;

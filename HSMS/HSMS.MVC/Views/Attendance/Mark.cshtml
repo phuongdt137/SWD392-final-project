@@ -1,8 +1,10 @@
 @using HSMS.MVC.Common
+@* Bảng ghi/sửa cả lớp; nhận SheetAsync và gửi biểu mẫu đến AttendanceController.Save. *@
 @model HSMS.MVC.ViewModels.Attendance.AttendanceSheet
 @{
     Layout = "_DashboardLayout"; ViewData["Title"] = "Bảng điểm danh";
     var e = Model.Entry;
+    // Mốc UTC có hậu tố Z để JavaScript so sánh đúng hạn 00h Việt Nam.
     var cutoff = SchoolTime.LockUtc(Model.Date).ToString("yyyy-MM-ddTHH:mm:ssZ");
     var returnUrl = ViewData["AttendanceReturnUrl"] as string ?? Url.Action("Index", new { date = Model.Date.ToString("yyyy-MM-dd") });
 }
@@ -25,11 +27,13 @@
     @if (!Model.CanWrite) { <div class="alert alert-info">@Model.ReadOnlyReason</div> }
     @if (Model.Attempt != null) { <p><a asp-action="Mark" asp-route-timetableEntryId="@e.Id" asp-route-date="@Model.Date.ToString("yyyy-MM-dd")" asp-route-returnUrl="@returnUrl">Tải lại dữ liệu hiện hành</a> để đối chiếu nếu có xung đột.</p> }
     <div id="attendance-lock-message" class="alert alert-info d-none" role="status">Đã đến hạn khóa. Bảng chuyển sang chế độ chỉ xem.</div>
+    @* Form Tag Helper tạo mã chống giả mạo; token/Version phát hiện dữ liệu cũ, không cấp quyền. *@
     <form asp-action="Save" method="post" id="attendance-form" data-cutoff="@cutoff" data-can-edit-after-deadline="@(Model.CanEditAfterDeadline ? "true" : "false")">
         <input type="hidden" name="TimetableEntryId" value="@e.Id" />
         <input type="hidden" name="ReturnUrl" value="@returnUrl" />
         <input type="hidden" name="Date" value="@Model.Date.ToString("yyyy-MM-dd")" />
         <input type="hidden" name="RosterToken" value="@(Model.Attempt?.RosterToken ?? Model.RosterToken)" />
+        @* Khóa giao diện theo CanWrite; sửa HTML vẫn phải qua kiểm tra quyền tại Service. *@
         <fieldset disabled="@(!Model.CanWrite)" id="attendance-fields">
             <div class="d-flex justify-content-between align-items-center gap-3 mb-3">
                 <span>@Model.Students.Count học sinh</span>
@@ -39,6 +43,7 @@
                 <thead><tr><th>Học sinh</th><th>Kết quả</th><th>Đơn nghỉ được duyệt</th><th>Ghi chú</th><th></th></tr></thead>
                 <tbody>@for (var i = 0; i < Model.Students.Count; i++) {
                     var row = Model.Students[i];
+                    // POST lỗi thì giữ dữ liệu Attempt; không thay Version cũ bằng phiên bản mới từ database.
                     var attempted = Model.Attempt?.Rows.FirstOrDefault(x => x.CustomerId == row.Student.Id);
                     var status = attempted?.Status ?? row.Record?.Status;
                     var leaveId = attempted != null ? attempted.LeaveRequestId : row.Record?.LeaveRequestId;
@@ -66,6 +71,7 @@
             }
         </fieldset>
     </form>
+    @* Giữ kết quả lệch danh sách để đối chiếu, không tự xóa lịch sử. *@
     @if (Model.HistoricalRecords.Count > 0) {
         <div class="card p-3 mt-4"><h2 class="h5">Kết quả đã lưu cần đối chiếu danh sách</h2>
         @foreach (var r in Model.HistoricalRecords) { <p>@r.Customer.FullName · @AttendanceStatuses.Label(r.Status) · <a asp-action="Audit" asp-route-id="@r.Id">Nhật ký</a></p> }</div>

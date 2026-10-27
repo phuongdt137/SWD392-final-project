@@ -12,6 +12,7 @@ public static partial class DbSeeder
     {
         await using var transaction = await db.Database.BeginTransactionAsync();
         var today = time.Today;
+        // Chọn năm học/học kỳ mẫu bao phủ ngày Việt Nam hiện tại để có thể mở luồng demo ngay.
         var startYear = today.Month >= 8 ? today.Year : today.Year - 1;
         var yearStart = new DateTime(startYear, 8, 1);
         var yearEnd = new DateTime(startYear + 1, 7, 31);
@@ -22,12 +23,14 @@ public static partial class DbSeeder
         var yearCode = $"ATT-DEMO-{startYear}-{startYear + 1}";
         var passwordHash = BCrypt.Net.BCrypt.HashPassword(DefaultPassword);
 
+        // Tái sử dụng dữ liệu theo khóa nhận diện, chỉ tạo khi thiếu; không ghi đè kết quả có sẵn.
         async Task<T> GetOrAdd<T>(DbSet<T> set, Expression<Func<T, bool>> predicate, Func<T> create) where T : class
         {
             var item = await set.SingleOrDefaultAsync(predicate);
             if (item != null) return item;
             item = create(); set.Add(item); await db.SaveChangesAsync(); return item;
         }
+        // Tạo tài khoản demo khi thiếu và bổ sung role; không đặt lại mật khẩu tài khoản đã tồn tại.
         async Task<User> DemoUser(string username, string name, string roleCode)
         {
             var user = await GetOrAdd(db.Users, u => u.Username == username,
@@ -37,6 +40,7 @@ public static partial class DbSeeder
             { db.UserRoles.Add(new UserRole(user.Id, role.Id)); await db.SaveChangesAsync(); }
             return user;
         }
+        // Dùng hồ sơ Customer chung cho học sinh/phụ huynh; chỉ gắn phụ huynh nếu chưa có liên kết.
         async Task<Customer> Profile(User user, string? code = null, long? parentId = null)
         {
             var customer = await GetOrAdd(db.Customers, c => c.UserId == user.Id,
@@ -64,6 +68,7 @@ public static partial class DbSeeder
         await GetOrAdd(db.Employees, e => e.UserId == adminUser.Id,
             () => new Employee(adminUser.Id, "ATT-DEMO-ADMIN", department: "Quản trị", position: "ADMIN"));
 
+        // Tạo ngữ cảnh học vụ mẫu bằng các bảng sẵn có: năm, kỳ, lớp, học sinh, môn và phân công.
         var year = await GetOrAdd(db.AcademicYears, y => y.YearCode == yearCode, () => new AcademicYear(yearCode, yearStart, yearEnd));
         var semester = await GetOrAdd(db.Semesters, s => s.SemesterCode == termCode,
             () => new Semester(termCode, "Học kỳ mẫu " + (firstTerm ? "1" : "2"), termStart, termEnd, year.Id));
@@ -100,6 +105,7 @@ public static partial class DbSeeder
             () => { var leave = new LeaveRequest(second.Id, parent.Id, "Đơn mẫu: nghỉ ốm đã được duyệt", today, today); leave.Approve(teacher, "Dữ liệu mẫu để thử trạng thái vắng có phép"); return leave; });
         await GetOrAdd(db.LeaveRequests, l => l.StudentCustomerId == fourth.Id && l.StartDate == today && l.EndDate == today && l.Reason == "Đơn mẫu: đang chờ duyệt",
             () => new LeaveRequest(fourth.Id, secondParent.Id, "Đơn mẫu: đang chờ duyệt", today, today));
+        // Hoàn tất dữ liệu demo trong một transaction; hàm không tự ghi kết quả điểm danh.
         await transaction.CommitAsync();
     }
 }

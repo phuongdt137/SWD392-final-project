@@ -9,6 +9,7 @@ namespace HSMS.MVC.Migrations
     public partial class AddAttendanceModule : Migration
     {
         /// <inheritdoc />
+        // Mở rộng bảng kết quả/thông báo sẵn có và thêm audit; áp schema chỉ khi chạy migration.
         protected override void Up(MigrationBuilder migrationBuilder)
         {
             migrationBuilder.AddColumn<long>(
@@ -62,6 +63,7 @@ namespace HSMS.MVC.Migrations
                 nullable: false,
                 defaultValueSql: "NEWID()");
 
+            // Audit giữ người thực hiện, giá trị trước/sau và lần ghi đầu.
             migrationBuilder.CreateTable(
                 name: "AttendanceAuditLog",
                 columns: table => new
@@ -124,6 +126,7 @@ namespace HSMS.MVC.Migrations
                 table: "AttendanceRecord",
                 column: "UpdatedByEmployeeId");
 
+            // Ràng buộc database bảo vệ bốn trạng thái và đơn nghỉ của EXCUSED.
             migrationBuilder.AddCheckConstraint(
                 name: "CK_AttendanceRecord_Status",
                 table: "AttendanceRecord",
@@ -155,6 +158,7 @@ namespace HSMS.MVC.Migrations
         }
 
         /// <inheritdoc />
+        // Hoàn tác schema theo thứ tự gỡ liên kết rồi xóa bảng/cột/chỉ mục đã thêm.
         protected override void Down(MigrationBuilder migrationBuilder)
         {
             migrationBuilder.DropForeignKey(

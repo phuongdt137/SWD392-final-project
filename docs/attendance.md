@@ -5,10 +5,10 @@ Triển khai theo `attendance-plan.txt` ngày 26/10/2026, trong ứng dụng `HS
 ## Tận dụng thành phần sẵn có
 
 - Giữ ASP.NET Core MVC/Razor, EF Core 8, SQL Server và luồng Controller → Service → Repository.
-- Mở rộng `AttendanceRecord`, `Notification`, `AppDbContext`; tái sử dụng học sinh/phụ huynh trong `Customer`, hồ sơ `Employee`, vai trò, lớp, lịch sử tham gia lớp, phân công, thời khóa biểu và đơn nghỉ.
+- Mở rộng `AttendanceRecord`, `Notification`, `AppDbContext`; tái sử dụng học sinh/phụ huynh trong `Customer`, hồ sơ `Employee`, vai trò, lớp, lịch sử tham gia lớp, phân công, thời khóa biểu và đơn nghỉ. Dùng bảng `MessageLog` hiện có cho trạng thái gửi email và `IEmailService`/SMTP hiện có để gửi thư; không thêm bảng email hay migration cho thay đổi này.
 - `AttendanceRepository` kế thừa `GenericRepository<AttendanceRecord>`; `CurrentUserService` dùng `IUserRepository` hiện có.
 - Tiếp tục trả `ServiceResult`/`AppError`, dùng dashboard/layout, Bootstrap và jQuery sẵn có.
-- Giữ Session cho giao diện, bổ sung cookie authentication để bảo vệ cả MVC và SignalR. Vai trò hiện hành được kiểm tra từ database ở mỗi request; UserId được phân giải sang EmployeeId/CustomerId.
+- Chỉ dùng Session `CurrentUser` như luồng đăng nhập gốc, không phát hành cookie xác thực. `SessionAuthenticationHandler` dựng `HttpContext.User` trong từng request để tiếp tục dùng `[Authorize]`/`IsInRole`; `CurrentUserService` đọc Session rồi kiểm tra trạng thái, vai trò và hồ sơ trong database. Cookie mã phiên ASP.NET Core và anti-forgery vẫn được dùng; TempData chuyển sang lưu trong Session.
 - Chỉ thêm bảng nghiệp vụ `AttendanceAuditLog`. Không tạo bảng học sinh, lớp, đơn nghỉ, thông báo hoặc phiên điểm danh thay thế các bảng đã có.
 
 ## Chức năng
@@ -19,8 +19,7 @@ Triển khai theo `attendance-plan.txt` ngày 26/10/2026, trong ứng dụng `HS
 - `/Attendance/History`: lọc ngày, học sinh, lớp, môn, trạng thái; phân trang 30 kết quả; thống kê dùng cùng bộ lọc và phạm vi quyền.
 - Học sinh và phụ huynh xem bố cục riêng tại `/Attendance/History`: chọn học kỳ, lớp/môn và bảng lịch từng tiết gồm ngày, giờ, phòng, giáo viên, lớp, trạng thái, ghi chú. Phụ huynh chọn từng con được liên kết; đổi con sẽ đặt lại học kỳ/môn. Bảng có cả tiết chưa ghi nhận và tiết sắp tới, phân trang 30 tiết; không quy các tiết này thành vắng.
 - `/Attendance/Audit?id=…`: nhân viên có phạm vi phù hợp xem trước/sau của trạng thái, ghi chú, đơn nghỉ, người sửa, lý do và thời điểm.
-- `/Notifications`, `/Notifications/Feed`, `POST /Notifications/Read`: hộp thông báo cá nhân, số chưa đọc và đánh dấu đã đọc. Feed hiển thị 100 thông báo gần nhất.
-- `/hubs/notifications`: SignalR dành cho phụ huynh đã xác thực. Client không có API chọn nhóm hoặc người nhận.
+- `/Notifications`, `POST /Notifications/Read`: hộp thông báo HTML cá nhân, 100 thông báo gần nhất và đánh dấu đã đọc. Chuông lấy số chưa đọc tại server khi mở/tải lại trang; không có polling, pop-up hay kết nối real-time. Đã gỡ endpoint `/Notifications/Feed`, Hub và thư viện SignalR.
 - Menu, nút điểm danh, chuông thông báo và các chỉ số chuyên cần trong dashboard dùng dữ liệu thật.
 
 ## Quy tắc được bảo vệ tại server
@@ -39,11 +38,23 @@ Triển khai theo `attendance-plan.txt` ngày 26/10/2026, trong ứng dụng `HS
 
 ## Thông báo
 
-Kết quả, audit và Notification được ghi trong cùng transaction. Mỗi audit có tối đa một thông báo phụ huynh. Sau commit, dispatcher nền mới gửi SignalR. Khi gửi lỗi, Notification còn trong database và được thử lại với thời gian giãn dần. Khi ứng dụng khởi động lại, dispatcher tiếp tục quét hàng đợi.
+`AuthController` được khôi phục theo commit `e401754` trước Attendance: đăng nhập ghi Session, đăng xuất xóa Session; không có `SignInAsync`/`SignOutAsync` và không tự chuyển ADMIN sang Attendance. Không cung cấp tùy chọn ghi nhớ đăng nhập lâu dài. Session hết hạn hoặc bị xóa: trang được bảo vệ chuyển về Login, POST được bảo vệ trả 401; đăng nhập lại mới truy cập được. Thời gian Session idle vẫn là 2 giờ. Không có request thông báo tự động gia hạn phiên trong nền. Khi khởi động lại ứng dụng, kho Session trong bộ nhớ bị mất và người dùng phải đăng nhập lại.
 
-Thông báo được tạo khi lần đầu vắng không phép/đi muộn, chuyển sang hoặc giữa hai trạng thái này, và khi sửa cảnh báo sang có mặt/có phép. Chỉ sửa ghi chú không lặp cảnh báo. Phụ huynh offline xem lại feed; client đối chiếu Notification.Id và tải lại số chưa đọc sau kết nối lại. Nếu tài khoản, vai trò hoặc quan hệ phụ huynh–con không còn hợp lệ, dispatcher không gửi dữ liệu cũ cho người đó.
+Kết quả, audit, Notification và MessageLog email được ghi trong cùng transaction. Mỗi audit có tối đa một thông báo phụ huynh. Sau commit, dispatcher nền mới dùng `IEmailService.SendAttendanceEmailAsync` gửi SMTP; request điểm danh không chờ SMTP. Thông báo trong ứng dụng tồn tại độc lập, kể cả khi email lỗi.
 
-Không có phụ huynh hoạt động: kết quả vẫn lưu và giao diện báo số cảnh báo chưa có người nhận. Phạm vi là thông báo trong ứng dụng, chưa bao gồm SMS/email/push thiết bị. Thiết kế dispatcher hiện tại dành cho **một máy chủ**; nhiều máy chủ cần điều phối gửi và hạ tầng SignalR dùng chung.
+MessageLog dùng kênh `EMAIL`, template `ATTENDANCE` và các trạng thái `QUEUED` → `SENDING` → `SENT`; lỗi chuyển `FAILED`, có `RetryCount` và hẹn lại bằng các cột gửi nền sẵn có của Notification. `SENT` nghĩa SMTP đã chấp nhận thư, không xác nhận phụ huynh đã nhận hoặc đọc. Hộp thông báo hiển thị trạng thái email riêng với trạng thái đã đọc. Khi ứng dụng khởi động lại, dispatcher tiếp tục quét hàng chờ; nếu dừng sau lúc SMTP nhận nhưng trước khi ghi trạng thái, có thể gửi lặp khi thử lại. Các thông báo cũ không có MessageLog email không bị gửi bù hàng loạt.
+
+Thông báo và email được tạo khi lần đầu vắng không phép/đi muộn, chuyển sang hoặc giữa hai trạng thái này, và khi sửa cảnh báo sang có mặt/có phép. Chỉ sửa ghi chú hoặc lưu cùng nội dung không tạo thêm email. Phụ huynh mở lại hộp thông báo để xem các mục mới. Nếu tài khoản, vai trò hoặc quan hệ phụ huynh–con không còn hợp lệ, dispatcher không gửi dữ liệu cũ. Địa chỉ nhận lấy từ `User.Email` hiện tại của phụ huynh và được cập nhật vào MessageLog trước mỗi lần gửi.
+
+Không có phụ huynh hoạt động: kết quả vẫn lưu và giao diện báo số cảnh báo chưa có người nhận. Phạm vi là thông báo trong ứng dụng và email, chưa có SMS/push thiết bị. Dispatcher hiện tại dành cho **một máy chủ**; nhiều máy chủ cần điều phối việc nhận và gửi hàng chờ.
+
+### Cấu hình email
+
+Tận dụng `EmailSettings` đang có: `SmtpHost`, `SmtpPort`, `SenderEmail`, `SenderPassword`, `SenderName`, `EnableSsl`. Luồng đặt lại mật khẩu tiếp tục sử dụng cùng dịch vụ gửi. Cấu hình SMTP sai/thiếu hoặc địa chỉ nhận không hợp lệ sẽ được ghi lỗi và thử lại cho Attendance, không bị coi là đã gửi thành công.
+
+`EmailSettings:ApplicationUrl` là URL công khai để tạo liên kết tra cứu trong email; Development mặc định `http://localhost:5105`, khi triển khai đặt URL HTTPS thực tế (có thể dùng biến môi trường `EmailSettings__ApplicationUrl`). Nếu chưa cấu hình URL hợp lệ, email chỉ hướng dẫn đăng nhập, không tạo liên kết từ Host header. Tên, nội dung và đường dẫn được mã hóa HTML trước khi đưa vào thư.
+
+Các tài khoản demo có email đuôi `.invalid` chỉ nhận thông báo trong ứng dụng; email được ghi lỗi/chờ thử lại cho đến khi hồ sơ có địa chỉ thực tế hợp lệ. Để thử gửi thật, cập nhật email đúng cho tài khoản phụ huynh và dùng SMTP đã cấu hình. Không tự gửi thư thử ra ngoài trong quá trình sửa mã.
 
 ## Cài đặt và chạy
 
@@ -85,8 +96,8 @@ Mật khẩu ban đầu của các tài khoản mẫu: `Password@123` (tái sử
 1. Từ thư mục `HSMS`, chạy `dotnet run --project HSMS.MVC --launch-profile http`; mở `http://localhost:5105`.
 2. Đăng nhập `teacher`, mở **Điểm danh**, chọn ngày hôm nay. Lớp mẫu có Toán và Ngữ văn, tổng cộng 4 tiết mỗi ngày. Tiết 1 bắt đầu 00:00 là tiết riêng để trải nghiệm bất kỳ giờ nào; các tiết còn lại bắt đầu 07:00, 09:00, 13:00.
 3. Mở **Tiết 1**, chọn đủ kết quả cho 4 học sinh. Có thể chọn Long **Vắng không phép**, Linh **Vắng có phép** cùng đơn đã duyệt, Khang **Đi muộn**, Hân **Có mặt**. Không để trống dòng nào.
-4. Trước khi lưu, mở trình duyệt khác hoặc cửa sổ ẩn danh, đăng nhập `parent`. Giữ cửa sổ này mở để quan sát thông báo realtime cho Long. `attendance.parent2` sẽ nhận thông báo cho Khang, không nhận dữ liệu của Long/Linh.
-5. Lưu từ cửa sổ giáo viên, sau đó mở **Tra cứu chuyên cần**, **Nhật ký** hoặc chuông thông báo. Phụ huynh đang offline xem lại thông báo khi đăng nhập.
+4. Trước khi lưu, mở trình duyệt khác hoặc cửa sổ ẩn danh, đăng nhập `parent`. `parent` nhận thông báo cho Long; `attendance.parent2` nhận thông báo cho Khang, không nhận dữ liệu của Long/Linh. Muốn nhận email thì hồ sơ phụ huynh cần địa chỉ thực tế hợp lệ.
+5. Lưu từ cửa sổ giáo viên, sau đó mở **Tra cứu chuyên cần**, **Nhật ký** hoặc chuông thông báo. Phụ huynh tải lại trang/mở hộp thông báo để xem mục mới và trạng thái gửi email; không có cập nhật real-time.
 6. Sửa Long thành **Có mặt**, nhập lý do và lưu để thử thông báo điều chỉnh. Dùng `attendance.admin` và chọn ngày hôm qua để thử quyền sửa sau mốc khóa; cùng ngày đó tài khoản `teacher` chỉ được xem.
 
 Mỗi lần mở ứng dụng trong Development, seeder bổ sung đơn nghỉ đã duyệt cho Linh và đơn đang chờ cho Hân vào ngày hiện tại nếu chưa có. Đơn đang chờ không được gợi ý để áp dụng EXCUSED. Seeder không điền trước AttendanceRecord/Notification, nên bạn tự trải nghiệm toàn bộ luồng lưu. Kết quả do bạn lưu vẫn còn sau khi khởi động lại; chọn tiết khác hoặc ngày mới để thử lượt chưa điểm danh.
@@ -99,4 +110,4 @@ Project `HSMS.MVC.Tests`, các file mã kiểm thử, kết quả kiểm thử v
 
 Giao diện tạo/duyệt đơn nghỉ, lịch nghỉ lễ/tiết hủy/dạy thay, xuất Excel/PDF, QR/GPS/nhận diện khuôn mặt và triển khai nhiều máy chủ vẫn cần yêu cầu riêng. Đơn nghỉ được gợi ý trên bảng, không tự sửa kết quả khi duyệt muộn hoặc sau hạn khóa.
 
-Tham khảo kỹ thuật: [EF Core concurrency](https://learn.microsoft.com/en-us/ef/core/saving/concurrency), [transactions](https://learn.microsoft.com/en-us/ef/core/saving/transactions), [SignalR authentication](https://learn.microsoft.com/en-us/aspnet/core/signalr/authn-and-authz?view=aspnetcore-8.0).
+Tham khảo kỹ thuật: [EF Core concurrency](https://learn.microsoft.com/en-us/ef/core/saving/concurrency), [transactions](https://learn.microsoft.com/en-us/ef/core/saving/transactions), [SMTP SendMailAsync](https://learn.microsoft.com/en-us/dotnet/api/system.net.mail.smtpclient.sendmailasync?view=net-8.0).

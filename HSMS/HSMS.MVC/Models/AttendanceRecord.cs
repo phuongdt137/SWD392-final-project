@@ -2,10 +2,12 @@
 
 namespace HSMS.MVC.Models;
 
+// Kết quả của một học sinh trong một tiết học vào một ngày; chưa có bản ghi là chưa ghi nhận.
 public class AttendanceRecord
 {
     public long Id { get; private set; }
     public long CustomerId { get; private set; }
+    // Người ghi lần đầu được giữ riêng với người cập nhật gần nhất.
     public long RecordedByEmployeeId { get; private set; }
     public long? LeaveRequestId { get; private set; }
     public long TimetableEntryId { get; private set; }
@@ -15,6 +17,7 @@ public class AttendanceRecord
     public DateTime CreatedAt { get; private set; }
     public DateTime? UpdatedAt { get; private set; }
     public long? UpdatedByEmployeeId { get; private set; }
+    // Token chống ghi đè đồng thời: đổi sau mỗi lần cập nhật kết quả.
     public Guid Version { get; private set; } = Guid.NewGuid();
     public virtual Employee? UpdatedByEmployee { get; private set; }
 
@@ -23,8 +26,10 @@ public class AttendanceRecord
     public virtual LeaveRequest? LeaveRequest { get; private set; }
     public virtual TimetableEntry TimetableEntry { get; private set; } = null!;
 
+    // Constructor rỗng dành cho EF Core khôi phục entity từ database.
     protected AttendanceRecord() { }
 
+    // Tạo kết quả hợp lệ về dữ liệu cơ bản; Service chịu trách nhiệm quyền và danh sách lớp.
     public AttendanceRecord(long customerId, long timetableEntryId, long recordedByEmployeeId, DateTime attendanceDate, string status, string? comment = null, long? leaveRequestId = null, DateTime? createdAtUtc = null)
     {
         if (customerId <= 0)
@@ -52,6 +57,7 @@ public class AttendanceRecord
         CreatedAt = createdAtUtc ?? DateTime.UtcNow;
     }
 
+    // Ghi trạng thái không gắn đơn nghỉ; xóa liên kết đơn cũ khi chuyển khỏi EXCUSED.
     public void Mark(string status, string? comment = null)
     {
         status = AttendanceStatuses.Validate(status);
@@ -62,6 +68,7 @@ public class AttendanceRecord
         Version = Guid.NewGuid();
     }
 
+    // EXCUSED bắt buộc đơn thuộc đúng học sinh, đã duyệt và bao phủ ngày điểm danh.
     public void ApplyApprovedLeave(LeaveRequest request)
     {
         ArgumentNullException.ThrowIfNull(request);
@@ -80,6 +87,7 @@ public class AttendanceRecord
         Version = Guid.NewGuid();
     }
 
+    // Điểm vào của luồng ghi/sửa: áp quy tắc trạng thái rồi lưu người/thời điểm sửa và Version mới.
     public void RecordResult(string status, string? comment, LeaveRequest? leave, long employeeId, DateTime utcNow)
     {
         status = AttendanceStatuses.Validate(status);

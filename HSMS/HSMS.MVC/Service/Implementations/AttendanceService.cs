@@ -11,13 +11,17 @@ using Microsoft.EntityFrameworkCore;
 
 namespace HSMS.MVC.Service;
 
+// Luồng chính: Controller -> Service -> Repository -> AppDbContext -> SQL Server.
+// Service điều phối quyền, quy tắc nghiệp vụ và transaction của mỗi lần lưu.
 public sealed class AttendanceService(IAttendanceRepository repo, ICurrentUserService current, SchoolTime time,
     NotificationDispatchSignal dispatch, ILogger<AttendanceService> logger) : IAttendanceService
 {
+    // Lấy danh tính/vai trò từ server qua CurrentUserService, không nhận người ghi từ biểu mẫu.
     private async Task<CurrentUser> User(CancellationToken ct) => await current.GetAsync(ct) ??
         throw new AppError("Vui lòng đăng nhập lại.", "UNAUTHORIZED", ErrorType.Unauthorized);
     private static AppError Forbidden() => new("Bạn không có quyền truy cập bảng điểm danh này.", "FORBIDDEN", ErrorType.Forbidden);
     private static AppError Conflict() => new("Dữ liệu đã thay đổi. Vui lòng tải lại bảng và đối chiếu.", "ATTENDANCE_CONFLICT", ErrorType.Conflict);
+    // Ngày phải khớp thứ, hiệu lực lịch, học kỳ và năm học; khi ghi còn phải đang hoạt động.
     private static void ValidateLesson(TimetableEntry e, DateTime date, bool write)
     {
         var a = e.TeachingAssignment;
@@ -28,11 +32,14 @@ public sealed class AttendanceService(IAttendanceRepository repo, ICurrentUserSe
         if (write && (e.Status != "ACTIVE" || a.Status != "ACTIVE" || a.Class.Status != "ACTIVE"))
             throw new AppError("Lớp, phân công hoặc thời khóa biểu đã ngừng hoạt động.", "INACTIVE_LESSON");
     }
+    // Mỗi học sinh chỉ được xuất hiện một lần trong danh sách lớp tại ngày học.
     private static void ValidateRoster(List<StudentClass> roster)
     {
         if (roster.GroupBy(x => x.CustomerId).Any(g => g.Count() > 1))
             throw new AppError("Lịch sử tham gia lớp bị trùng khoảng ngày. Cần đối chiếu hồ sơ học vụ.", "OVERLAPPING_ENROLLMENT", ErrorType.Conflict);
     }
+    // Dấu vân tay lịch + danh sách lớp để phát hiện dữ liệu thay đổi từ lúc mở bảng đến lúc lưu.
+    // Token không thay thế việc kiểm tra quyền trên server.
     private static string RosterToken(TimetableEntry e, DateTime date, List<StudentClass> roster)
     {
         var value = $"{e.Id}|{date:yyyy-MM-dd}|{e.DayOfWeek}|{e.EffectiveFrom:O}|{e.EffectiveTo:O}|{e.Status}|" +
@@ -41,8 +48,10 @@ public sealed class AttendanceService(IAttendanceRepository repo, ICurrentUserSe
             string.Join(';', roster.OrderBy(x => x.Id).Select(x => $"{x.Id}:{x.CustomerId}:{x.JoinedAt:O}:{x.LeftAt:O}"));
         return Convert.ToHexString(SHA256.HashData(Encoding.UTF8.GetBytes(value)));
     }
+    // Tiện ích cho nơi chỉ truyền ngày, dùng chung luồng lọc lịch bên dưới.
     public Task<ServiceResult<AttendanceIndex>> IndexAsync(DateTime date, CancellationToken ct = default) =>
         IndexAsync(new AttendanceScheduleFilter { Date = date }, ct);
+    // Chuẩn hóa bộ lọc, áp phạm vi tài khoản và ghép trạng thái hiển thị cho từng tiết.
     public async Task<ServiceResult<AttendanceIndex>> IndexAsync(AttendanceScheduleFilter filter, CancellationToken ct = default)
     {
         try
@@ -70,6 +79,8 @@ public sealed class AttendanceService(IAttendanceRepository repo, ICurrentUserSe
         }
         catch (AppError e) { return ServiceResult<AttendanceIndex>.Failed(e); }
     }
+    // Đọc bảng: người dùng -> tiết học -> quyền/ngày -> danh sách lớp -> kết quả -> đơn nghỉ.
+    // GET chỉ đọc; CanWrite và ReadOnlyReason giúp View chọn chế độ chỉnh sửa/chỉ xem.
     public async Task<ServiceResult<AttendanceSheet>> SheetAsync(long entryId, DateTime date, CancellationToken ct = default)
     {
         try
@@ -88,6 +99,7 @@ public sealed class AttendanceService(IAttendanceRepository repo, ICurrentUserSe
             catch (AppError ex) { reason = ex.Description; }
             if (roster.Count == 0) reason = "Lớp chưa có học sinh trong ngày học này.";
             var ids = roster.Select(x => x.CustomerId).ToHashSet();
+            // Giữ kết quả cũ khi danh sách hiện tại khác lịch sử; yêu cầu đối chiếu trước khi sửa.
             var historical = records.Where(x => !ids.Contains(x.CustomerId)).ToList();
             if (historical.Count > 0) reason = "Danh sách đã thay đổi so với kết quả lưu. Cần đối chiếu hồ sơ; các kết quả cũ được giữ nguyên.";
             return ServiceResult<AttendanceSheet>.Success(new()
@@ -99,13 +111,17 @@ public sealed class AttendanceService(IAttendanceRepository repo, ICurrentUserSe
         }
         catch (AppError e) { return ServiceResult<AttendanceSheet>.Failed(e); }
     }
+    // Ghi mới và sửa dùng chung một luồng; kiểm tra toàn bộ biểu mẫu trước khi đổi entity.
     public async Task<ServiceResult<SaveAttendanceResult>> SaveAsync(SaveAttendanceDto input, CancellationToken ct = default)
     {
         try
         {
+            // 1. Transaction bao phủ kết quả, audit và thông báo. Lỗi trước commit được rollback
+            // khi await using giải phóng transaction; catch sau đó bỏ các entity đang theo dõi.
             await using var tx = await repo.BeginAsync(ct);
             var user = await User(ct);
             var date = input.Date.Date;
+            // 2. Đọc lại lịch/quyền/thời gian hiện tại, không tin trạng thái từ giao diện.
             var e = await repo.GetLessonAsync(input.TimetableEntryId, ct) ?? throw new AppError("Không tìm thấy tiết học.", "NOT_FOUND", ErrorType.NotFound);
             if (!AttendanceAccess.CanWrite(user, e)) throw Forbidden();
             ValidateLesson(e, date, true); time.EnsureWritable(date, e.TimeSlot.StartTime, AttendanceAccess.CanEditAfterDeadline(user));
@@ -114,6 +130,7 @@ public sealed class AttendanceService(IAttendanceRepository repo, ICurrentUserSe
             await EnsureEnrollment(e, date, roster, ct);
             if (roster.Count == 0) throw new AppError("Không thể điểm danh lớp rỗng.", "EMPTY_ROSTER");
             var ids = roster.Select(x => x.CustomerId).ToHashSet();
+            // 3. Danh sách nộp phải đúng, đủ, không trùng học sinh và khớp RosterToken lúc mở bảng.
             if (RosterToken(e, date, roster) != input.RosterToken || input.Rows == null || input.Rows.Count != ids.Count ||
                 input.Rows.Select(x => x.CustomerId).Distinct().Count() != ids.Count || input.Rows.Any(x => !ids.Contains(x.CustomerId)))
                 throw Conflict();
@@ -130,20 +147,25 @@ public sealed class AttendanceService(IAttendanceRepository repo, ICurrentUserSe
                     throw new AppError("Đơn nghỉ cần được duyệt, đúng học sinh và bao phủ ngày học.", "INVALID_APPROVED_LEAVE");
                 if (row.Status != AttendanceStatuses.Excused) row.LeaveRequestId = null;
             }
+            // 4. Chỉ lấy dòng thực sự đổi; lưu cùng nội dung không tạo thêm audit hay thông báo.
             bool Changed(AttendanceInput row, AttendanceRecord? record) => record == null ||
                 record.Status != row.Status || record.Comment != row.Comment || record.LeaveRequestId != row.LeaveRequestId;
             var changes = input.Rows.Where(row => Changed(row, records.SingleOrDefault(r => r.CustomerId == row.CustomerId))).ToList();
             if (changes.Count > 0)
             {
+                // Version cũ cho thấy đã có cập nhật khác; cần tải lại để người dùng đối chiếu.
                 foreach (var row in input.Rows)
                     if (records.SingleOrDefault(r => r.CustomerId == row.CustomerId)?.Version != row.Version) throw Conflict();
                 if (changes.Any(row => records.Any(r => r.CustomerId == row.CustomerId)) && string.IsNullOrWhiteSpace(input.ChangeReason))
                     throw new AppError("Nhập lý do khi thay đổi kết quả đã lưu.", "CHANGE_REASON_REQUIRED");
             }
+            // 5. STAFF thiếu Employee chỉ được bổ sung hồ sơ khi thực sự ghi, trong cùng transaction.
             if (changes.Count > 0 && user.Has("STAFF") && !user.EmployeeId.HasValue)
                 user = user with { EmployeeId = await repo.EnsureStaffEmployeeAsync(user.UserId, ct) };
+            // Lấy phụ huynh hợp lệ một lần cho tập học sinh có thay đổi.
             var parents = await repo.GetActiveParentsAsync(changes.Select(x => x.CustomerId).ToArray(), ct);
             var missingParents = 0;
+            // 6. Chuẩn bị kết quả, ảnh chụp trước/sau và thông báo cho từng dòng thay đổi.
             foreach (var row in changes)
             {
                 var record = records.SingleOrDefault(x => x.CustomerId == row.CustomerId);
@@ -151,11 +173,13 @@ public sealed class AttendanceService(IAttendanceRepository repo, ICurrentUserSe
                 if (record == null)
                 {
                     record = new AttendanceRecord(row.CustomerId, e.Id, user.EmployeeId!.Value, date, AttendanceStatuses.Present, createdAtUtc: time.UtcNow);
+                    // Chỉ đưa entity mới vào ChangeTracker; FlushAsync bên dưới mới ghi kết quả xuống SQL.
                     await repo.AddAsync(record);
                 }
                 record.RecordResult(row.Status, row.Comment, leaves.SingleOrDefault(x => x.Id == row.LeaveRequestId), user.EmployeeId!.Value, time.UtcNow);
                 var audit = new AttendanceAuditLog(record, oldStatus, oldComment, oldLeave, input.ChangeReason?.Trim(), user.EmployeeId!.Value, time.UtcNow);
                 repo.AddAudit(audit);
+                // Chỉ thông báo khi trạng thái đổi có liên quan vắng/đi muộn; đổi ghi chú không gửi thêm.
                 if (oldStatus == record.Status || (!AttendanceStatuses.IsAlert(oldStatus) && !AttendanceStatuses.IsAlert(record.Status))) continue;
                 var parent = parents.SingleOrDefault(p => p.Children.Any(c => c.Id == row.CustomerId));
                 if (parent == null) { missingParents++; continue; }
@@ -163,13 +187,21 @@ public sealed class AttendanceService(IAttendanceRepository repo, ICurrentUserSe
                 var text = $"{student.FullName} ({student.StudentCode}) — {e.TeachingAssignment.Class.ClassName}, {e.TeachingAssignment.Subject.SubjectName}, tiết {e.TimeSlot.PeriodNo}, {date:dd/MM/yyyy}: {AttendanceStatuses.Label(record.Status)}.";
                 var notification = new Notification(oldStatus == null ? "Kết quả điểm danh" : "Cập nhật điểm danh", text, parent.UserId, user.UserId);
                 notification.AttachAttendance(audit, $"/Attendance/History?studentId={row.CustomerId}&from={date:yyyy-MM-dd}&to={date:yyyy-MM-dd}", time.UtcNow);
+                // Tái sử dụng MessageLog để xếp email cùng transaction với kết quả/audit/thông báo.
+                // Thêm qua navigation giúp EF tự gắn NotificationId sau khi tạo khóa trong database.
+                notification.MessageLogs.Add(new MessageLog("EMAIL", parent.User.Email, text,
+                    subject: notification.Title, provider: "SMTP", templateCode: "ATTENDANCE",
+                    recipientUserId: parent.UserId, createdByUserId: user.UserId));
                 repo.AddNotification(notification);
             }
             time.EnsureWritable(date, e.TimeSlot.StartTime, AttendanceAccess.CanEditAfterDeadline(user));
+            // 7. SaveChanges gửi INSERT/UPDATE trong transaction; dữ liệu vẫn chưa commit.
             await repo.FlushAsync(ct);
             // Recheck at commit: teachers stop at midnight; STAFF and ADMIN may correct past dates.
             time.EnsureWritable(date, e.TimeSlot.StartTime, AttendanceAccess.CanEditAfterDeadline(user));
+            // Kiểm tra thời gian ngay trước commit để giáo viên không lưu vượt hạn trong lúc xử lý.
             await tx.CommitAsync(ct);
+            // 8. Chỉ đánh thức tác vụ email sau commit; không chờ SMTP mới trả kết quả điểm danh.
             if (changes.Count > 0) dispatch.Wake();
             return ServiceResult<SaveAttendanceResult>.Success(new(changes.Count, missingParents));
         }
@@ -182,6 +214,7 @@ public sealed class AttendanceService(IAttendanceRepository repo, ICurrentUserSe
             return ServiceResult<SaveAttendanceResult>.Failed(new AppError("Không thể lưu điểm danh. Vui lòng thử lại.", "SYSTEM_ERROR", ErrorType.Failure));
         }
     }
+    // Tra cứu có scope theo tài khoản; thống kê và phân trang chỉ trên dữ liệu được phép xem.
     public async Task<ServiceResult<AttendanceHistory>> HistoryAsync(AttendanceFilter f, CancellationToken ct = default)
     {
         try
@@ -198,6 +231,7 @@ public sealed class AttendanceService(IAttendanceRepository repo, ICurrentUserSe
         }
         catch (AppError e) { return ServiceResult<AttendanceHistory>.Failed(e); }
     }
+    // Kiểm tra quyền xem nhật ký và phạm vi bản ghi trước khi đọc log.
     public async Task<ServiceResult<AttendanceAudit>> AuditAsync(long recordId, CancellationToken ct = default)
     {
         try
@@ -209,6 +243,7 @@ public sealed class AttendanceService(IAttendanceRepository repo, ICurrentUserSe
         }
         catch (AppError e) { return ServiceResult<AttendanceAudit>.Failed(e); }
     }
+    // Lịch sử riêng: học sinh được phép -> học kỳ -> lớp/môn -> dựng các buổi học.
     public async Task<ServiceResult<StudentAttendanceHistory>> StudentHistoryAsync(AttendanceFilter filter, CancellationToken ct = default)
     {
         try
@@ -218,6 +253,7 @@ public sealed class AttendanceService(IAttendanceRepository repo, ICurrentUserSe
                 throw Forbidden();
             var isParent = user.Has("PARENT");
             var students = await repo.GetStudentChoicesAsync(user.CustomerId, isParent, ct);
+            // ID trên URL phải thuộc bản thân học sinh hoặc các con được liên kết của phụ huynh.
             var student = filter.StudentId.HasValue ? students.SingleOrDefault(x => x.Id == filter.StudentId) : students.FirstOrDefault();
             if (filter.StudentId.HasValue && student == null) throw Forbidden();
             var localNow = SchoolTime.Local(time.UtcNow);
@@ -227,6 +263,7 @@ public sealed class AttendanceService(IAttendanceRepository repo, ICurrentUserSe
             var referenceDate = filter.From?.Date ?? time.Today;
             var semesters = assignments.Select(x => x.Semester).DistinctBy(x => x.Id)
                 .OrderByDescending(x => x.StartDate).ToList();
+            // Chưa chọn học kỳ: ưu tiên kỳ chứa ngày tham chiếu, rồi kỳ gần trước đó.
             var semester = filter.SemesterId.HasValue ? semesters.SingleOrDefault(x => x.Id == filter.SemesterId) :
                 semesters.FirstOrDefault(x => x.StartDate <= referenceDate && referenceDate <= x.EndDate) ??
                 semesters.FirstOrDefault(x => x.StartDate <= referenceDate) ?? semesters.FirstOrDefault();
@@ -245,6 +282,7 @@ public sealed class AttendanceService(IAttendanceRepository repo, ICurrentUserSe
 
             var data = await repo.GetStudentScheduleAsync(student.Id, selected.Id, selected.ClassId, ct);
             var records = data.Records.ToDictionary(x => (x.TimetableEntryId, x.AttendanceDate.Date));
+            // Ghép lịch lặp tuần và kết quả bằng khóa (tiết học, ngày); không tự sinh kết quả có/vắng.
             var sessions = new Dictionary<(long EntryId, DateTime Date), StudentAttendanceSession>();
             foreach (var entry in data.Entries.Where(x => x.Status == "ACTIVE" && selected.Status == "ACTIVE" && selected.Class.Status == "ACTIVE"))
             {
@@ -252,6 +290,7 @@ public sealed class AttendanceService(IAttendanceRepository repo, ICurrentUserSe
                     entry.EffectiveFrom?.Date ?? selected.Semester.StartDate.Date }.Max();
                 var end = new[] { selected.Semester.EndDate.Date, selected.Class.AcademicYear.EndDate.Date,
                     entry.EffectiveTo?.Date ?? selected.Semester.EndDate.Date }.Min();
+                // Tìm ngày đầu đúng thứ trong giao hiệu lực lịch/học kỳ/năm học, rồi tăng mỗi lần 7 ngày.
                 var first = start.AddDays((entry.DayOfWeek - SchoolTime.Weekday(start) + 7) % 7);
                 for (var date = first; date <= end; date = date.AddDays(7))
                 {
@@ -267,6 +306,7 @@ public sealed class AttendanceService(IAttendanceRepository repo, ICurrentUserSe
                 sessions[(entry.Id, record.AttendanceDate.Date)] = new(record.AttendanceDate.Date, entry, record);
             }
             var ordered = sessions.Values.OrderBy(x => x.Date).ThenBy(x => x.Entry.TimeSlot.StartTime).ThenBy(x => x.Entry.Id).ToList();
+            // Thống kê trên toàn bộ buổi trước khi phân trang; chưa ghi không mặc định là có mặt/vắng.
             var recorded = ordered.Count(x => x.Record != null);
             var absent = ordered.Count(x => x.Record?.Status is AttendanceStatuses.Absent or AttendanceStatuses.Excused);
             var pageCount = Math.Max(1, (int)Math.Ceiling(ordered.Count / (double)StudentAttendanceHistory.PageSize));
@@ -284,6 +324,7 @@ public sealed class AttendanceService(IAttendanceRepository repo, ICurrentUserSe
         }
         catch (AppError e) { return ServiceResult<StudentAttendanceHistory>.Failed(e); }
     }
+    // Tái sử dụng tra cứu và lịch trong ngày để lấy số liệu tổng quan.
     public async Task<AttendanceSummary> DashboardAsync(CancellationToken ct = default)
     {
         var history = await HistoryAsync(new() { From = time.Today, To = time.Today }, ct);
@@ -291,6 +332,7 @@ public sealed class AttendanceService(IAttendanceRepository repo, ICurrentUserSe
         var pending = index.Data?.Pending ?? 0;
         return (history.Data?.Summary ?? new AttendanceSummary(0, 0, 0, 0)) with { Pending = pending };
     }
+    // Phát hiện học sinh có khoảng tham gia nhiều lớp bị chồng nhau trong cùng năm học.
     private async Task EnsureEnrollment(TimetableEntry e, DateTime date, List<StudentClass> roster, CancellationToken ct)
     {
         if (await repo.HasOverlappingEnrollmentAsync(e.TeachingAssignment.ClassId, date, roster.Select(x => x.CustomerId).ToArray(), ct))

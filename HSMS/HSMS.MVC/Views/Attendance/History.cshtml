@@ -1,10 +1,12 @@
 @using HSMS.MVC.Common
 @using HSMS.MVC.ViewModels.Attendance
+@* Tra cứu kết quả cho quản lý/giáo viên; phạm vi dữ liệu được giới hạn ở Service/Repository. *@
 @model HSMS.MVC.ViewModels.Attendance.AttendanceHistory
 @{
     Layout = "_DashboardLayout"; ViewData["Title"] = "Lịch sử chuyên cần";
     var f = Model.Filter;
     var pages = Math.Max(1, (int)Math.Ceiling(Model.Total / 30d));
+    // Giữ điều kiện tra cứu khi chuyển trang hoặc quay lại từ chỉnh sửa.
     string PageUrl(int page) => Url.Action("History", new { f.From, f.To, f.StudentId, f.ClassId, f.SubjectId, f.Status, Page = page })!;
 }
 <div class="attendance-page">
@@ -25,6 +27,7 @@
             @foreach (var s in Model.Choices.Subjects) { <option value="@s.Id" selected="@(f.SubjectId == s.Id)">@s.Name</option> }</select></div>
         <div class="col-12"><button class="btn btn-primary">Tra cứu</button> <a asp-action="Index" class="btn btn-outline-secondary">Lịch điểm danh</a></div>
     </form>
+    @* Thống kê toàn tập đã lọc; chưa ghi không coi là vắng. *@
     <div class="attendance-stats mb-4">
         <div><strong>@(Model.Summary.Rate?.ToString("0.#") + (Model.Summary.Rate.HasValue ? "%" : "Chưa có dữ liệu"))</strong><span>Tỷ lệ tham dự</span></div>
         <div><strong>@Model.Summary.Absent</strong><span>Tiết vắng không phép</span></div><div><strong>@Model.Summary.Excused</strong><span>Tiết vắng có phép</span></div><div><strong>@Model.Summary.Late</strong><span>Tiết đi muộn</span></div>
@@ -36,6 +39,7 @@
                 <td>@r.TimetableEntry.TeachingAssignment.Class.ClassName<br /><small>@r.TimetableEntry.TeachingAssignment.Subject.SubjectName</small></td>
                 <td><span class="attendance-badge @r.Status.ToLowerInvariant()">@AttendanceStatuses.Label(r.Status)</span></td><td>@r.Comment</td>
                 <td><div class="d-flex gap-2 align-items-center">
+                    @* Ẩn/hiện nút chỉ hỗ trợ giao diện; action đích vẫn tự kiểm tra quyền. *@
                     @if (User.IsInRole("ADMIN") || User.IsInRole("STAFF")) { <a asp-action="Mark" asp-route-timetableEntryId="@r.TimetableEntryId" asp-route-date="@r.AttendanceDate.ToString("yyyy-MM-dd")" asp-route-returnUrl="@PageUrl(f.Page)" class="btn btn-sm btn-outline-primary">Chỉnh sửa</a> }
                     @if (User.IsInRole("ADMIN") || User.IsInRole("STAFF") || User.IsInRole("PRINCIPAL") || User.IsInRole("TEACHER")) { <a asp-action="Audit" asp-route-id="@r.Id">Nhật ký</a> }
                 </div></td></tr>

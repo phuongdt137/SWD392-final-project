@@ -85,13 +85,7 @@
                             <span asp-validation-for="Password" class="text-danger small mt-1 d-block"></span>
                         </div>
 
-                        <!-- Remember Me -->
-                        <div class="form-check mb-4">
-                            <input class="form-check-input" type="checkbox" asp-for="RememberMe" id="rememberMeCheck">
-                            <label class="form-check-label small text-muted user-select-none" for="rememberMeCheck">
-                                Ghi nhớ đăng nhập trên thiết bị này
-                            </label>
-                        </div>
+                        @* Đăng nhập chỉ dùng Session, không cung cấp tùy chọn cookie đăng nhập lâu dài. *@
 
                         <!-- Submit Button -->
                         <button type="submit" class="btn btn-primary w-100 py-2 fw-semibold rounded-pill shadow-sm mb-3">

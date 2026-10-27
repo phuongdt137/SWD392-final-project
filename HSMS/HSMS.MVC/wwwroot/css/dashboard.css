@@ -277,13 +277,19 @@ body.dashboard-body-tag {
     color: #FFFFFF;
     font-size: 0.65rem;
     font-weight: 800;
-    width: 18px;
+    min-width: 18px;
+    padding-inline: 3px;
     height: 18px;
-    border-radius: 50%;
+    border-radius: 999px;
     display: flex;
     align-items: center;
     justify-content: center;
     border: 2px solid #FFFFFF;
+}
+
+/* display:flex không được làm hiện badge có thuộc tính hidden khi chưa có thông báo. */
+.notification-badge-dot[hidden] {
+    display: none;
 }
 
 /* User Profile Header Pill */
