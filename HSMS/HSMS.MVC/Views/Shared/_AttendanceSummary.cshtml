@@ -1,3 +1,4 @@
+@* Tổng quan tái sử dụng DashboardAsync; đơn vị là lượt học sinh-tiết đã ghi nhận. *@
 @model HSMS.MVC.DTOs.Attendance.AttendanceSummary
 <div class="attendance-stats">
     <div><strong>@(Model.Rate.HasValue ? Model.Rate.Value.ToString("0.#") + "%" : "—")</strong><span>Tham dự hôm nay · @(Model.Recorded == 0 ? "Chưa có dữ liệu" : Model.Recorded + " lượt đã ghi")</span></div>

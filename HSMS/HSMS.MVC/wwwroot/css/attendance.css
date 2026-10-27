@@ -1,3 +1,4 @@
+/* Bố cục và thẻ thống kê dùng chung các trang Attendance. */
 .attendance-page { max-width: 1440px; margin-inline: auto; }
 .attendance-table { min-width: 850px; }
 .attendance-table td:nth-child(2), .attendance-table td:nth-child(3) { min-width: 190px; }
@@ -5,12 +6,14 @@
 .attendance-stats > div { background: white; padding: 1rem 1.2rem; border-radius: 1rem; box-shadow: 0 2px 12px #00000006; }
 .attendance-stats strong { display: block; font-size: 1.6rem; color: #185adb; }
 .attendance-stats span { font-size: .85rem; color: #64748b; }
+/* Màu kết quả lưu: PRESENT / ABSENT / LATE / EXCUSED. */
 .attendance-badge { display: inline-block; padding: .3rem .6rem; border-radius: .5rem; font-size: .8rem; white-space: nowrap; }
 .attendance-badge.present { background: #d1fae5; color: #065f46; }
 .attendance-badge.absent { background: #fee2e2; color: #991b1b; }
 .attendance-badge.late { background: #fef3c7; color: #92400e; }
 .attendance-badge.excused { background: #dbeafe; color: #1e40af; }
 
+/* Quản lý nhiều lớp: bộ lọc, bảng nhóm theo lớp và tiến độ ghi nhận. */
 .schedule-heading { display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 18px; margin-bottom: 24px; }
 .schedule-heading h1 { margin: 0 0 8px; font-size: 1.55rem; font-weight: 750; color: #25334b; }
 .schedule-heading p { margin: 0; color: #77849a; font-size: .9rem; }
@@ -50,6 +53,7 @@
     .schedule-class-heading small { display: block; margin: 5px 0 0 24px; }
 }
 
+/* Học sinh/phụ huynh: bộ lọc con-học kỳ-lớp/môn và bảng theo buổi. */
 .attendance-review { color: #25334b; }
 .review-page-heading { margin-bottom: 22px; }
 .review-page-heading h1 { margin: 0 0 7px; font-size: 1.5rem; font-weight: 750; }
@@ -89,6 +93,7 @@
 .review-time { padding: 5px 9px; border-radius: 10px; color: #a73d13; background: #fff0e5; }
 .review-period { display: block; margin-top: 4px; padding-left: 9px; color: #79849a; font-size: .73rem; }
 .review-status { padding: 4px 10px; border-radius: 20px; font-size: .8rem; }
+/* Tách màu kết quả đã ghi và trạng thái giao diện chưa ghi/chưa đến giờ. */
 .review-status.present { background: #e0f2eb; color: #087b55; }
 .review-status.absent { background: #fbe5e7; color: #b32739; }
 .review-status.late { background: #ffebdc; color: #a3470c; }
@@ -96,6 +101,7 @@
 .review-status.unmarked { background: #fff4d4; color: #966400; }
 .review-status.upcoming { background: #e9edf3; color: #586a81; }
 .review-comment { min-width: 120px; max-width: 280px; overflow-wrap: anywhere; color: #59677c; }
+/* Phân trang chung: số trang, active, disabled, dấu lược và cuộn ngang. */
 .review-pagination { display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 14px; padding: 18px 24px; border-top: 1px solid #e8ebf5; color: #77849a; font-size: .8rem; }
 .review-pagination nav { display: flex; max-width: 100%; overflow-x: auto; }
 .review-page-numbers .page-link { display: flex; align-items: center; justify-content: center; min-width: 34px; height: 34px; padding: 0 9px; border-color: #d8dfe7; color: #326e98; background: #fff; font-size: .84rem; }
@@ -126,5 +132,6 @@
     .review-pagination { padding: 16px; }
     .review-page-numbers .page-link { min-width: 28px; height: 32px; padding-inline: 7px; font-size: .79rem; }
     .review-page-numbers .review-page-gap .page-link { min-width: 23px; }
+    /* Điện thoại ẩn trang xa, giữ trang đầu/cuối và các trang sát trang chọn. */
     .review-page-distant { display: none; }
 }

@@ -1,14 +1,12 @@
 using HSMS.MVC.Common;
-using HSMS.MVC.DTOs.Notifications;
-using HSMS.MVC.Hubs;
 using HSMS.MVC.Repositories.Interfaces;
-using Microsoft.AspNetCore.SignalR;
 
 namespace HSMS.MVC.Service.Notifications;
 
-/// <summary>Single-host durable delivery: database rows survive restarts and send failures.</summary>
-public sealed class NotificationDispatcher(IServiceScopeFactory scopes, IHubContext<NotificationHub> hub,
-    NotificationDispatchSignal signal, SchoolTime time, ILogger<NotificationDispatcher> logger) : BackgroundService
+// Hàng chờ Notification/MessageLog có sẵn: gửi email sau commit, không có kết nối real-time.
+// Dành cho một máy chủ; SMTP lỗi không làm mất thông báo trong ứng dụng hoặc kết quả điểm danh.
+public sealed class NotificationDispatcher(IServiceScopeFactory scopes, NotificationDispatchSignal signal,
+    SchoolTime time, ILogger<NotificationDispatcher> logger) : BackgroundService
 {
     protected override async Task ExecuteAsync(CancellationToken stoppingToken)
     {
@@ -18,25 +16,46 @@ public sealed class NotificationDispatcher(IServiceScopeFactory scopes, IHubCont
             {
                 using var scope = scopes.CreateScope();
                 var repo = scope.ServiceProvider.GetRequiredService<INotificationRepository>();
+                var emailService = scope.ServiceProvider.GetRequiredService<IEmailService>();
                 var rows = await repo.DueAsync(time.UtcNow, stoppingToken);
-                foreach (var n in rows)
+                foreach (var notification in rows)
                 {
+                    var email = notification.MessageLogs.Single(m => m.Channel == "EMAIL" && m.TemplateCode == "ATTENDANCE");
                     try
                     {
-                        if (await repo.CanDeliverAsync(n, stoppingToken))
-                            await hub.Clients.User(n.RecipientId.ToString()).SendAsync("AttendanceNotification",
-                                new NotificationItem(n.Id, n.Title, n.Content, n.IsRead, n.SentAt, n.Link), stoppingToken);
-                        // A removed parent relationship must not receive an old queued payload.
-                        n.Delivered(time.UtcNow);
+                        // Kiểm tra lại liên kết con/tài khoản/role trước gửi, tránh lộ thông báo cũ.
+                        if (!await repo.CanDeliverAsync(notification, stoppingToken))
+                        {
+                            email.MarkAsFailed("Người nhận không còn quyền nhận thông báo điểm danh này.");
+                            notification.Delivered(time.UtcNow);
+                        }
+                        else
+                        {
+                            if (email.Status != "QUEUED") email.PrepareRetry();
+                            email.UpdateRecipientAddress(notification.Recipient.Email);
+                            email.MarkAsSending();
+                            await repo.SaveAsync(stoppingToken);
+
+                            await emailService.SendAttendanceEmailAsync(email.RecipientAddress,
+                                notification.Recipient.FullName, notification.Title, notification.Content,
+                                notification.Link, stoppingToken);
+                            // SENT nghĩa SMTP đã chấp nhận thư, không phải phụ huynh đã đọc email.
+                            email.MarkAsSent();
+                            notification.Delivered(time.UtcNow);
+                        }
                     }
-                    catch (Exception ex) when (ex is not OperationCanceledException)
-                    { n.RetryLater(time.UtcNow); logger.LogWarning(ex, "Notification {Id} delivery will retry", n.Id); }
+                    catch (Exception ex) when (!stoppingToken.IsCancellationRequested)
+                    {
+                        email.MarkAsFailed("Gửi email chưa thành công; hệ thống sẽ thử lại.");
+                        notification.RetryLater(time.UtcNow);
+                        logger.LogWarning(ex, "Attendance email for notification {Id} will retry", notification.Id);
+                    }
                     await repo.SaveAsync(stoppingToken);
                 }
                 if (rows.Count == 50) signal.Wake();
             }
             catch (OperationCanceledException) when (stoppingToken.IsCancellationRequested) { break; }
-            catch (Exception ex) { logger.LogWarning(ex, "Notification dispatcher will retry; check Attendance migration is installed"); }
+            catch (Exception ex) { logger.LogWarning(ex, "Attendance email dispatcher will retry"); }
             await signal.WaitAsync(stoppingToken);
         }
     }

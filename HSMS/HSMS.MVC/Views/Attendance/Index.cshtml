@@ -1,9 +1,11 @@
 @using HSMS.MVC.ViewModels.Attendance
 @using HSMS.MVC.DTOs.Attendance
+@* Lịch đã được Service phân quyền; View hiển thị và tạo liên kết thao tác. *@
 @model AttendanceIndex
 @{
     Layout = "_DashboardLayout"; ViewData["Title"] = "Quản lý điểm danh";
     var f = Model.Filter;
+    // Giữ bộ lọc khi phân trang và khi quay lại từ bảng ghi/sửa.
     string PageUrl(int page) => Url.Action("Index", new { Date = Model.Date.ToString("yyyy-MM-dd"), f.GradeLevelId, f.ClassId, f.SubjectId, f.TeacherId, f.Status, f.Query, Page = page })!;
     var returnUrl = PageUrl(f.Page);
 }
@@ -12,6 +14,7 @@
         <div><h1>Quản lý điểm danh</h1><p>Lọc theo ngày, khối và lớp để tìm nhanh tiết học cần xử lý.</p></div>
         <a asp-action="History" class="btn btn-outline-primary"><i class="bi bi-clock-history" aria-hidden="true"></i> Tra cứu chuyên cần</a>
     </header>
+    @* Biểu mẫu GET đưa bộ lọc lên URL; đổi khối bỏ lớp phụ thuộc qua attendance-review.js. *@
     <form method="get" class="schedule-filters" id="attendance-schedule-filters" data-attendance-filter-form>
         <div><label for="schedule-date">Ngày học</label><input id="schedule-date" name="Date" type="date" value="@Model.Date.ToString("yyyy-MM-dd")" class="form-control" required /></div>
         <div><label for="schedule-grade">Khối</label><select id="schedule-grade" name="GradeLevelId" class="form-select" data-reset="ClassId" data-auto-submit="true"><option value="">Tất cả khối</option>
@@ -28,6 +31,7 @@
         <div><label for="schedule-query">Từ khóa</label><input id="schedule-query" name="Query" value="@f.Query" maxlength="100" placeholder="Tìm lớp, môn hoặc giáo viên" class="form-control" /></div>
         <div class="schedule-filter-actions"><button class="btn btn-primary"><i class="bi bi-funnel" aria-hidden="true"></i> Lọc kết quả</button><a asp-action="Index" asp-route-date="@Model.Date.ToString("yyyy-MM-dd")" class="btn btn-outline-secondary">Bỏ lọc</a></div>
     </form>
+    @* Thống kê trên toàn bộ tập đã lọc, không chỉ các tiết của trang hiện tại. *@
     <div class="attendance-stats schedule-stats">
         <div><span>Lớp có lịch</span><strong>@Model.Classes</strong></div>
         <div><span>Tổng số tiết</span><strong>@Model.Total</strong></div>
@@ -45,6 +49,7 @@
             <div class="schedule-table-scroll" tabindex="0" role="region" aria-label="Lịch điểm danh theo lớp">
                 <table class="schedule-table">
                     <thead><tr><th scope="col">Tiết / Giờ học</th><th scope="col">Môn học</th><th scope="col">Giáo viên</th><th scope="col">Phòng</th><th scope="col">Đã ghi nhận</th><th scope="col">Tình trạng</th><th scope="col">Thao tác</th></tr></thead>
+                    @* Gom tiết theo lớp trong trang hiện tại để dễ đọc khi có nhiều lớp. *@
                     @foreach (var group in Model.Lessons.GroupBy(x => x.Entry.TeachingAssignment.ClassId))
                     {
                         var classroom = group.First().Entry.TeachingAssignment.Class;
@@ -53,6 +58,7 @@
                             @foreach (var row in group)
                             {
                                 var e = row.Entry;
+                                // Màu theo trạng thái suy ra; CanWrite quyết định nút, server vẫn kiểm tra quyền khi thao tác.
                                 var badgeClass = row.Status switch { "LOCKED" => "bg-secondary", "UPCOMING" => "bg-info text-dark", "COMPLETED" => "bg-success", _ => "bg-warning text-dark" };
                                 var progress = row.Students == 0 ? 0 : Math.Min(100, (int)(100m * row.Recorded / row.Students));
                                 <tr>
@@ -67,6 +73,7 @@
                     }
                 </table>
             </div>
+            @* Dùng partial phân trang chung, PageUrl giữ điều kiện lọc. *@
             <footer class="review-pagination">
                 <span>Hiển thị @((f.Page - 1) * AttendanceScheduleFilter.PageSize + 1)–@Math.Min(f.Page * AttendanceScheduleFilter.PageSize, Model.Total) / @Model.Total tiết · Trang @f.Page/@Model.Pages</span>
                 <partial name="_AttendancePagination" model="@(new AttendancePagination(f.Page, Model.Pages, PageUrl))" />

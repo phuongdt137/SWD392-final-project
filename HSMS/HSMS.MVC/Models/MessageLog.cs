@@ -80,6 +80,14 @@ public class MessageLog
         CreatedAt = DateTime.UtcNow;
     }
 
+    // Email chờ gửi dùng địa chỉ hiện tại của phụ huynh, tránh gửi đến địa chỉ cũ đã thay đổi.
+    public void UpdateRecipientAddress(string address)
+    {
+        if (string.IsNullOrWhiteSpace(address))
+            throw new AppError("Địa chỉ nhận tin không được để trống.", "RECIPIENT_ADDRESS_REQUIRED");
+        RecipientAddress = address.Trim();
+    }
+
     public void MarkAsSending()
     {
         Status = "SENDING";

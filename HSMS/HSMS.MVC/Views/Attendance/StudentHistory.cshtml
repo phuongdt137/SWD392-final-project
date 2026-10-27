@@ -1,6 +1,7 @@
 @using System.Globalization
 @using HSMS.MVC.Common
 @using HSMS.MVC.ViewModels.Attendance
+@* Dùng chung cho học sinh/phụ huynh; phụ huynh có thêm ô chọn con trong phạm vi được phép. *@
 @model StudentAttendanceHistory
 @{
     Layout = "_DashboardLayout";
@@ -8,6 +9,7 @@
     var course = Model.Assignment;
     var vi = CultureInfo.GetCultureInfo("vi-VN");
     var pages = Math.Max(1, (int)Math.Ceiling(Model.Total / (double)StudentAttendanceHistory.PageSize));
+    // Phân trang giữ học sinh, học kỳ và phân công lớp/môn đang xem.
     string PageUrl(int page) => Url.Action("History", new { Model.StudentId, Model.SemesterId, TeachingAssignmentId = course?.Id, Page = page })!;
 }
 <div class="attendance-page attendance-review">
@@ -22,6 +24,7 @@
     }
     else
     {
+        @* GET tự gửi khi đổi lựa chọn; data-reset bỏ kỳ/môn cũ không còn phù hợp. *@
         <form asp-action="History" method="get" class="review-filters @(Model.IsParent ? "review-filters-parent" : "")" id="attendance-review-filters" data-attendance-filter-form data-auto-submit="true">
             @if (Model.IsParent)
             {
@@ -63,6 +66,7 @@
                     </div>
                     @if (Model.IsParent) { <span class="review-student-name"><i class="bi bi-person" aria-hidden="true"></i> @Model.StudentName</span> }
                 </header>
+                @* Thống kê toàn bộ buổi; mẫu số tỷ lệ vắng chỉ gồm tiết đã có kết quả. *@
                 <div class="review-summary" role="status">
                     <div><i class="bi bi-info-circle" aria-hidden="true"></i>
                         @if (Model.Recorded > 0)
@@ -88,6 +92,7 @@
                                 var session = Model.Sessions[i];
                                 var entry = session.Entry;
                                 var status = session.Record?.Status;
+                                // Chưa có kết quả: so giờ bắt đầu để phân biệt chưa đến giờ và chưa điểm danh.
                                 var upcoming = status == null && session.Date.Add(entry.TimeSlot.StartTime) > Model.LocalNow;
                                 var label = status == null ? (upcoming ? "Chưa đến giờ" : "Chưa điểm danh") : AttendanceStatuses.Label(status);
                                 var statusClass = status?.ToLowerInvariant() ?? (upcoming ? "upcoming" : "unmarked");
@@ -105,6 +110,7 @@
                             }</tbody>
                         </table>
                     </div>
+                    @* Số dòng nối tiếp theo trang; tổng số tiết/thống kê lấy từ toàn lịch. *@
                     <footer class="review-pagination">
                         <span>@Model.Total tiết học · Trang @Model.Page/@pages</span>
                         <partial name="_AttendancePagination" model="@(new AttendancePagination(Model.Page, pages, PageUrl))" />

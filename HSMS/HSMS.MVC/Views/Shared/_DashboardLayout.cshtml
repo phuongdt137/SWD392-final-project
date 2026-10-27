@@ -1,6 +1,7 @@
 @using Microsoft.AspNetCore.Http
 @using System.Text.Json
 @using HSMS.MVC.DTOs.Auth
+@inject HSMS.MVC.Service.INotificationService Notifications
 @{
     LoginResponseDto? currentUser = null;
     try
@@ -29,6 +30,8 @@
     var currentAction = ViewContext.RouteData.Values["action"]?.ToString() ?? "Index";
     var isDashboardPage = string.Equals(currentController, "Dashboard", StringComparison.OrdinalIgnoreCase);
     var isAttendancePage = string.Equals(currentController, "Attendance", StringComparison.OrdinalIgnoreCase);
+    // Chuông được render cùng trang; không polling, không SignalR và không bật pop-up tự động.
+    var unreadNotifications = await Notifications.UnreadCountAsync(Context.RequestAborted);
 }
 <!DOCTYPE html>
 <html lang="en">
@@ -279,7 +282,7 @@
                     <!-- Notifications -->
                     <a asp-controller="Notifications" asp-action="Index" class="notification-btn" title="Thông báo" aria-label="Thông báo">
                         <i class="bi bi-bell"></i>
-                        <span id="notification-count" class="notification-badge-dot" data-realtime="@(User.IsInRole("PARENT") ? "true" : "false")" hidden>0</span>
+                        <span id="notification-count" class="notification-badge-dot" hidden="@(unreadNotifications == 0)">@(unreadNotifications > 99 ? "99+" : unreadNotifications.ToString())</span>
                     </a>
 
                     <!-- User Profile Dropdown -->
@@ -329,7 +332,6 @@
 
             <!-- Main Page Content -->
             <main class="dashboard-content">
-                <div id="notification-live" class="alert alert-info d-none" role="status" aria-live="polite"></div>
                 @RenderBody()
             </main>
         </div>
@@ -338,8 +340,6 @@
     <!-- Scripts -->
     <script src="~/lib/jquery/dist/jquery.min.js"></script>
     <script src="~/lib/bootstrap/dist/js/bootstrap.bundle.min.js"></script>
-    <script src="~/lib/signalr/signalr.min.js" asp-append-version="true"></script>
-    <script src="~/js/notifications.js" asp-append-version="true"></script>
     <script>
         // Sidebar Toggle for Mobile / Responsive
         const sidebarToggle = document.getElementById('sidebarToggle');

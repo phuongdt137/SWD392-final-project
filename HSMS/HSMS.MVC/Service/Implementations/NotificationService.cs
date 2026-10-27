@@ -32,7 +32,16 @@ public sealed class NotificationService : INotificationService
             ? ServiceResult<NotificationFeed>.Failed(AuthErrors.MissingCredentials)
             : ServiceResult<NotificationFeed>.Success(await _repo.FeedAsync(user.UserId, ct));
     }
+    // Chuông thông báo lấy số chưa đọc của tài khoản Session khi render trang.
+    public async Task<int> UnreadCountAsync(CancellationToken ct = default)
+    {
+        var user = await _current.GetAsync(ct);
 
+        return user == null
+            ? 0
+            : await _repo.UnreadCountAsync(user.UserId, ct);
+    }
+    // Chỉ đánh dấu đã đọc khi thông báo thuộc phạm vi người dùng hiện tại.
     public async Task<ServiceResult> ReadAsync(long id, CancellationToken ct = default)
     {
         var user = await _current.GetAsync(ct);

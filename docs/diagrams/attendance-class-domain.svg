@@ -1,0 +1,160 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="3660" height="2420" viewBox="0 0 3660 2420"><title>ATTENDANCE — DOMAIN CLASS DIAGRAM</title><rect width="100%" height="100%" fill="#FFFFFF"/><defs><marker id="call" markerWidth="16" markerHeight="12" refX="14" refY="6" orient="auto" markerUnits="userSpaceOnUse"><path d="M0,0 L15,6 L0,12 Z" fill="#34465A"/></marker><marker id="open" markerWidth="16" markerHeight="14" refX="14" refY="7" orient="auto" markerUnits="userSpaceOnUse"><path d="M1,1 L14,7 L1,13" fill="none" stroke="#34465A" stroke-width="2"/></marker><marker id="triangle" markerWidth="22" markerHeight="20" refX="20" refY="10" orient="auto" markerUnits="userSpaceOnUse"><path d="M1,1 L20,10 L1,19 Z" fill="#FFFFFF" stroke="#34465A" stroke-width="2"/></marker></defs>
+<text font-family="Arial,sans-serif" font-size="30" fill="#172A3A" text-anchor="start" font-weight="bold"><tspan x="35" y="46">ATTENDANCE — DOMAIN CLASS DIAGRAM</tspan></text>
+<text font-family="Arial,sans-serif" font-size="18" fill="#506479" text-anchor="start"><tspan x="35" y="82">Existing model names; attendance-related members only. Solid associations show multiplicity, not execution order.</tspan></text>
+<path d="M620,246 L280,234 L280,450 L280,510" fill="none" stroke="#FFFFFF" stroke-width="7"/><path d="M620,246 L280,234 L280,450 L280,510" fill="none" stroke="#34465A" stroke-width="2.2"/>
+<rect x="354.02" y="193" width="151.96000000000004" height="28" fill="#FFFFFF"/>
+<text font-family="Arial,sans-serif" font-size="17" fill="#172A3A" text-anchor="middle"><tspan x="430" y="212">customer profile</tspan></text>
+<text font-family="Arial,sans-serif" font-size="17" fill="#172A3A" text-anchor="end" font-weight="bold"><tspan x="606" y="232">1</tspan></text>
+<text font-family="Arial,sans-serif" font-size="17" fill="#172A3A" text-anchor="start" font-weight="bold"><tspan x="296" y="497">0..1</tspan></text>
+<path d="M1040,246 L1250,234" fill="none" stroke="#FFFFFF" stroke-width="7"/><path d="M1040,246 L1250,234" fill="none" stroke="#34465A" stroke-width="2.2"/>
+<rect x="1066.145" y="168" width="147.71000000000004" height="28" fill="#FFFFFF"/>
+<text font-family="Arial,sans-serif" font-size="17" fill="#172A3A" text-anchor="middle"><tspan x="1140" y="187">employee profile</tspan></text>
+<text font-family="Arial,sans-serif" font-size="17" fill="#172A3A" text-anchor="start" font-weight="bold"><tspan x="1054" y="232">1</tspan></text>
+<text font-family="Arial,sans-serif" font-size="17" fill="#172A3A" text-anchor="end" font-weight="bold"><tspan x="1236" y="220">0..1</tspan></text>
+<path d="M50,642 L20,650 L20,410 L380,410 L381.2,510" fill="none" stroke="#FFFFFF" stroke-width="7"/><path d="M50,642 L20,650 L20,410 L380,410 L381.2,510" fill="none" stroke="#34465A" stroke-width="2.2"/>
+<rect x="176.66" y="373" width="86.68" height="28" fill="#FFFFFF"/>
+<text font-family="Arial,sans-serif" font-size="17" fill="#172A3A" text-anchor="middle"><tspan x="220" y="392">ParentId</tspan></text>
+<text font-family="Arial,sans-serif" font-size="17" fill="#172A3A" text-anchor="end" font-weight="bold"><tspan x="36" y="628">0..*</tspan></text>
+<text font-family="Arial,sans-serif" font-size="17" fill="#172A3A" text-anchor="start" font-weight="bold"><tspan x="397.2" y="497">0..1</tspan></text>
+<path d="M280,774 L280,1010" fill="none" stroke="#FFFFFF" stroke-width="7"/><path d="M280,774 L280,1010" fill="none" stroke="#34465A" stroke-width="2.2"/>
+<rect x="267.30499999999995" y="898" width="165.39000000000004" height="28" fill="#FFFFFF"/>
+<text font-family="Arial,sans-serif" font-size="17" fill="#172A3A" text-anchor="middle"><tspan x="350" y="917">enrollment history</tspan></text>
+<text font-family="Arial,sans-serif" font-size="17" fill="#172A3A" text-anchor="start" font-weight="bold"><tspan x="296" y="802">1</tspan></text>
+<text font-family="Arial,sans-serif" font-size="17" fill="#172A3A" text-anchor="start" font-weight="bold"><tspan x="296" y="997">0..*</tspan></text>
+<path d="M280,1510 L280,1250" fill="none" stroke="#FFFFFF" stroke-width="7"/><path d="M280,1510 L280,1250" fill="none" stroke="#34465A" stroke-width="2.2"/>
+<rect x="281.385" y="1378" width="157.23000000000002" height="28" fill="#FFFFFF"/>
+<text font-family="Arial,sans-serif" font-size="17" fill="#172A3A" text-anchor="middle"><tspan x="360" y="1397">class membership</tspan></text>
+<text font-family="Arial,sans-serif" font-size="17" fill="#172A3A" text-anchor="start" font-weight="bold"><tspan x="296" y="1497">1</tspan></text>
+<text font-family="Arial,sans-serif" font-size="17" fill="#172A3A" text-anchor="start" font-weight="bold"><tspan x="296" y="1278">0..*</tspan></text>
+<path d="M510,668.4 L800,650 L800,805 L1140,825.86" fill="none" stroke="#FFFFFF" stroke-width="7"/><path d="M510,668.4 L800,650 L800,805 L1140,825.86" fill="none" stroke="#34465A" stroke-width="2.2"/>
+<rect x="885.06" y="768" width="79.88000000000001" height="28" fill="#FFFFFF"/>
+<text font-family="Arial,sans-serif" font-size="17" fill="#172A3A" text-anchor="middle"><tspan x="925" y="787">student</tspan></text>
+<text font-family="Arial,sans-serif" font-size="17" fill="#172A3A" text-anchor="start" font-weight="bold"><tspan x="524" y="654.4">1</tspan></text>
+<text font-family="Arial,sans-serif" font-size="17" fill="#172A3A" text-anchor="end" font-weight="bold"><tspan x="1126" y="811.86">0..*</tspan></text>
+<path d="M510,568.08 L730,570 L730,465 L2475,465 L2475,570" fill="none" stroke="#FFFFFF" stroke-width="7"/><path d="M510,568.08 L730,570 L730,465 L2475,465 L2475,570" fill="none" stroke="#34465A" stroke-width="2.2"/>
+<rect x="1750.135" y="428" width="199.73000000000005" height="28" fill="#FFFFFF"/>
+<text font-family="Arial,sans-serif" font-size="17" fill="#172A3A" text-anchor="middle"><tspan x="1850" y="447">student leave requests</tspan></text>
+<text font-family="Arial,sans-serif" font-size="17" fill="#172A3A" text-anchor="start" font-weight="bold"><tspan x="524" y="554.08">1</tspan></text>
+<text font-family="Arial,sans-serif" font-size="17" fill="#172A3A" text-anchor="start" font-weight="bold"><tspan x="2491" y="557">0..*</tspan></text>
+<path d="M1490,328 L1485,610" fill="none" stroke="#FFFFFF" stroke-width="7"/><path d="M1490,328 L1485,610" fill="none" stroke="#34465A" stroke-width="2.2"/>
+<rect x="1474.36" y="463" width="151.28000000000003" height="28" fill="#FFFFFF"/>
+<text font-family="Arial,sans-serif" font-size="17" fill="#172A3A" text-anchor="middle"><tspan x="1550" y="482">original recorder</tspan></text>
+<text font-family="Arial,sans-serif" font-size="17" fill="#172A3A" text-anchor="start" font-weight="bold"><tspan x="1506" y="356">1</tspan></text>
+<text font-family="Arial,sans-serif" font-size="17" fill="#172A3A" text-anchor="start" font-weight="bold"><tspan x="1501" y="597">0..*</tspan></text>
+<path d="M1250,243.4 L1090,250 L1090,545 L1250,545 L1250.4,610" fill="none" stroke="#FFFFFF" stroke-width="7"/><path d="M1250,243.4 L1090,250 L1090,545 L1250,545 L1250.4,610" fill="none" stroke="#34465A" stroke-width="2.2"/>
+<rect x="1119.915" y="508" width="120.17000000000003" height="28" fill="#FFFFFF"/>
+<text font-family="Arial,sans-serif" font-size="17" fill="#172A3A" text-anchor="middle"><tspan x="1180" y="527">latest editor</tspan></text>
+<text font-family="Arial,sans-serif" font-size="17" fill="#172A3A" text-anchor="end" font-weight="bold"><tspan x="1236" y="229.4">0..1</tspan></text>
+<text font-family="Arial,sans-serif" font-size="17" fill="#172A3A" text-anchor="start" font-weight="bold"><tspan x="1266.4" y="597">0..*</tspan></text>
+<path d="M1730,243.4 L2855,250 L2855,1175 L2500,1175 L2500,1260" fill="none" stroke="#FFFFFF" stroke-width="7"/><path d="M1730,243.4 L2855,250 L2855,1175 L2500,1175 L2500,1260" fill="none" stroke="#34465A" stroke-width="2.2"/>
+<rect x="2803.925" y="1018" width="102.15000000000002" height="28" fill="#FFFFFF"/>
+<text font-family="Arial,sans-serif" font-size="17" fill="#172A3A" text-anchor="middle"><tspan x="2855" y="1037">changed by</tspan></text>
+<text font-family="Arial,sans-serif" font-size="17" fill="#172A3A" text-anchor="start" font-weight="bold"><tspan x="1744" y="229.4">1</tspan></text>
+<text font-family="Arial,sans-serif" font-size="17" fill="#172A3A" text-anchor="start" font-weight="bold"><tspan x="2516" y="1247">0..*</tspan></text>
+<path d="M1250,309.20000000000005 L955,305 L955,1430 L890,1430 L890,1510" fill="none" stroke="#FFFFFF" stroke-width="7"/><path d="M1250,309.20000000000005 L955,305 L955,1430 L890,1430 L890,1510" fill="none" stroke="#34465A" stroke-width="2.2"/>
+<rect x="924.53" y="1348" width="150.94000000000003" height="28" fill="#FFFFFF"/>
+<text font-family="Arial,sans-serif" font-size="17" fill="#172A3A" text-anchor="middle"><tspan x="1000" y="1367">assigned teacher</tspan></text>
+<text font-family="Arial,sans-serif" font-size="17" fill="#172A3A" text-anchor="end" font-weight="bold"><tspan x="1236" y="295.20000000000005">1</tspan></text>
+<text font-family="Arial,sans-serif" font-size="17" fill="#172A3A" text-anchor="start" font-weight="bold"><tspan x="906" y="1497">0..*</tspan></text>
+<path d="M510,1630 L660,1630" fill="none" stroke="#FFFFFF" stroke-width="7"/><path d="M510,1630 L660,1630" fill="none" stroke="#34465A" stroke-width="2.2"/>
+<rect x="556.025" y="1558" width="57.95" height="28" fill="#FFFFFF"/>
+<text font-family="Arial,sans-serif" font-size="17" fill="#172A3A" text-anchor="middle"><tspan x="585" y="1577">class</tspan></text>
+<text font-family="Arial,sans-serif" font-size="17" fill="#172A3A" text-anchor="start" font-weight="bold"><tspan x="524" y="1616">1</tspan></text>
+<text font-family="Arial,sans-serif" font-size="17" fill="#172A3A" text-anchor="end" font-weight="bold"><tspan x="646" y="1616">0..*</tspan></text>
+<path d="M1120,1630 L1280,1695" fill="none" stroke="#FFFFFF" stroke-width="7"/><path d="M1120,1630 L1280,1695" fill="none" stroke="#34465A" stroke-width="2.2"/>
+<rect x="1126.655" y="1568" width="146.69000000000003" height="28" fill="#FFFFFF"/>
+<text font-family="Arial,sans-serif" font-size="17" fill="#172A3A" text-anchor="middle"><tspan x="1200" y="1587">scheduled lesson</tspan></text>
+<text font-family="Arial,sans-serif" font-size="17" fill="#172A3A" text-anchor="start" font-weight="bold"><tspan x="1134" y="1616">1</tspan></text>
+<text font-family="Arial,sans-serif" font-size="17" fill="#172A3A" text-anchor="end" font-weight="bold"><tspan x="1266" y="1681">0..*</tspan></text>
+<path d="M1509.6,1510 L1510,1380 L1485,1380 L1485,1112" fill="none" stroke="#FFFFFF" stroke-width="7"/><path d="M1509.6,1510 L1510,1380 L1485,1380 L1485,1112" fill="none" stroke="#34465A" stroke-width="2.2"/>
+<rect x="1526.075" y="1278" width="137.85000000000002" height="28" fill="#FFFFFF"/>
+<text font-family="Arial,sans-serif" font-size="17" fill="#172A3A" text-anchor="middle"><tspan x="1595" y="1297">results by date</tspan></text>
+<text font-family="Arial,sans-serif" font-size="17" fill="#172A3A" text-anchor="start" font-weight="bold"><tspan x="1525.6" y="1497">1</tspan></text>
+<text font-family="Arial,sans-serif" font-size="17" fill="#172A3A" text-anchor="start" font-weight="bold"><tspan x="1501" y="1140">0..*</tspan></text>
+<path d="M1560,1990 L1560,1880" fill="none" stroke="#FFFFFF" stroke-width="7"/><path d="M1560,1990 L1560,1880" fill="none" stroke="#34465A" stroke-width="2.2"/>
+<rect x="1594.96" y="1898" width="90.08000000000001" height="28" fill="#FFFFFF"/>
+<text font-family="Arial,sans-serif" font-size="17" fill="#172A3A" text-anchor="middle"><tspan x="1640" y="1917">time slot</tspan></text>
+<text font-family="Arial,sans-serif" font-size="17" fill="#172A3A" text-anchor="start" font-weight="bold"><tspan x="1576" y="1977">1</tspan></text>
+<text font-family="Arial,sans-serif" font-size="17" fill="#172A3A" text-anchor="start" font-weight="bold"><tspan x="1576" y="1908">0..*</tspan></text>
+<path d="M2190,769.52 L1830,800.76" fill="none" stroke="#FFFFFF" stroke-width="7"/><path d="M2190,769.52 L1830,800.76" fill="none" stroke="#34465A" stroke-width="2.2"/>
+<rect x="1933.37" y="733" width="133.26000000000005" height="28" fill="#FFFFFF"/>
+<text font-family="Arial,sans-serif" font-size="17" fill="#172A3A" text-anchor="middle"><tspan x="2000" y="752">approved leave</tspan></text>
+<text font-family="Arial,sans-serif" font-size="17" fill="#172A3A" text-anchor="end" font-weight="bold"><tspan x="2176" y="755.52">0..1</tspan></text>
+<text font-family="Arial,sans-serif" font-size="17" fill="#172A3A" text-anchor="start" font-weight="bold"><tspan x="1844" y="786.76">0..*</tspan></text>
+<path d="M1830,1011.6 L2010,970 L2010,1400 L2190,1408" fill="none" stroke="#FFFFFF" stroke-width="7"/><path d="M1830,1011.6 L2010,970 L2010,1400 L2190,1408" fill="none" stroke="#34465A" stroke-width="2.2"/>
+<rect x="1939.09" y="1168" width="161.82000000000005" height="28" fill="#FFFFFF"/>
+<text font-family="Arial,sans-serif" font-size="17" fill="#172A3A" text-anchor="middle"><tspan x="2020" y="1187">immutable history</tspan></text>
+<text font-family="Arial,sans-serif" font-size="17" fill="#172A3A" text-anchor="start" font-weight="bold"><tspan x="1844" y="997.6">1</tspan></text>
+<text font-family="Arial,sans-serif" font-size="17" fill="#172A3A" text-anchor="end" font-weight="bold"><tspan x="2176" y="1394">0..*</tspan></text>
+<path d="M2810,1445 L2940,1449.04" fill="none" stroke="#FFFFFF" stroke-width="7"/><path d="M2810,1445 L2940,1449.04" fill="none" stroke="#34465A" stroke-width="2.2"/>
+<rect x="2799.53" y="1388" width="150.94000000000003" height="28" fill="#FFFFFF"/>
+<text font-family="Arial,sans-serif" font-size="17" fill="#172A3A" text-anchor="middle"><tspan x="2875" y="1407">attendance alert</tspan></text>
+<text font-family="Arial,sans-serif" font-size="17" fill="#172A3A" text-anchor="start" font-weight="bold"><tspan x="2824" y="1431">0..1</tspan></text>
+<text font-family="Arial,sans-serif" font-size="17" fill="#172A3A" text-anchor="end" font-weight="bold"><tspan x="2926" y="1435.04">0..1</tspan></text>
+<path d="M830,140 L830,110 L3500,110 L3500,1160 L3250,1160 L3250,1260" fill="none" stroke="#FFFFFF" stroke-width="7"/><path d="M830,140 L830,110 L3500,110 L3500,1160 L3250,1160 L3250,1260" fill="none" stroke="#34465A" stroke-width="2.2"/>
+<rect x="3158.835" y="1048" width="162.33000000000004" height="28" fill="#FFFFFF"/>
+<text font-family="Arial,sans-serif" font-size="17" fill="#172A3A" text-anchor="middle"><tspan x="3240" y="1067">recipient (UserId)</tspan></text>
+<text font-family="Arial,sans-serif" font-size="17" fill="#172A3A" text-anchor="start" font-weight="bold"><tspan x="846" y="127">1</tspan></text>
+<text font-family="Arial,sans-serif" font-size="17" fill="#172A3A" text-anchor="start" font-weight="bold"><tspan x="3266" y="1247">0..*</tspan></text>
+<rect x="620" y="140" width="420" height="212" fill="#FFFFFF" stroke="#52677D" stroke-width="2"/><rect x="620" y="140" width="420" height="62" fill="#EAF1FA" stroke="#52677D" stroke-width="2"/>
+<text font-family="Arial,sans-serif" font-size="16" fill="#172A3A" text-anchor="middle"><tspan x="830" y="163">«entity»</tspan></text>
+<text font-family="Arial,sans-serif" font-size="22" fill="#172A3A" text-anchor="middle" font-weight="bold"><tspan x="830" y="188">User</tspan></text>
+<text font-family="Arial,sans-serif" font-size="20" fill="#172A3A" text-anchor="start"><tspan x="636" y="231">+ Id: long</tspan><tspan x="636" y="257">+ FullName: string</tspan><tspan x="636" y="283">+ IsActive: bool</tspan></text>
+<line x1="620" y1="302" x2="1040" y2="302" stroke="#52677D" stroke-width="1.5"/>
+<text font-family="Arial,sans-serif" font-size="20" fill="#172A3A" text-anchor="start"><tspan x="636" y="331">+ GetActiveRoleCodes()</tspan></text>
+<rect x="1250" y="140" width="480" height="188" fill="#FFFFFF" stroke="#52677D" stroke-width="2"/><rect x="1250" y="140" width="480" height="62" fill="#EAF1FA" stroke="#52677D" stroke-width="2"/>
+<text font-family="Arial,sans-serif" font-size="16" fill="#172A3A" text-anchor="middle"><tspan x="1490" y="163">«entity»</tspan></text>
+<text font-family="Arial,sans-serif" font-size="22" fill="#172A3A" text-anchor="middle" font-weight="bold"><tspan x="1490" y="188">Employee</tspan></text>
+<text font-family="Arial,sans-serif" font-size="20" fill="#172A3A" text-anchor="start"><tspan x="1266" y="231">+ Id: long</tspan><tspan x="1266" y="257">+ UserId: long</tspan><tspan x="1266" y="283">+ EmployeeCode: string</tspan><tspan x="1266" y="309">+ FullName: string {derived}</tspan></text>
+<rect x="50" y="510" width="460" height="264" fill="#FFFFFF" stroke="#52677D" stroke-width="2"/><rect x="50" y="510" width="460" height="62" fill="#EAF1FA" stroke="#52677D" stroke-width="2"/>
+<text font-family="Arial,sans-serif" font-size="16" fill="#172A3A" text-anchor="middle"><tspan x="280" y="533">«entity»</tspan></text>
+<text font-family="Arial,sans-serif" font-size="22" fill="#172A3A" text-anchor="middle" font-weight="bold"><tspan x="280" y="558">Customer</tspan></text>
+<text font-family="Arial,sans-serif" font-size="20" fill="#172A3A" text-anchor="start"><tspan x="66" y="601">+ Id: long</tspan><tspan x="66" y="627">+ UserId: long</tspan><tspan x="66" y="653">+ StudentCode: string?</tspan><tspan x="66" y="679">+ ParentId: long?</tspan><tspan x="66" y="705">+ FullName: string {derived}</tspan></text>
+<line x1="50" y1="724" x2="510" y2="724" stroke="#52677D" stroke-width="1.5"/>
+<text font-family="Arial,sans-serif" font-size="20" fill="#172A3A" text-anchor="start"><tspan x="66" y="753">+ AssignParent(parentId, relationshipType)</tspan></text>
+<rect x="50" y="1010" width="460" height="240" fill="#FFFFFF" stroke="#52677D" stroke-width="2"/><rect x="50" y="1010" width="460" height="62" fill="#EAF1FA" stroke="#52677D" stroke-width="2"/>
+<text font-family="Arial,sans-serif" font-size="16" fill="#172A3A" text-anchor="middle"><tspan x="280" y="1033">«entity»</tspan></text>
+<text font-family="Arial,sans-serif" font-size="22" fill="#172A3A" text-anchor="middle" font-weight="bold"><tspan x="280" y="1058">StudentClass</tspan></text>
+<text font-family="Arial,sans-serif" font-size="20" fill="#172A3A" text-anchor="start"><tspan x="66" y="1101">+ Id: long</tspan><tspan x="66" y="1127">+ CustomerId: long</tspan><tspan x="66" y="1153">+ ClassId: long</tspan><tspan x="66" y="1179">+ JoinedAt: DateTime</tspan><tspan x="66" y="1205">+ LeftAt: DateTime?</tspan><tspan x="66" y="1231">+ Status: string</tspan></text>
+<rect x="50" y="1510" width="460" height="240" fill="#FFFFFF" stroke="#52677D" stroke-width="2"/><rect x="50" y="1510" width="460" height="62" fill="#EAF1FA" stroke="#52677D" stroke-width="2"/>
+<text font-family="Arial,sans-serif" font-size="16" fill="#172A3A" text-anchor="middle"><tspan x="280" y="1533">«entity»</tspan></text>
+<text font-family="Arial,sans-serif" font-size="22" fill="#172A3A" text-anchor="middle" font-weight="bold"><tspan x="280" y="1558">Class</tspan></text>
+<text font-family="Arial,sans-serif" font-size="20" fill="#172A3A" text-anchor="start"><tspan x="66" y="1601">+ Id: long</tspan><tspan x="66" y="1627">+ ClassName: string</tspan><tspan x="66" y="1653">+ HomeroomEmployeeId: long?</tspan><tspan x="66" y="1679">+ AcademicYearId: long</tspan><tspan x="66" y="1705">+ GradeLevelId: long</tspan><tspan x="66" y="1731">+ Status: string</tspan></text>
+<rect x="1140" y="610" width="690" height="502" fill="#FFFFFF" stroke="#52677D" stroke-width="2"/><rect x="1140" y="610" width="690" height="62" fill="#E9F8EF" stroke="#52677D" stroke-width="2"/>
+<text font-family="Arial,sans-serif" font-size="16" fill="#172A3A" text-anchor="middle"><tspan x="1485" y="633">«entity — extended»</tspan></text>
+<text font-family="Arial,sans-serif" font-size="22" fill="#172A3A" text-anchor="middle" font-weight="bold"><tspan x="1485" y="658">AttendanceRecord</tspan></text>
+<text font-family="Arial,sans-serif" font-size="20" fill="#172A3A" text-anchor="start"><tspan x="1156" y="701">+ Id: long</tspan><tspan x="1156" y="727">+ CustomerId: long</tspan><tspan x="1156" y="753">+ TimetableEntryId: long</tspan><tspan x="1156" y="779">+ AttendanceDate: DateTime</tspan><tspan x="1156" y="805">+ Status: string</tspan><tspan x="1156" y="831">+ Comment: string?</tspan><tspan x="1156" y="857">+ LeaveRequestId: long?</tspan><tspan x="1156" y="883">+ RecordedByEmployeeId: long</tspan><tspan x="1156" y="909">+ UpdatedByEmployeeId: long?</tspan><tspan x="1156" y="935">+ CreatedAt: DateTime</tspan><tspan x="1156" y="961">+ UpdatedAt: DateTime?</tspan><tspan x="1156" y="987">+ Version: Guid</tspan></text>
+<line x1="1140" y1="1006" x2="1830" y2="1006" stroke="#52677D" stroke-width="1.5"/>
+<text font-family="Arial,sans-serif" font-size="20" fill="#172A3A" text-anchor="start"><tspan x="1156" y="1035">+ Mark(status, comment)</tspan><tspan x="1156" y="1061">+ ApplyApprovedLeave(request)</tspan><tspan x="1156" y="1087">+ RecordResult(status, comment, leave, employeeId, utcNow)</tspan></text>
+<rect x="2190" y="570" width="570" height="344" fill="#FFFFFF" stroke="#52677D" stroke-width="2"/><rect x="2190" y="570" width="570" height="62" fill="#EAF1FA" stroke="#52677D" stroke-width="2"/>
+<text font-family="Arial,sans-serif" font-size="16" fill="#172A3A" text-anchor="middle"><tspan x="2475" y="593">«entity»</tspan></text>
+<text font-family="Arial,sans-serif" font-size="22" fill="#172A3A" text-anchor="middle" font-weight="bold"><tspan x="2475" y="618">LeaveRequest</tspan></text>
+<text font-family="Arial,sans-serif" font-size="20" fill="#172A3A" text-anchor="start"><tspan x="2206" y="661">+ Id: long</tspan><tspan x="2206" y="687">+ StudentCustomerId: long</tspan><tspan x="2206" y="713">+ RequestedByCustomerId: long</tspan><tspan x="2206" y="739">+ StartDate: DateTime</tspan><tspan x="2206" y="765">+ EndDate: DateTime</tspan><tspan x="2206" y="791">+ Status: string</tspan><tspan x="2206" y="817">+ ReviewedByEmployeeId: long?</tspan></text>
+<line x1="2190" y1="836" x2="2760" y2="836" stroke="#52677D" stroke-width="1.5"/>
+<text font-family="Arial,sans-serif" font-size="20" fill="#172A3A" text-anchor="start"><tspan x="2206" y="865">+ Approve(reviewer, note)</tspan><tspan x="2206" y="891">+ Reject(reviewer, reason)</tspan></text>
+<rect x="2190" y="1260" width="620" height="370" fill="#FFFFFF" stroke="#52677D" stroke-width="2"/><rect x="2190" y="1260" width="620" height="62" fill="#FFF1D6" stroke="#52677D" stroke-width="2"/>
+<text font-family="Arial,sans-serif" font-size="16" fill="#172A3A" text-anchor="middle"><tspan x="2500" y="1283">«entity — new»</tspan></text>
+<text font-family="Arial,sans-serif" font-size="22" fill="#172A3A" text-anchor="middle" font-weight="bold"><tspan x="2500" y="1308">AttendanceAuditLog</tspan></text>
+<text font-family="Arial,sans-serif" font-size="20" fill="#172A3A" text-anchor="start"><tspan x="2206" y="1351">+ Id: long</tspan><tspan x="2206" y="1377">+ AttendanceRecordId: long</tspan><tspan x="2206" y="1403">+ OldStatus: string?</tspan><tspan x="2206" y="1429">+ NewStatus: string</tspan><tspan x="2206" y="1455">+ OldComment: string?</tspan><tspan x="2206" y="1481">+ NewComment: string?</tspan><tspan x="2206" y="1507">+ OldLeaveRequestId: long?</tspan><tspan x="2206" y="1533">+ NewLeaveRequestId: long?</tspan><tspan x="2206" y="1559">+ ChangeReason: string?</tspan><tspan x="2206" y="1585">+ ChangedByEmployeeId: long</tspan><tspan x="2206" y="1611">+ ChangedAt: DateTime</tspan></text>
+<rect x="2940" y="1260" width="620" height="556" fill="#FFFFFF" stroke="#52677D" stroke-width="2"/><rect x="2940" y="1260" width="620" height="62" fill="#E9F8EF" stroke="#52677D" stroke-width="2"/>
+<text font-family="Arial,sans-serif" font-size="16" fill="#172A3A" text-anchor="middle"><tspan x="3250" y="1283">«entity — extended»</tspan></text>
+<text font-family="Arial,sans-serif" font-size="22" fill="#172A3A" text-anchor="middle" font-weight="bold"><tspan x="3250" y="1308">Notification</tspan></text>
+<text font-family="Arial,sans-serif" font-size="20" fill="#172A3A" text-anchor="start"><tspan x="2956" y="1351">+ Id: long</tspan><tspan x="2956" y="1377">+ SenderId: long?</tspan><tspan x="2956" y="1403">+ RecipientId: long</tspan><tspan x="2956" y="1429">+ AttendanceAuditLogId: long?</tspan><tspan x="2956" y="1455">+ Title: string</tspan><tspan x="2956" y="1481">+ Content: string</tspan><tspan x="2956" y="1507">+ IsRead: bool</tspan><tspan x="2956" y="1533">+ SentAt: DateTime</tspan><tspan x="2956" y="1559">+ ReadAt: DateTime?</tspan><tspan x="2956" y="1585">+ DispatchedAt: DateTime?</tspan><tspan x="2956" y="1611">+ DeliveryAttempts: int</tspan><tspan x="2956" y="1637">+ NextDeliveryAttemptAt: DateTime?</tspan><tspan x="2956" y="1663">+ Link: string?</tspan></text>
+<line x1="2940" y1="1682" x2="3560" y2="1682" stroke="#52677D" stroke-width="1.5"/>
+<text font-family="Arial,sans-serif" font-size="20" fill="#172A3A" text-anchor="start"><tspan x="2956" y="1711">+ AttachAttendance(audit, link, utcNow)</tspan><tspan x="2956" y="1737">+ Delivered(utcNow)</tspan><tspan x="2956" y="1763">+ RetryLater(utcNow)</tspan><tspan x="2956" y="1789">+ MarkAsRead()</tspan></text>
+<rect x="660" y="1510" width="460" height="240" fill="#FFFFFF" stroke="#52677D" stroke-width="2"/><rect x="660" y="1510" width="460" height="62" fill="#EAF1FA" stroke="#52677D" stroke-width="2"/>
+<text font-family="Arial,sans-serif" font-size="16" fill="#172A3A" text-anchor="middle"><tspan x="890" y="1533">«entity»</tspan></text>
+<text font-family="Arial,sans-serif" font-size="22" fill="#172A3A" text-anchor="middle" font-weight="bold"><tspan x="890" y="1558">TeachingAssignment</tspan></text>
+<text font-family="Arial,sans-serif" font-size="20" fill="#172A3A" text-anchor="start"><tspan x="676" y="1601">+ Id: long</tspan><tspan x="676" y="1627">+ EmployeeId: long</tspan><tspan x="676" y="1653">+ SubjectId: long</tspan><tspan x="676" y="1679">+ ClassId: long</tspan><tspan x="676" y="1705">+ SemesterId: long</tspan><tspan x="676" y="1731">+ Status: string</tspan></text>
+<rect x="1280" y="1510" width="560" height="370" fill="#FFFFFF" stroke="#52677D" stroke-width="2"/><rect x="1280" y="1510" width="560" height="62" fill="#EAF1FA" stroke="#52677D" stroke-width="2"/>
+<text font-family="Arial,sans-serif" font-size="16" fill="#172A3A" text-anchor="middle"><tspan x="1560" y="1533">«entity»</tspan></text>
+<text font-family="Arial,sans-serif" font-size="22" fill="#172A3A" text-anchor="middle" font-weight="bold"><tspan x="1560" y="1558">TimetableEntry</tspan></text>
+<text font-family="Arial,sans-serif" font-size="20" fill="#172A3A" text-anchor="start"><tspan x="1296" y="1601">+ Id: long</tspan><tspan x="1296" y="1627">+ TeachingAssignmentId: long</tspan><tspan x="1296" y="1653">+ RoomId: long</tspan><tspan x="1296" y="1679">+ TimeSlotId: long</tspan><tspan x="1296" y="1705">+ DayOfWeek: byte</tspan><tspan x="1296" y="1731">+ EffectiveFrom: DateTime?</tspan><tspan x="1296" y="1757">+ EffectiveTo: DateTime?</tspan><tspan x="1296" y="1783">+ Status: string</tspan></text>
+<line x1="1280" y1="1802" x2="1840" y2="1802" stroke="#52677D" stroke-width="1.5"/>
+<text font-family="Arial,sans-serif" font-size="20" fill="#172A3A" text-anchor="start"><tspan x="1296" y="1831">+ CheckConflict(other)</tspan><tspan x="1296" y="1857">+ Reschedule(newRoom, newSlot, newDayOfWeek)</tspan></text>
+<rect x="1280" y="1990" width="560" height="214" fill="#FFFFFF" stroke="#52677D" stroke-width="2"/><rect x="1280" y="1990" width="560" height="62" fill="#EAF1FA" stroke="#52677D" stroke-width="2"/>
+<text font-family="Arial,sans-serif" font-size="16" fill="#172A3A" text-anchor="middle"><tspan x="1560" y="2013">«entity»</tspan></text>
+<text font-family="Arial,sans-serif" font-size="22" fill="#172A3A" text-anchor="middle" font-weight="bold"><tspan x="1560" y="2038">TimeSlot</tspan></text>
+<text font-family="Arial,sans-serif" font-size="20" fill="#172A3A" text-anchor="start"><tspan x="1296" y="2081">+ Id: long</tspan><tspan x="1296" y="2107">+ PeriodNo: int</tspan><tspan x="1296" y="2133">+ SlotCode: string</tspan><tspan x="1296" y="2159">+ StartTime: TimeSpan</tspan><tspan x="1296" y="2185">+ EndTime: TimeSpan</tspan></text>
+<rect x="35" y="2250" width="3590" height="150" rx="5" fill="#F5F8FC" stroke="#B8C7D6"/>
+<text font-family="Arial,sans-serif" font-size="18" fill="#172A3A" text-anchor="start"><tspan x="53" y="2278">MULTIPLICITY: 1 = exactly one; 0..1 = optional; 0..* = zero or more. No arrowhead is required on a bidirectional association.</tspan><tspan x="53" y="2301.4">Customer represents both students and parents; ParentId links Customer to Customer. Notification.RecipientId points to User, not Customer.</tspan><tspan x="53" y="2324.8">For attendance notifications, AttendanceAuditLogId is present and unique; generic notifications can have no attendance audit. Each audit produces at most one notification.</tspan><tspan x="53" y="2348.2">Unique attendance key: (CustomerId, TimetableEntryId, AttendanceDate). Status: PRESENT / ABSENT / LATE / EXCUSED. No AttendanceSession or Submitted state.</tspan><tspan x="53" y="2371.6">Subject, Semester, Room, AcademicYear, GradeLevel and role classes are reused context and omitted here. Additional reviewer/requester/sender associations are omitted for clarity.</tspan></text></svg>

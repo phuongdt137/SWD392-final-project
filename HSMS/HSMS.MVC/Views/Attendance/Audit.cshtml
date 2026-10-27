@@ -1,4 +1,5 @@
 @using HSMS.MVC.Common
+@* Nhật ký được Service cho phép; thời điểm UTC đổi sang giờ Việt Nam. *@
 @model HSMS.MVC.ViewModels.Attendance.AttendanceAudit
 @{ Layout = "_DashboardLayout"; ViewData["Title"] = "Nhật ký điểm danh"; }
 <div class="attendance-page">
@@ -6,6 +7,7 @@
     <p>@Model.Record.AttendanceDate.ToString("dd/MM/yyyy") · @Model.Record.TimetableEntry.TeachingAssignment.Class.ClassName · @Model.Record.TimetableEntry.TeachingAssignment.Subject.SubjectName · Tiết @Model.Record.TimetableEntry.TimeSlot.PeriodNo</p>
     <div class="card p-3 border-0 shadow-sm table-responsive"><table class="table align-middle">
         <thead><tr><th>Thời điểm (VN)</th><th>Người ghi/sửa</th><th>Trước → Sau</th><th>Ghi chú trước → Sau</th><th>Đơn nghỉ trước → Sau</th><th>Lý do</th></tr></thead>
+        @* Mỗi log giữ giá trị trước/sau; null lần đầu được hiển thị bằng nhãn chưa ghi nhận/dấu gạch. *@
         <tbody>@foreach (var log in Model.Logs) {
             <tr><td>@SchoolTime.Local(log.ChangedAt).ToString("dd/MM/yyyy HH:mm:ss")</td><td>@log.ChangedByEmployee.FullName</td>
                 <td>@AttendanceStatuses.Label(log.OldStatus) → @AttendanceStatuses.Label(log.NewStatus)</td><td>@(log.OldComment ?? "—") → @(log.NewComment ?? "—")</td>
