@@ -9,7 +9,6 @@ namespace HSMS.MVC.Controllers;
 
 public class AuthController : Controller
 {
-    public const string SessionUserKey = "CurrentUser";
     private readonly IAuthService _authService;
 
     public AuthController(IAuthService authService)
@@ -48,7 +47,7 @@ public class AuthController : Controller
         }
 
         var userJson = JsonSerializer.Serialize(result.Data);
-        HttpContext.Session.SetString(SessionUserKey, userJson);
+        HttpContext.Session.SetString(SessionKeys.CurrentUser, userJson);
 
         if (!string.IsNullOrWhiteSpace(model.ReturnUrl) 
             && Url.IsLocalUrl(model.ReturnUrl)
@@ -192,7 +191,7 @@ public class AuthController : Controller
 
     private LoginResponseDto? GetCurrentUserFromSession()
     {
-        var userJson = HttpContext.Session.GetString(SessionUserKey);
+        var userJson = HttpContext.Session.GetString(SessionKeys.CurrentUser);
         if (string.IsNullOrEmpty(userJson))
             return null;
 
@@ -252,3 +251,4 @@ public class AuthController : Controller
         return RedirectToAction("Index", "Dashboard");
     }
 }
+

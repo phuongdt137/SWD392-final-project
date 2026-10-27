@@ -2,16 +2,7 @@
 @using System.Text.Json
 @using HSMS.MVC.DTOs.Auth
 @{
-    LoginResponseDto? currentUser = null;
-    try
-    {
-        var userJson = Context.Session.GetString("CurrentUser");
-        if (!string.IsNullOrEmpty(userJson))
-        {
-            currentUser = JsonSerializer.Deserialize<LoginResponseDto>(userJson);
-        }
-    }
-    catch { }
+    var currentUser = Context.Session.GetCurrentUser();
 
     var displayName = currentUser?.FullName ?? currentUser?.Username ?? "User";
     var primaryRole = (currentUser?.Roles?.FirstOrDefault() ?? "STAFF").ToUpper();

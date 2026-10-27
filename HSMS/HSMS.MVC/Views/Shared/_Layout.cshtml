@@ -2,26 +2,9 @@
 @using System.Text.Json
 @using HSMS.MVC.DTOs.Auth
 @{
-    var isAuthenticated = false;
-    string? displayName = null;
-    LoginResponseDto? currentUser = null;
-    try
-    {
-        var currentUserJson = Context.Session.GetString("CurrentUser");
-        if (!string.IsNullOrWhiteSpace(currentUserJson))
-        {
-            currentUser = JsonSerializer.Deserialize<LoginResponseDto>(currentUserJson);
-            if (currentUser != null)
-            {
-                displayName = !string.IsNullOrWhiteSpace(currentUser.FullName) ? currentUser.FullName : currentUser.Username;
-                isAuthenticated = true;
-            }
-        }
-    }
-    catch
-    {
-        isAuthenticated = false;
-    }
+    var currentUser = Context.Session.GetCurrentUser();
+    var isAuthenticated = currentUser != null;
+    var displayName = !string.IsNullOrWhiteSpace(currentUser?.FullName) ? currentUser.FullName : currentUser?.Username;
 }
 <!DOCTYPE html>
 <html lang="en">

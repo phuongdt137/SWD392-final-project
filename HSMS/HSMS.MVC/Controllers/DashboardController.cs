@@ -1,6 +1,7 @@
 using System.Text.Json;
 using Microsoft.AspNetCore.Mvc;
 using HSMS.MVC.DTOs.Auth;
+using HSMS.MVC.Common;
 
 namespace HSMS.MVC.Controllers;
 
@@ -15,7 +16,7 @@ public class DashboardController : Controller
 
     private LoginResponseDto? GetCurrentUser()
     {
-        var userJson = HttpContext.Session.GetString(AuthController.SessionUserKey);
+        var userJson = HttpContext.Session.GetString(SessionKeys.CurrentUser);
         if (string.IsNullOrEmpty(userJson))
         {
             return null;
@@ -114,3 +115,4 @@ public class DashboardController : Controller
         return View(user);
     }
 }
+
