@@ -24,7 +24,7 @@ public class StudentScoreRepository : GenericRepository<StudentScore>, IStudentS
                 .ThenInclude(c => c.Parent)
             .Include(s => s.ScoreAuditLogs)
                 .ThenInclude(l => l.ChangedByEmployee)
-                    .ThenInclude(e => e.User)
+                    
             .FirstOrDefaultAsync(s => s.Id == id);
     }
 

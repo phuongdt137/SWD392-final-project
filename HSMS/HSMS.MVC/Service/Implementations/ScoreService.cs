@@ -11,7 +11,7 @@ namespace HSMS.MVC.Service;
 /// </summary>
 public class ScoreService : IScoreService
 {
-    private readonly IUserRepository _userRepository;
+    private readonly IAccountRepository _accountRepository;
     private readonly ITeachingAssignmentRepository _assignmentRepository;
     private readonly IAssessmentRepository _assessmentRepository;
     private readonly IAssessmentTypeRepository _assessmentTypeRepository;
@@ -21,7 +21,7 @@ public class ScoreService : IScoreService
     private readonly ILogger<ScoreService> _logger;
 
     public ScoreService(
-        IUserRepository userRepository,
+        IAccountRepository accountRepository,
         ITeachingAssignmentRepository assignmentRepository,
         IAssessmentRepository assessmentRepository,
         IAssessmentTypeRepository assessmentTypeRepository,
@@ -30,7 +30,7 @@ public class ScoreService : IScoreService
         INotificationService notificationService,
         ILogger<ScoreService> logger)
     {
-        _userRepository = userRepository;
+        _accountRepository = accountRepository;
         _assignmentRepository = assignmentRepository;
         _assessmentRepository = assessmentRepository;
         _assessmentTypeRepository = assessmentTypeRepository;
@@ -361,13 +361,13 @@ public class ScoreService : IScoreService
     {
         try
         {
-            var viewer = await _customerRepository.GetByUserIdWithChildrenAsync(userId)
+            var viewer = await _customerRepository.GetByIdWithChildrenAsync(userId)
                 ?? throw ScoreErrors.NotStudentOrParent;
 
             var targetId = studentCustomerId
                 ?? (viewer.Children.Count > 0 ? viewer.Children.First().Id : viewer.Id);
 
-            var student = await _customerRepository.GetByIdWithUserAsync(targetId)
+            var student = await _customerRepository.GetByIdWithParentAsync(targetId)
                 ?? throw ScoreErrors.StudentNotFound;
 
             if (student.Id != viewer.Id && !viewer.IsGuardianOf(student))
@@ -431,11 +431,11 @@ public class ScoreService : IScoreService
     /// </summary>
     private async Task<Employee> ResolveTeacherAsync(long userId)
     {
-        var user = await _userRepository.GetByIdWithDetailsAsync(userId);
-        if (user?.EmployeeProfile == null || !user.GetActiveRoleCodes().Contains("TEACHER"))
+        var user = await _accountRepository.GetAsync(userId, "EMPLOYEE");
+        if (user is not Employee || !user.GetActiveRoleCodes().Contains("TEACHER"))
             throw ScoreErrors.NotTeacher;
 
-        return user.EmployeeProfile;
+        return (Employee)user;
     }
 
     /// <summary>

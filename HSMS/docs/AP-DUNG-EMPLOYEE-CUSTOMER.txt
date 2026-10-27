@@ -1,0 +1,22 @@
+HƯỚNG DẪN ÁP DỤNG BỘ CODE EMPLOYEE/CUSTOMER
+
+Code trong workspace hiện tại đã được tích hợp và database local đã được cập nhật.
+ZIP này gồm source dự án, hướng dẫn, script SQL và kiểm tra. Không gồm bin/obj,
+appsettings hoặc thông tin kết nối riêng của bạn. Giữ appsettings hiện tại khi áp dụng.
+
+Nếu dùng ZIP để thay cho bản code cũ, phải xóa các file cũ sau (không chỉ copy đè):
+HSMS.MVC/Models/User.cs
+HSMS.MVC/Models/UserRole.cs
+HSMS.MVC/Repositories/Interfaces/IUserRepository.cs
+HSMS.MVC/Repositories/Implementations/UserRepository.cs
+HSMS.MVC/Migrations/20261023132901_Add-Model-User-And-Refactor-Auth.cs
+HSMS.MVC/Migrations/20261023132901_Add-Model-User-And-Refactor-Auth.Designer.cs
+HSMS.MVC/Migrations/20261023185526_AddPasswordResetTokenToUser.cs
+HSMS.MVC/Migrations/20261023185526_AddPasswordResetTokenToUser.Designer.cs
+HSMS.MVC/Migrations/20261026045557_AddAttendanceModule.cs
+HSMS.MVC/Migrations/20261026045557_AddAttendanceModule.Designer.cs
+
+Các file mới và snapshot trong ZIP thay thế migration chưa áp dụng nói trên.
+Đọc database/README.txt trước khi áp dụng vào database khác.
+Dừng Debug, build lại, chạy migration mới nếu database khác chưa cập nhật, rồi F5.
+Đăng nhập lại để cookie có AccountType (EMPLOYEE/CUSTOMER).

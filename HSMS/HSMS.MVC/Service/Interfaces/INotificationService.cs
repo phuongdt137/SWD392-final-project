@@ -13,5 +13,5 @@ public interface INotificationService
     /// Gửi thông báo cho học sinh và phụ huynh khi điểm bị thay đổi.
     /// Lỗi gửi thông báo không làm thất bại thao tác cập nhật điểm.
     /// </summary>
-    Task NotifyScoreChangedAsync(StudentScore score, decimal? oldScore, long senderUserId);
+    Task NotifyScoreChangedAsync(StudentScore score, decimal? oldScore, long senderEmployeeId);
 }

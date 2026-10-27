@@ -108,7 +108,7 @@ public class AuthController : Controller
             return View(model);
         }
 
-        var dto = new ChangePasswordDto(user.Id, model.CurrentPassword, model.NewPassword);
+        var dto = new ChangePasswordDto(user.Id, user.UserType, model.CurrentPassword, model.NewPassword);
         var result = await _authService.ChangePasswordAsync(dto);
 
         if (!result.IsSuccess)

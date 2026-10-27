@@ -50,7 +50,7 @@ public static class ScoreSeeder
 
         var teacher = await context.Employees.FirstOrDefaultAsync(e => e.EmployeeCode == "EMP_TEA001");
         var student = await context.Customers.FirstOrDefaultAsync(c => c.StudentCode == "HS2024001");
-        var parent = await context.Customers.Include(c => c.User).FirstOrDefaultAsync(c => c.User.Username == "parent");
+        var parent = await context.Customers.FirstOrDefaultAsync(c => c.Username == "parent");
         if (teacher == null || student == null || parent == null)
             return;
 

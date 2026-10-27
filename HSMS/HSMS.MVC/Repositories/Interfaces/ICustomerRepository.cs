@@ -8,17 +8,18 @@ namespace HSMS.MVC.Repositories.Interfaces;
 public interface ICustomerRepository : IGenericRepository<Customer>
 {
     /// <summary>
-    /// Lấy danh sách học sinh đang hoạt động trong lớp, kèm thông tin User.
+    /// Lấy danh sách học sinh đang hoạt động trong lớp, kèm thông tin học sinh.
     /// </summary>
     Task<IReadOnlyList<Customer>> GetActiveStudentsByClassAsync(long classId);
 
     /// <summary>
-    /// Tìm hồ sơ Customer theo UserId, kèm danh sách con (nếu là phụ huynh).
+    /// Tìm hồ sơ Customer theo CustomerId, kèm danh sách con (nếu là phụ huynh).
     /// </summary>
-    Task<Customer?> GetByUserIdWithChildrenAsync(long userId);
+    Task<Customer?> GetByIdWithChildrenAsync(long userId);
 
     /// <summary>
-    /// Tìm hồ sơ Customer theo Id, kèm User và phụ huynh.
+    /// Tìm hồ sơ Customer theo Id, kèm phụ huynh.
     /// </summary>
-    Task<Customer?> GetByIdWithUserAsync(long id);
+    Task<Customer?> GetByIdWithParentAsync(long id);
 }
+

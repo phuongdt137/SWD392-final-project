@@ -34,7 +34,7 @@ public partial class AppDbContext
             e.HasOne(x => x.AttendanceAuditLog).WithMany().HasForeignKey(x => x.AttendanceAuditLogId).OnDelete(DeleteBehavior.NoAction);
             e.HasIndex(x => x.AttendanceAuditLogId).IsUnique().HasFilter("[AttendanceAuditLogId] IS NOT NULL");
             e.HasIndex(x => new { x.DispatchedAt, x.NextDeliveryAttemptAt }).HasFilter("[AttendanceAuditLogId] IS NOT NULL AND [DispatchedAt] IS NULL");
-            e.HasIndex(x => new { x.RecipientId, x.IsRead, x.SentAt });
+            e.HasIndex(x => new { x.RecipientCustomerId, x.IsRead, x.SentAt });
         });
     }
 }

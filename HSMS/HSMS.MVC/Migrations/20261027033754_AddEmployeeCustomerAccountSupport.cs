@@ -1,4 +1,4 @@
-using System;
+﻿using System;
 using Microsoft.EntityFrameworkCore.Migrations;
 
 #nullable disable
@@ -6,7 +6,7 @@ using Microsoft.EntityFrameworkCore.Migrations;
 namespace HSMS.MVC.Migrations
 {
     /// <inheritdoc />
-    public partial class AddAttendanceModule : Migration
+    public partial class AddEmployeeCustomerAccountSupport : Migration
     {
         /// <inheritdoc />
         protected override void Up(MigrationBuilder migrationBuilder)
@@ -40,6 +40,44 @@ namespace HSMS.MVC.Migrations
             migrationBuilder.AddColumn<DateTime>(
                 name: "NextDeliveryAttemptAt",
                 table: "Notification",
+                type: "datetime2",
+                nullable: true);
+
+            migrationBuilder.AddColumn<DateTime>(
+                name: "LastLoginAt",
+                table: "Employee",
+                type: "datetime2",
+                nullable: true);
+
+            migrationBuilder.AddColumn<string>(
+                name: "PasswordResetToken",
+                table: "Employee",
+                type: "nvarchar(256)",
+                maxLength: 256,
+                nullable: true);
+
+            migrationBuilder.AddColumn<DateTime>(
+                name: "PasswordResetTokenExpiry",
+                table: "Employee",
+                type: "datetime2",
+                nullable: true);
+
+            migrationBuilder.AddColumn<DateTime>(
+                name: "LastLoginAt",
+                table: "Customer",
+                type: "datetime2",
+                nullable: true);
+
+            migrationBuilder.AddColumn<string>(
+                name: "PasswordResetToken",
+                table: "Customer",
+                type: "nvarchar(256)",
+                maxLength: 256,
+                nullable: true);
+
+            migrationBuilder.AddColumn<DateTime>(
+                name: "PasswordResetTokenExpiry",
+                table: "Customer",
                 type: "datetime2",
                 nullable: true);
 
@@ -94,8 +132,6 @@ namespace HSMS.MVC.Migrations
                         principalColumn: "Id");
                 });
 
-
-
             migrationBuilder.CreateIndex(
                 name: "IX_Notification_AttendanceAuditLogId",
                 table: "Notification",
@@ -110,9 +146,9 @@ namespace HSMS.MVC.Migrations
                 filter: "[AttendanceAuditLogId] IS NOT NULL AND [DispatchedAt] IS NULL");
 
             migrationBuilder.CreateIndex(
-                name: "IX_Notification_RecipientId_IsRead_SentAt",
+                name: "IX_Notification_RecipientCustomerId_IsRead_SentAt",
                 table: "Notification",
-                columns: new[] { "RecipientId", "IsRead", "SentAt" });
+                columns: new[] { "RecipientCustomerId", "IsRead", "SentAt" });
 
             migrationBuilder.CreateIndex(
                 name: "IX_AttendanceRecord_TimetableEntryId_AttendanceDate",
@@ -165,21 +201,19 @@ namespace HSMS.MVC.Migrations
                 name: "FK_Notification_AttendanceAuditLog_AttendanceAuditLogId",
                 table: "Notification");
 
+            migrationBuilder.DropTable(
+                name: "AttendanceAuditLog");
 
             migrationBuilder.DropIndex(
                 name: "IX_Notification_AttendanceAuditLogId",
                 table: "Notification");
-
-            migrationBuilder.DropTable(
-                name: "AttendanceAuditLog");
-
 
             migrationBuilder.DropIndex(
                 name: "IX_Notification_DispatchedAt_NextDeliveryAttemptAt",
                 table: "Notification");
 
             migrationBuilder.DropIndex(
-                name: "IX_Notification_RecipientId_IsRead_SentAt",
+                name: "IX_Notification_RecipientCustomerId_IsRead_SentAt",
                 table: "Notification");
 
             migrationBuilder.DropIndex(
@@ -215,6 +249,30 @@ namespace HSMS.MVC.Migrations
                 table: "Notification");
 
             migrationBuilder.DropColumn(
+                name: "LastLoginAt",
+                table: "Employee");
+
+            migrationBuilder.DropColumn(
+                name: "PasswordResetToken",
+                table: "Employee");
+
+            migrationBuilder.DropColumn(
+                name: "PasswordResetTokenExpiry",
+                table: "Employee");
+
+            migrationBuilder.DropColumn(
+                name: "LastLoginAt",
+                table: "Customer");
+
+            migrationBuilder.DropColumn(
+                name: "PasswordResetToken",
+                table: "Customer");
+
+            migrationBuilder.DropColumn(
+                name: "PasswordResetTokenExpiry",
+                table: "Customer");
+
+            migrationBuilder.DropColumn(
                 name: "UpdatedAt",
                 table: "AttendanceRecord");
 
@@ -225,8 +283,6 @@ namespace HSMS.MVC.Migrations
             migrationBuilder.DropColumn(
                 name: "Version",
                 table: "AttendanceRecord");
-
-
         }
     }
 }

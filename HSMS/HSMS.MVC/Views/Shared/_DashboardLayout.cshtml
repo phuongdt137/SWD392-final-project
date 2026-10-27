@@ -132,7 +132,7 @@
                         <i class="bi bi-journal-bookmark-fill"></i>
                         <span>Môn học</span>
                     </a>
-                    <a href="#timetable" class="sidebar-link">
+                    <a asp-controller="Timetable" asp-action="@(primaryRole == "STUDENT" ? "Student" : "Index")" class="sidebar-link @(currentController == "Timetable" ? "active" : "")">
                         <i class="bi bi-calendar3"></i>
                         <span>Thời khóa biểu</span>
                     </a>
@@ -171,7 +171,7 @@
                         <i class="bi bi-journal-text"></i>
                         <span>Bài tập & Đánh giá</span>
                     </a>
-                    <a href="#schedule" class="sidebar-link">
+                    <a asp-controller="Timetable" asp-action="Teacher" class="sidebar-link @(currentController == "Timetable" ? "active" : "")">
                         <i class="bi bi-calendar3"></i>
                         <span>Lịch dạy</span>
                     </a>
@@ -191,7 +191,7 @@
                         <i class="bi bi-grid-1x2-fill"></i>
                         <span>Dashboard</span>
                     </a>
-                    <a href="#timetable" class="sidebar-link">
+                    <a asp-controller="Timetable" asp-action="@(primaryRole == "STUDENT" ? "Student" : "Index")" class="sidebar-link @(currentController == "Timetable" ? "active" : "")">
                         <i class="bi bi-calendar3"></i>
                         <span>Thời khóa biểu</span>
                     </a>
@@ -353,3 +353,4 @@
     @await RenderSectionAsync("Scripts", required: false)
 </body>
 </html>
+

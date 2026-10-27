@@ -1,16 +1,14 @@
-﻿using HSMS.MVC.Common;
+using HSMS.MVC.Common;
 
 namespace HSMS.MVC.Models;
 
-/// <summary>
-/// Thực thể Lưu vết Gửi tin nhắn (Email/SMS/Notification).
-/// </summary>
 public class MessageLog
 {
     public long Id { get; private set; }
     public string Channel { get; private set; } = null!;
     public string? Provider { get; private set; }
-    public long? RecipientUserId { get; private set; }
+    public long? RecipientCustomerId { get; private set; }
+    public long? RecipientEmployeeId { get; private set; }
     public string RecipientAddress { get; private set; } = null!;
     public string? Subject { get; private set; }
     public string MessageBody { get; private set; } = null!;
@@ -22,12 +20,13 @@ public class MessageLog
     public decimal? Cost { get; private set; }
     public DateTime? SentAt { get; private set; }
     public DateTime? DeliveredAt { get; private set; }
-    public long? CreatedByUserId { get; private set; }
+    public long? CreatedByEmployeeId { get; private set; }
     public long? NotificationId { get; private set; }
     public DateTime CreatedAt { get; private set; }
 
-    public virtual User? RecipientUser { get; private set; }
-    public virtual User? CreatedByUser { get; private set; }
+    public virtual Customer? RecipientCustomer { get; private set; }
+    public virtual Employee? RecipientEmployee { get; private set; }
+    public virtual Employee? CreatedByEmployee { get; private set; }
     public virtual Notification? Notification { get; private set; }
 
     protected MessageLog() { }
@@ -39,8 +38,9 @@ public class MessageLog
         string? subject = null,
         string? provider = null,
         string? templateCode = null,
-        long? recipientUserId = null,
-        long? createdByUserId = null,
+        long? recipientCustomerId = null,
+        long? recipientEmployeeId = null,
+        long? createdByEmployeeId = null,
         long? notificationId = null,
         decimal? cost = null)
     {
@@ -53,10 +53,16 @@ public class MessageLog
         if (string.IsNullOrWhiteSpace(messageBody))
             throw new AppError("Nội dung tin nhắn không được để trống.", "MESSAGE_BODY_REQUIRED");
 
-        if (recipientUserId.HasValue && recipientUserId.Value <= 0)
-            throw new AppError("Id người nhận tin không hợp lệ.", "INVALID_USER_ID");
+        if (recipientCustomerId.HasValue && recipientEmployeeId.HasValue)
+            throw new AppError("Người nhận không thể đồng thời là Customer và Employee.", "INVALID_RECIPIENT");
 
-        if (createdByUserId.HasValue && createdByUserId.Value <= 0)
+        if (recipientCustomerId.HasValue && recipientCustomerId.Value <= 0)
+            throw new AppError("Id Customer nhận tin không hợp lệ.", "INVALID_CUSTOMER_ID");
+
+        if (recipientEmployeeId.HasValue && recipientEmployeeId.Value <= 0)
+            throw new AppError("Id Employee nhận tin không hợp lệ.", "INVALID_EMPLOYEE_ID");
+
+        if (createdByEmployeeId.HasValue && createdByEmployeeId.Value <= 0)
             throw new AppError("Id người tạo tin không hợp lệ.", "INVALID_CREATOR_ID");
 
         if (notificationId.HasValue && notificationId.Value <= 0)
@@ -71,8 +77,9 @@ public class MessageLog
         Subject = subject?.Trim();
         Provider = provider?.Trim();
         TemplateCode = templateCode?.Trim();
-        RecipientUserId = recipientUserId;
-        CreatedByUserId = createdByUserId;
+        RecipientCustomerId = recipientCustomerId;
+        RecipientEmployeeId = recipientEmployeeId;
+        CreatedByEmployeeId = createdByEmployeeId;
         NotificationId = notificationId;
         Cost = cost;
         Status = "QUEUED";

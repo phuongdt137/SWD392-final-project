@@ -1,38 +1,34 @@
-﻿using HSMS.MVC.Common;
+using HSMS.MVC.Common;
 
 namespace HSMS.MVC.Models;
 
-/// <summary>
-/// Thực thể Nhân viên / Cán bộ / Giáo viên (Hồ sơ nghiệp vụ liên kết 1:1 với User).
-/// </summary>
-public class Employee
+public class Employee : IAccount
 {
+    public DateTime? LastLoginAt { get; private set; }
+    public string? PasswordResetToken { get; private set; }
+    public DateTime? PasswordResetTokenExpiry { get; private set; }
     public long Id { get; private set; }
-    public long UserId { get; private set; }
     public string EmployeeCode { get; private set; } = null!;
+    public string Username { get; private set; } = null!;
+    public string Email { get; private set; } = null!;
+    public string PasswordHash { get; private set; } = null!;
+    public string FullName { get; private set; } = null!;
+    public string? PhoneNumber { get; private set; }
     public string? Gender { get; private set; }
     public DateTime? DateOfBirth { get; private set; }
     public string? Address { get; private set; }
+    public string? AvatarUrl { get; private set; }
     public string? Department { get; private set; }
     public string? Position { get; private set; }
     public string? Specialization { get; private set; }
     public int? MaxPeriodsPerWeek { get; private set; }
     public string? Qualification { get; private set; }
     public DateTime? HireDate { get; private set; }
+    public bool IsActive { get; private set; } = true;
+    public DateTime CreatedAt { get; private set; }
     public DateTime? UpdatedAt { get; private set; }
 
-    // Navigation tới User (1:1)
-    public virtual User User { get; private set; } = null!;
-
-    // Helper properties ánh xạ sang User để giữ tương thích ngược
-    public string FullName => User?.FullName ?? string.Empty;
-    public string Username => User?.Username ?? string.Empty;
-    public string Email => User?.Email ?? string.Empty;
-    public string? PhoneNumber => User?.PhoneNumber;
-    public string? AvatarUrl => User?.AvatarUrl;
-    public bool IsActive => User?.IsActive ?? true;
-
-    // Academic & School Relations
+    public virtual ICollection<EmployeeRole> EmployeeRoles { get; private set; } = new List<EmployeeRole>();
     public virtual ICollection<Class> HomeroomClasses { get; private set; } = new List<Class>();
     public virtual ICollection<TeachingAssignment> TeachingAssignments { get; private set; } = new List<TeachingAssignment>();
     public virtual ICollection<LeaveRequest> ReviewedLeaveRequests { get; private set; } = new List<LeaveRequest>();
@@ -40,69 +36,103 @@ public class Employee
     public virtual ICollection<ScoreAuditLog> ScoreAuditLogs { get; private set; } = new List<ScoreAuditLog>();
     public virtual ICollection<ConductEvaluation> ConductEvaluations { get; private set; } = new List<ConductEvaluation>();
     public virtual ICollection<SemesterReport> FinalizedSemesterReports { get; private set; } = new List<SemesterReport>();
+    public virtual ICollection<Notification> SentNotifications { get; private set; } = new List<Notification>();
+    public virtual ICollection<Notification> ReceivedNotifications { get; private set; } = new List<Notification>();
+    public virtual ICollection<MessageLog> ReceivedMessageLogs { get; private set; } = new List<MessageLog>();
+    public virtual ICollection<MessageLog> SentMessageLogs { get; private set; } = new List<MessageLog>();
     public virtual ICollection<StudentTransfer> RecordedStudentTransfers { get; private set; } = new List<StudentTransfer>();
     public virtual ICollection<StudentAnnualReport> FinalizedStudentAnnualReports { get; private set; } = new List<StudentAnnualReport>();
 
     protected Employee() { }
 
     public Employee(
-        long userId,
         string employeeCode,
+        string username,
+        string email,
+        string passwordHash,
+        string fullName,
+        string? phoneNumber = null,
+        string? gender = null,
+        DateTime? dateOfBirth = null,
+        string? address = null,
+        string? avatarUrl = null,
         string? department = null,
         string? position = null,
         string? specialization = null,
         string? qualification = null,
         DateTime? hireDate = null,
-        int? maxPeriodsPerWeek = null,
-        string? gender = null,
-        DateTime? dateOfBirth = null,
-        string? address = null)
+        int? maxPeriodsPerWeek = null)
     {
-        if (userId <= 0)
-            throw new AppError("Id người dùng không hợp lệ.", "INVALID_USER_ID");
-
         if (string.IsNullOrWhiteSpace(employeeCode))
             throw new AppError("Mã nhân viên không được để trống.", "EMPLOYEE_CODE_REQUIRED");
 
+        if (string.IsNullOrWhiteSpace(username))
+            throw new AppError("Tên đăng nhập không được để trống.", "USERNAME_REQUIRED");
+
+        if (string.IsNullOrWhiteSpace(email))
+            throw new AppError("Email không được để trống.", "EMAIL_REQUIRED");
+
+        if (string.IsNullOrWhiteSpace(passwordHash))
+            throw new AppError("Mật khẩu băm không được để trống.", "PASSWORD_REQUIRED");
+
+        if (string.IsNullOrWhiteSpace(fullName))
+            throw new AppError("Họ và tên không được để trống.", "FULLNAME_REQUIRED");
+
         if (maxPeriodsPerWeek.HasValue && maxPeriodsPerWeek.Value < 0)
             throw new AppError("Số tiết tối đa trong tuần phải >= 0.", "INVALID_MAX_PERIODS");
 
-        UserId = userId;
         EmployeeCode = employeeCode.Trim();
-        Department = department?.Trim();
-        Position = position?.Trim();
-        Specialization = specialization?.Trim();
-        Qualification = qualification?.Trim();
-        HireDate = hireDate;
-        MaxPeriodsPerWeek = maxPeriodsPerWeek;
+        Username = username.Trim();
+        Email = email.Trim().ToLowerInvariant();
+        PasswordHash = passwordHash;
+        FullName = fullName.Trim();
+        PhoneNumber = phoneNumber;
         Gender = gender;
         DateOfBirth = dateOfBirth;
         Address = address;
+        AvatarUrl = avatarUrl;
+        Department = department;
+        Position = position;
+        Specialization = specialization;
+        Qualification = qualification;
+        HireDate = hireDate;
+        MaxPeriodsPerWeek = maxPeriodsPerWeek;
+        IsActive = true;
+        CreatedAt = DateTime.UtcNow;
     }
 
-    public void UpdateEmployeeInfo(
-        string? department,
-        string? position,
-        string? specialization,
-        string? qualification,
-        int? maxPeriodsPerWeek,
-        string? gender,
-        DateTime? dateOfBirth,
-        string? address)
+    public bool VerifyPassword(string rawPassword)
     {
-        if (maxPeriodsPerWeek.HasValue && maxPeriodsPerWeek.Value < 0)
-            throw new AppError("Số tiết tối đa trong tuần phải >= 0.", "INVALID_MAX_PERIODS");
+        if (string.IsNullOrEmpty(rawPassword) || string.IsNullOrEmpty(PasswordHash))
+            return false;
 
-        Department = department?.Trim();
-        Position = position?.Trim();
-        Specialization = specialization?.Trim();
-        Qualification = qualification?.Trim();
-        MaxPeriodsPerWeek = maxPeriodsPerWeek;
-        Gender = gender;
-        DateOfBirth = dateOfBirth;
+        return BCrypt.Net.BCrypt.Verify(rawPassword, PasswordHash);
+    }
+
+    public void Activate()
+    {
+        IsActive = true;
+        UpdatedAt = DateTime.UtcNow;
+    }
+
+    public void Deactivate()
+    {
+        IsActive = false;
+        UpdatedAt = DateTime.UtcNow;
+    }
+
+    public void UpdateProfile(string fullName, string? phoneNumber, string? address)
+    {
+        if (string.IsNullOrWhiteSpace(fullName))
+            throw new AppError("Họ và tên không được để trống.", "INVALID_FULLNAME");
+
+        FullName = fullName.Trim();
+        PhoneNumber = phoneNumber;
         Address = address;
         UpdatedAt = DateTime.UtcNow;
     }
+
+    public Employee GetProfile() => this;
 
     public int CurrentWorkload(long semesterId)
     {
@@ -111,4 +141,52 @@ public class Employee
             .SelectMany(ta => ta.TimetableEntries)
             .Count(te => te.Status == "ACTIVE");
     }
+    public void ChangePassword(string newPasswordHash)
+    {
+        if (string.IsNullOrWhiteSpace(newPasswordHash))
+            throw new AppError("Mật khẩu mới không được để trống.", "PASSWORD_REQUIRED");
+
+        PasswordHash = newPasswordHash;
+    }
+
+    public void RecordLogin()
+    {
+        LastLoginAt = DateTime.UtcNow;
+    }
+
+    public IReadOnlyList<string> GetActiveRoleCodes()
+    {
+        return EmployeeRoles
+            .Where(ur => ur.IsActive && ur.Role != null && ur.Role.IsActive)
+            .Select(ur => ur.Role!.RoleCode)
+            .Where(code => code is "ADMIN" or "STAFF" or "TEACHER" or "PRINCIPAL")
+            .Distinct()
+            .ToList()
+            .AsReadOnly();
+    }
+
+    public void SetPasswordResetToken(string token, DateTime expiry)
+    {
+        if (string.IsNullOrWhiteSpace(token))
+            throw new AppError("Mã xác nhận đặt lại mật khẩu không hợp lệ.", "RESET_TOKEN_REQUIRED");
+
+        PasswordResetToken = token;
+        PasswordResetTokenExpiry = expiry;
+    }
+
+    public void ClearPasswordResetToken()
+    {
+        PasswordResetToken = null;
+        PasswordResetTokenExpiry = null;
+    }
+
+    public bool IsPasswordResetTokenValid(string token)
+    {
+        return !string.IsNullOrWhiteSpace(PasswordResetToken)
+            && PasswordResetToken == token
+            && PasswordResetTokenExpiry.HasValue
+            && PasswordResetTokenExpiry.Value > DateTime.UtcNow;
+    }
+
 }
+

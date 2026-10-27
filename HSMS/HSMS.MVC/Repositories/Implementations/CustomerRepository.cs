@@ -18,27 +18,23 @@ public class CustomerRepository : GenericRepository<Customer>, ICustomerReposito
     {
         return await _dbSet
             .AsNoTracking()
-            .Include(c => c.User)
             .Where(c => c.StudentClasses.Any(sc => sc.ClassId == classId && sc.Status == "ACTIVE"))
             .OrderBy(c => c.StudentCode)
             .ToListAsync();
     }
 
-    public async Task<Customer?> GetByUserIdWithChildrenAsync(long userId)
+    public async Task<Customer?> GetByIdWithChildrenAsync(long userId)
     {
         return await _dbSet
             .AsNoTracking()
-            .Include(c => c.User)
             .Include(c => c.Children)
-                .ThenInclude(ch => ch.User)
-            .FirstOrDefaultAsync(c => c.UserId == userId);
+            .FirstOrDefaultAsync(c => c.Id == userId);
     }
 
-    public async Task<Customer?> GetByIdWithUserAsync(long id)
+    public async Task<Customer?> GetByIdWithParentAsync(long id)
     {
         return await _dbSet
             .AsNoTracking()
-            .Include(c => c.User)
             .Include(c => c.Parent)
             .FirstOrDefaultAsync(c => c.Id == id);
     }

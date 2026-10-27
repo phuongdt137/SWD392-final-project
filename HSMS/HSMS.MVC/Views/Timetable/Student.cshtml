@@ -1,0 +1,8 @@
+@model HSMS.MVC.DTOs.WeeklyTimetableDto
+@{
+    ViewData["Title"] = "Thời khóa biểu của tôi";
+}
+
+<form method="get" class="d-flex gap-2 mb-3"><label for="week">Ngày trong tuần cần xem</label><input id="week" name="week" type="date" value="@Model.WeekStart.ToString("yyyy-MM-dd")" class="form-control w-auto" /><button class="btn btn-primary">Xem lịch</button></form>
+@await Html.PartialAsync("_WeeklyGrid", Model)
+

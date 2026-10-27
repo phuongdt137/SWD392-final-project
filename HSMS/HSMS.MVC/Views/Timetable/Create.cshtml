@@ -1,0 +1,130 @@
+@model HSMS.MVC.DTOs.FormOptionsDto
+@{
+    ViewData["Title"] = "Tạo lịch dạy";
+}
+
+<h2>Tạo lịch dạy</h2>
+
+@Html.AntiForgeryToken()
+<div id="alertBox" role="status" aria-live="polite"></div>
+
+<div class="row g-3">
+    <div class="col-md-4">
+        <label for="employeeId" class="form-label">Giáo viên</label>
+        <select id="employeeId" class="form-select">
+            <option value="">-- Chọn --</option>
+            @foreach (var o in Model.Employees) { <option value="@o.Id">@o.Text</option> }
+        </select>
+    </div>
+    <div class="col-md-4">
+        <label for="subjectId" class="form-label">Môn học</label>
+        <select id="subjectId" class="form-select">
+            <option value="">-- Chọn --</option>
+            @foreach (var o in Model.Subjects) { <option value="@o.Id">@o.Text</option> }
+        </select>
+    </div>
+    <div class="col-md-4">
+        <label for="classId" class="form-label">Lớp</label>
+        <select id="classId" class="form-select">
+            <option value="">-- Chọn --</option>
+            @foreach (var o in Model.Classes) { <option value="@o.Id">@o.Text</option> }
+        </select>
+    </div>
+    <div class="col-md-4">
+        <label for="semesterId" class="form-label">Học kỳ</label>
+        <select id="semesterId" class="form-select">
+            <option value="">-- Chọn --</option>
+            @foreach (var o in Model.Semesters) { <option value="@o.Id">@o.Text</option> }
+        </select>
+    </div>
+    <div class="col-md-4">
+        <label for="roomId" class="form-label">Phòng học</label>
+        <select id="roomId" class="form-select">
+            <option value="">-- Chọn --</option>
+            @foreach (var o in Model.Rooms) { <option value="@o.Id">@o.Text</option> }
+        </select>
+    </div>
+    <div class="col-md-4">
+        <label for="timeSlotId" class="form-label">Tiết học</label>
+        <select id="timeSlotId" class="form-select">
+            <option value="">-- Chọn --</option>
+            @foreach (var o in Model.TimeSlots) { <option value="@o.Id">@o.Text</option> }
+        </select>
+    </div>
+    <div class="col-md-4">
+        <label for="dayOfWeek" class="form-label">Thứ</label>
+        <select id="dayOfWeek" class="form-select">
+            <option value="">-- Chọn --</option>
+            <option value="1">Thứ 2</option>
+            <option value="2">Thứ 3</option>
+            <option value="3">Thứ 4</option>
+            <option value="4">Thứ 5</option>
+            <option value="5">Thứ 6</option>
+            <option value="6">Thứ 7</option><option value="7">Chủ nhật</option>
+        </select>
+    </div>
+    <div class="col-md-4">
+        <label for="effectiveFrom" class="form-label">Áp dụng từ ngày (để trống: đầu học kỳ)</label>
+        <input type="date" id="effectiveFrom" class="form-control" />
+    </div>
+    <div class="col-md-4">
+        <label for="effectiveTo" class="form-label">Đến ngày (để trống: cuối học kỳ)</label>
+        <input type="date" id="effectiveTo" class="form-control" />
+    </div>
+</div>
+
+<div class="mt-3">
+    <button type="button" id="btnSave" class="btn btn-primary">Lưu</button>
+    <a asp-action="Index" class="btn btn-outline-secondary">Xem thời khóa biểu</a>
+</div>
+
+@section Scripts {
+    <script>
+        function val(id) { return document.getElementById(id).value; }
+
+        function showAlert(type, message) {
+            const box = document.getElementById('alertBox');
+            box.className = 'alert alert-' + type;
+            box.textContent = message;
+        }
+
+        // BƯỚC 1: Staff nhập dữ liệu và bấm "Lưu"
+        document.getElementById('btnSave').addEventListener('click', async function () {
+            const body = {
+                employeeId: Number(val('employeeId')),
+                subjectId: Number(val('subjectId')),
+                classId: Number(val('classId')),
+                semesterId: Number(val('semesterId')),
+                roomId: Number(val('roomId')),
+                timeSlotId: Number(val('timeSlotId')),
+                dayOfWeek: Number(val('dayOfWeek')),
+                effectiveFrom: val('effectiveFrom') || null,
+                effectiveTo: val('effectiveTo') || null
+            };
+
+            // BƯỚC 2: gửi POST /api/teaching-assignment
+            this.disabled = true;
+            try {
+                const res = await fetch('@Url.Content("~/api/teaching-assignment")', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json', 'RequestVerificationToken': document.querySelector('input[name="__RequestVerificationToken"]').value },
+                    body: JSON.stringify(body)
+                });
+                if (res.redirected) { showAlert('danger', 'Phiên đăng nhập đã hết. Vui lòng đăng nhập lại.'); return; }
+                if (!res.headers.get('content-type')?.includes('application/json')) { showAlert('danger', 'Yêu cầu không thành công. Hãy tải lại trang và thử lại.'); return; }
+                const data = await res.json();
+    
+                // BƯỚC 19 + 24: nhận HTTP 201 thì hiển thị thông báo thành công
+                if (res.status === 201) {
+                    showAlert('success', data.message);
+                } else {
+                    showAlert('danger', data.message);
+                }
+                } catch { showAlert('danger', 'Mất kết nối. Hãy kiểm tra lịch trước khi thử lưu lại.'); }
+            finally { this.disabled = false; }
+        });
+    </script>
+}
+
+
+

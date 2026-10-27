@@ -11,16 +11,16 @@ namespace HSMS.MVC.Service;
 /// </summary>
 public class AuthService : IAuthService
 {
-    private readonly IUserRepository _userRepository;
+    private readonly IAccountRepository _accountRepository;
     private readonly IEmailService _emailService;
     private readonly ILogger<AuthService> _logger;
 
     public AuthService(
-        IUserRepository userRepository,
+        IAccountRepository accountRepository,
         IEmailService emailService,
         ILogger<AuthService> logger)
     {
-        _userRepository = userRepository;
+        _accountRepository = accountRepository;
         _emailService = emailService;
         _logger = logger;
     }
@@ -36,7 +36,7 @@ public class AuthService : IAuthService
 
             var identifier = dto.UsernameOrEmail.Trim().ToLower();
 
-            var user = await _userRepository.GetByUsernameOrEmailWithDetailsAsync(identifier);
+            var user = await _accountRepository.FindByLoginAsync(identifier);
 
             if (user == null)
             {
@@ -64,12 +64,11 @@ public class AuthService : IAuthService
             }
 
             // Xác định UserType
-            string userType = user.EmployeeProfile != null ? "EMPLOYEE"
-                            : (user.CustomerProfile != null ? "CUSTOMER" : "USER");
+            string userType = user is HSMS.MVC.Models.Employee ? "EMPLOYEE" : "CUSTOMER";
 
             // Cập nhật thời điểm đăng nhập qua Repository
             user.RecordLogin();
-            await _userRepository.SaveChangesAsync();
+            await _accountRepository.SaveChangesAsync();
 
             var responseDto = new LoginResponseDto(
                 user.Id,
@@ -98,7 +97,7 @@ public class AuthService : IAuthService
     {
         try
         {
-            var user = await _userRepository.GetByIdAsync(dto.UserId);
+            var user = await _accountRepository.GetAsync(dto.AccountId, dto.AccountType);
             if (user == null)
             {
                 throw AuthErrors.UserNotFound;
@@ -124,7 +123,7 @@ public class AuthService : IAuthService
             string newHash = BCrypt.Net.BCrypt.HashPassword(dto.NewPassword);
             user.ChangePassword(newHash);
 
-            await _userRepository.SaveChangesAsync();
+            await _accountRepository.SaveChangesAsync();
 
             return ServiceResult.Success("Đổi mật khẩu thành công.");
         }
@@ -134,7 +133,7 @@ public class AuthService : IAuthService
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "Lỗi hệ thống ngoài dự kiến khi đổi mật khẩu cho UserId: {UserId}", dto.UserId);
+            _logger.LogError(ex, "Lỗi hệ thống ngoài dự kiến khi đổi mật khẩu cho UserId: {UserId}", dto.AccountId);
             return ServiceResult.Failed(new AppError("Hệ thống gặp sự cố khi đổi mật khẩu. Vui lòng thử lại sau.", "SYSTEM_ERROR", ErrorType.Failure));
         }
     }
@@ -149,7 +148,7 @@ public class AuthService : IAuthService
             }
 
             var email = dto.Email.Trim().ToLower();
-            var user = await _userRepository.GetByEmailAsync(email);
+            var user = await _accountRepository.FindByEmailAsync(email);
 
             if (user == null || !user.IsActive)
             {
@@ -162,7 +161,7 @@ public class AuthService : IAuthService
             var expiry = DateTime.UtcNow.AddMinutes(15);
 
             user.SetPasswordResetToken(token, expiry);
-            await _userRepository.SaveChangesAsync();
+            await _accountRepository.SaveChangesAsync();
 
             var resetUrl = $"{resetLinkBaseUrl}?token={Uri.EscapeDataString(token)}&email={Uri.EscapeDataString(user.Email)}";
             await _emailService.SendPasswordResetEmailAsync(user.Email, resetUrl);
@@ -190,7 +189,7 @@ public class AuthService : IAuthService
             }
 
             var email = dto.Email.Trim().ToLower();
-            var user = await _userRepository.GetByEmailAsync(email);
+            var user = await _accountRepository.FindByEmailAsync(email);
 
             if (user == null || !user.IsActive)
             {
@@ -206,7 +205,7 @@ public class AuthService : IAuthService
             user.ChangePassword(newHash);
             user.ClearPasswordResetToken();
 
-            await _userRepository.SaveChangesAsync();
+            await _accountRepository.SaveChangesAsync();
 
             return ServiceResult.Success("Đặt lại mật khẩu thành công. Vui lòng đăng nhập bằng mật khẩu mới.");
         }

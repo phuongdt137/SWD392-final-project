@@ -1,0 +1,45 @@
+@model HSMS.MVC.DTOs.WeeklyTimetableDto
+@{
+    var days = new[] { 1, 2, 3, 4, 5, 6, 7 };
+}
+
+<h4 class="mb-3">@Model.Title</h4>
+
+<p>Tuần @Model.WeekStart.ToString("dd/MM/yyyy") – @Model.WeekStart.AddDays(6).ToString("dd/MM/yyyy")</p>
+@if (Model.Items.Count == 0) { <div class="alert alert-info">Không có lịch trong tuần đã chọn. Với học sinh, hãy kiểm tra thời gian xếp lớp.</div> }
+<div class="table-responsive"><table class="table table-bordered text-center align-middle">
+    <thead class="table-light">
+        <tr>
+            <th style="width:110px">Tiết</th>
+            @foreach (var d in days)
+            {
+                <th>@(d == 7 ? "Chủ nhật" : "Thứ " + (d + 1))<br /><small>@Model.WeekStart.AddDays(d - 1).ToString("dd/MM")</small></th>
+            }
+        </tr>
+    </thead>
+    <tbody>
+        @foreach (var slot in Model.Slots)
+        {
+            <tr>
+                <td>
+                    <strong>Tiết @slot.PeriodNo</strong><br />
+                    <small class="text-muted">@slot.TimeText</small>
+                </td>
+                @foreach (var d in days)
+                {
+                    <td>
+                        @foreach (var item in Model.Items.Where(i => i.DayOfWeek == d && i.TimeSlotId == slot.Id))
+                        {
+                            <div class="border rounded p-1 mb-1 bg-light">
+                                <strong>@item.SubjectName</strong><br />
+                                <small>@item.ClassName - @item.TeacherName</small><br />
+                                <small>Phòng: @item.RoomName</small>
+                            </div>
+                        }
+                    </td>
+                }
+            </tr>
+        }
+    </tbody>
+</table></div>
+

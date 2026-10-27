@@ -11,7 +11,6 @@ public interface IAttendanceRepository : IGenericRepository<AttendanceRecord>
     Task<List<TimetableEntry>> GetLessonsAsync(DateTime date, Expression<Func<TimetableEntry, bool>> scope, CancellationToken ct);
     Task<AttendanceScheduleResult> GetSchedulePageAsync(AttendanceScheduleFilter filter, Expression<Func<TimetableEntry, bool>> scope,
         DateTime localNow, bool locked, CancellationToken ct);
-    Task<long> EnsureStaffEmployeeAsync(long userId, CancellationToken ct);
     Task<List<StudentClass>> GetRosterAsync(long classId, DateTime date, CancellationToken ct);
     Task<List<AttendanceRecord>> GetSheetAsync(long entryId, DateTime date, CancellationToken ct);
     Task<List<LeaveRequest>> GetLeavesAsync(long[] students, DateTime date, CancellationToken ct);

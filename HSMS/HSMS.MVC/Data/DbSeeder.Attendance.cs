@@ -28,41 +28,31 @@ public static partial class DbSeeder
             if (item != null) return item;
             item = create(); set.Add(item); await db.SaveChangesAsync(); return item;
         }
-        async Task<User> DemoUser(string username, string name, string roleCode)
+        async Task<Customer> DemoCustomer(string username, string name, string roleCode, string? code = null, long? parentId = null)
         {
-            var user = await GetOrAdd(db.Users, u => u.Username == username,
-                () => new User(username, username + "@example.invalid", passwordHash, name));
-            var role = await db.Roles.SingleAsync(r => r.RoleCode == roleCode);
-            if (!await db.UserRoles.AnyAsync(r => r.UserId == user.Id && r.RoleId == role.Id))
-            { db.UserRoles.Add(new UserRole(user.Id, role.Id)); await db.SaveChangesAsync(); }
-            return user;
-        }
-        async Task<Customer> Profile(User user, string? code = null, long? parentId = null)
-        {
-            var customer = await GetOrAdd(db.Customers, c => c.UserId == user.Id,
-                () => new Customer(user.Id, studentCode: code, admissionDate: code == null ? null : yearStart,
+            var customer = await GetOrAdd(db.Customers, c => c.Username == username,
+                () => new Customer(username, username + "@example.invalid", passwordHash, name,
+                    studentCode: code, admissionDate: code == null ? null : yearStart,
                     parentId: parentId, relationshipType: parentId.HasValue ? "Con" : null));
+            var role = await db.Roles.SingleAsync(r => r.RoleCode == roleCode);
+            if (!await db.CustomerRoles.AnyAsync(r => r.CustomerId == customer.Id && r.RoleId == role.Id))
+            { db.CustomerRoles.Add(new CustomerRole(customer.Id, role.Id)); await db.SaveChangesAsync(); }
             if (parentId.HasValue && !customer.ParentId.HasValue)
             { customer.AssignParent(parentId.Value, "Con"); await db.SaveChangesAsync(); }
             return customer;
         }
-
-        // Reuse the existing sample accounts created by SeedAdminAccountsAsync.
-        var teacherUser = await db.Users.SingleAsync(u => u.Username == "teacher");
-        var teacher = await GetOrAdd(db.Employees, e => e.UserId == teacherUser.Id,
-            () => new Employee(teacherUser.Id, "ATT-DEMO-TEACHER", position: "Giáo viên mẫu"));
-        var parentUser = await db.Users.SingleAsync(u => u.Username == "parent");
-        var parent = await Profile(parentUser);
-        var studentUser = await db.Users.SingleAsync(u => u.Username == "student");
-        var student = await Profile(studentUser, "HS2024001", parent.Id);
-        var secondParent = await Profile(await DemoUser("attendance.parent2", "Lê Thu Mai — Phụ huynh mẫu 2", "PARENT"));
-        var second = await Profile(await DemoUser("attendance.student2", "Nguyễn Ngọc Linh", "STUDENT"), "ATT-DEMO-HS02", parent.Id);
-        var third = await Profile(await DemoUser("attendance.student3", "Trần Minh Khang", "STUDENT"), "ATT-DEMO-HS03", secondParent.Id);
-        var fourth = await Profile(await DemoUser("attendance.student4", "Lê Gia Hân", "STUDENT"), "ATT-DEMO-HS04", secondParent.Id);
+        var teacher = await db.Employees.SingleAsync(e => e.Username == "teacher");
+        var parent = await DemoCustomer("parent", "Phụ huynh mẫu", "PARENT");
+        var student = await DemoCustomer("student", "Học sinh mẫu", "STUDENT", "HS2024001", parent.Id);
+        var secondParent = await DemoCustomer("attendance.parent2", "Lê Thu Mai", "PARENT");
+        var second = await DemoCustomer("attendance.student2", "Nguyễn Ngọc Linh", "STUDENT", "ATT-DEMO-HS02", parent.Id);
+        var third = await DemoCustomer("attendance.student3", "Trần Minh Khang", "STUDENT", "ATT-DEMO-HS03", secondParent.Id);
+        var fourth = await DemoCustomer("attendance.student4", "Lê Gia Hân", "STUDENT", "ATT-DEMO-HS04", secondParent.Id);
         var adminRole = await GetOrAdd(db.Roles, r => r.RoleCode == "ADMIN", () => new Role("ADMIN", "Administrator"));
-        var adminUser = await DemoUser("attendance.admin", "Quản trị viên điểm danh mẫu", adminRole.RoleCode);
-        await GetOrAdd(db.Employees, e => e.UserId == adminUser.Id,
-            () => new Employee(adminUser.Id, "ATT-DEMO-ADMIN", department: "Quản trị", position: "ADMIN"));
+        var admin = await GetOrAdd(db.Employees, e => e.Username == "attendance.admin",
+            () => new Employee("ATT-DEMO-ADMIN", "attendance.admin", "attendance.admin@example.invalid", passwordHash, "Quản trị viên điểm danh"));
+        if (!await db.EmployeeRoles.AnyAsync(r => r.EmployeeId == admin.Id && r.RoleId == adminRole.Id))
+        { db.EmployeeRoles.Add(new EmployeeRole(admin.Id, adminRole.Id)); await db.SaveChangesAsync(); }
 
         var year = await GetOrAdd(db.AcademicYears, y => y.YearCode == yearCode, () => new AcademicYear(yearCode, yearStart, yearEnd));
         var semester = await GetOrAdd(db.Semesters, s => s.SemesterCode == termCode,

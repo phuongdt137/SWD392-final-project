@@ -9,21 +9,21 @@ using Microsoft.AspNetCore.Authentication.Cookies;
 namespace HSMS.MVC.Service;
 
 /// <summary>Refresh active roles and profiles instead of trusting an old login snapshot.</summary>
-public sealed class SchoolCookieEvents(IUserRepository users) : CookieAuthenticationEvents
+public sealed class SchoolCookieEvents(IAccountRepository accounts) : CookieAuthenticationEvents
 {
     public override async Task ValidatePrincipal(CookieValidatePrincipalContext context)
     {
         if (!long.TryParse(context.Principal?.FindFirstValue(ClaimTypes.NameIdentifier), out var id))
         { context.RejectPrincipal(); return; }
-        var user = await users.GetByIdWithDetailsAsync(id);
+        var user = await accounts.GetAsync(id, context.Principal?.FindFirstValue(UserPrincipal.AccountTypeClaim) ?? "");
         if (user is not { IsActive: true } || user.GetActiveRoleCodes().Count == 0)
         {
             context.RejectPrincipal(); context.HttpContext.Session.Clear();
             await context.HttpContext.SignOutAsync(); return;
         }
-        context.ReplacePrincipal(UserPrincipal.Create(user.Id, user.FullName, user.GetActiveRoleCodes()));
+        context.ReplacePrincipal(UserPrincipal.Create(user.Id, user.FullName, user.GetActiveRoleCodes(), user is HSMS.MVC.Models.Employee ? "EMPLOYEE" : "CUSTOMER"));
         var dto = new LoginResponseDto(user.Id, user.Username, user.FullName, user.Email,
-            user.EmployeeProfile == null ? "CUSTOMER" : "EMPLOYEE", user.GetActiveRoleCodes(), user.AvatarUrl);
+            user is HSMS.MVC.Models.Employee ? "EMPLOYEE" : "CUSTOMER", user.GetActiveRoleCodes(), user.AvatarUrl);
         context.HttpContext.Session.SetString("CurrentUser", JsonSerializer.Serialize(dto));
     }
     public override Task RedirectToLogin(RedirectContext<CookieAuthenticationOptions> context)
@@ -38,5 +38,5 @@ public sealed class SchoolCookieEvents(IUserRepository users) : CookieAuthentica
         else context.Response.Redirect(context.RedirectUri);
         return Task.CompletedTask;
     }
-    private static bool IsEndpoint(PathString path) => path.StartsWithSegments("/hubs") || path.StartsWithSegments("/Notifications/Feed");
+    private static bool IsEndpoint(PathString path) => path.StartsWithSegments("/api") || path.StartsWithSegments("/hubs") || path.StartsWithSegments("/Notifications/Feed");
 }

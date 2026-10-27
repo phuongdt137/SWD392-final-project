@@ -30,21 +30,21 @@ public sealed class NotificationService : INotificationService
         var user = await _current.GetAsync(ct);
         return user == null
             ? ServiceResult<NotificationFeed>.Failed(AuthErrors.MissingCredentials)
-            : ServiceResult<NotificationFeed>.Success(await _repo.FeedAsync(user.UserId, ct));
+            : ServiceResult<NotificationFeed>.Success(await _repo.FeedAsync(user.AccountId, user.EmployeeId.HasValue ? "EMPLOYEE" : "CUSTOMER", ct));
     }
 
     public async Task<ServiceResult> ReadAsync(long id, CancellationToken ct = default)
     {
         var user = await _current.GetAsync(ct);
         if (user == null) return ServiceResult.Unauthorized();
-        return await _repo.ReadAsync(user.UserId, id, ct) ? ServiceResult.Success() : ServiceResult.NotFound();
+        return await _repo.ReadAsync(user.AccountId, user.EmployeeId.HasValue ? "EMPLOYEE" : "CUSTOMER", id, ct) ? ServiceResult.Success() : ServiceResult.NotFound();
     }
 
     /// <summary>
     /// Gửi thông báo cho học sinh và phụ huynh khi điểm bị thay đổi.
     /// Lỗi gửi thông báo không làm thất bại thao tác cập nhật điểm.
     /// </summary>
-    public async Task NotifyScoreChangedAsync(StudentScore score, decimal? oldScore, long senderUserId)
+    public async Task NotifyScoreChangedAsync(StudentScore score, decimal? oldScore, long senderEmployeeId)
     {
         try
         {
@@ -55,14 +55,14 @@ public sealed class NotificationService : INotificationService
             var content = $"Điểm {score.Assessment.AssessmentName} môn {subjectName} đã thay đổi từ " +
                           $"{FormatScore(oldScore)} thành {FormatScore(score.Score)}.";
 
-            var recipientUserIds = new List<long> { student.UserId };
+            var recipientCustomerIds = new List<long> { student.Id };
             if (student.Parent != null)
-                recipientUserIds.Add(student.Parent.UserId);
+                recipientCustomerIds.Add(student.Parent.Id);
 
-            foreach (var recipientUserId in recipientUserIds.Distinct())
+            foreach (var recipientCustomerId in recipientCustomerIds.Distinct())
             {
                 await _notificationRepository.AddAsync(
-                    new Notification(title, content, recipientUserId, senderUserId));
+                    new Notification(title, content, recipientCustomerId: recipientCustomerId, senderEmployeeId: senderEmployeeId));
             }
 
             await _notificationRepository.SaveChangesAsync();

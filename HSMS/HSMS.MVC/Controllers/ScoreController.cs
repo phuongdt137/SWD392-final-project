@@ -235,6 +235,7 @@ public class ScoreController : Controller
 
     private LoginResponseDto? GetCurrentUser()
     {
+        if (User.Identity?.IsAuthenticated != true) return null;
         var userJson = HttpContext.Session.GetString(AuthController.SessionUserKey);
         if (string.IsNullOrEmpty(userJson))
             return null;
@@ -260,3 +261,4 @@ public class ScoreController : Controller
         return null;
     }
 }
+

@@ -18,10 +18,10 @@ public sealed class AttendanceRepository : GenericRepository<AttendanceRecord>, 
         .Include(x => x.TeachingAssignment).ThenInclude(x => x.Class).ThenInclude(x => x.GradeLevel)
         .Include(x => x.TeachingAssignment).ThenInclude(x => x.Semester)
         .Include(x => x.TeachingAssignment).ThenInclude(x => x.Subject)
-        .Include(x => x.TeachingAssignment).ThenInclude(x => x.Employee).ThenInclude(x => x.User)
+        .Include(x => x.TeachingAssignment).ThenInclude(x => x.Employee)
         .Include(x => x.TimeSlot).Include(x => x.Room);
     private IQueryable<AttendanceRecord> Details => _context.AttendanceRecords
-        .Include(x => x.Customer).ThenInclude(x => x.User)
+        .Include(x => x.Customer)
         .Include(x => x.TimetableEntry).ThenInclude(x => x.TimeSlot)
         .Include(x => x.TimetableEntry).ThenInclude(x => x.TeachingAssignment).ThenInclude(x => x.Class)
         .Include(x => x.TimetableEntry).ThenInclude(x => x.TeachingAssignment).ThenInclude(x => x.Subject);
@@ -48,7 +48,7 @@ public sealed class AttendanceRepository : GenericRepository<AttendanceRecord>, 
             GradeId = e.TeachingAssignment.Class.GradeLevelId, GradeName = e.TeachingAssignment.Class.GradeLevel.LevelName,
             ClassId = e.TeachingAssignment.ClassId, ClassName = e.TeachingAssignment.Class.ClassName,
             SubjectId = e.TeachingAssignment.SubjectId, SubjectName = e.TeachingAssignment.Subject.SubjectName,
-            TeacherId = e.TeachingAssignment.EmployeeId, TeacherName = e.TeachingAssignment.Employee.User.FullName
+            TeacherId = e.TeachingAssignment.EmployeeId, TeacherName = e.TeachingAssignment.Employee.FullName
         }).Distinct().ToListAsync(ct);
         var choices = new AttendanceScheduleChoices(
             options.Select(x => new StudentChoice(x.GradeId, x.GradeName)).DistinctBy(x => x.Id).OrderBy(x => x.Name).ToList(),
@@ -60,7 +60,7 @@ public sealed class AttendanceRepository : GenericRepository<AttendanceRecord>, 
         if (filter.SubjectId.HasValue) daily = daily.Where(e => e.TeachingAssignment.SubjectId == filter.SubjectId);
         if (filter.TeacherId.HasValue) daily = daily.Where(e => e.TeachingAssignment.EmployeeId == filter.TeacherId);
         if (!string.IsNullOrEmpty(filter.Query)) daily = daily.Where(e => e.TeachingAssignment.Class.ClassName.Contains(filter.Query) ||
-            e.TeachingAssignment.Subject.SubjectName.Contains(filter.Query) || e.TeachingAssignment.Employee.User.FullName.Contains(filter.Query));
+            e.TeachingAssignment.Subject.SubjectName.Contains(filter.Query) || e.TeachingAssignment.Employee.FullName.Contains(filter.Query));
 
         var rows = daily.Select(e => new
         {
@@ -92,19 +92,10 @@ public sealed class AttendanceRepository : GenericRepository<AttendanceRecord>, 
             .Skip((page - 1) * AttendanceScheduleFilter.PageSize).Take(AttendanceScheduleFilter.PageSize).ToListAsync(ct);
         return new(items.Select(x => new AttendanceScheduleRow(x.Entry, x.Students, x.Recorded)).ToList(), total, classes, completed, pending, page, choices);
     }
-    public async Task<long> EnsureStaffEmployeeAsync(long userId, CancellationToken ct)
-    {
-        var profile = await _context.Employees.SingleOrDefaultAsync(e => e.UserId == userId, ct);
-        if (profile != null) return profile.Id;
-        profile = new Employee(userId, $"ATT-STAFF-{userId}", department: "Học vụ", position: "Nhân viên học vụ");
-        _context.Employees.Add(profile);
-        await _context.SaveChangesAsync(ct);
-        return profile.Id;
-    }
     public Task<List<StudentClass>> GetRosterAsync(long classId, DateTime date, CancellationToken ct) => _context.StudentClasses.AsNoTracking()
-        .Include(x => x.Customer).ThenInclude(x => x.User)
+        .Include(x => x.Customer)
         .Where(x => x.ClassId == classId && x.JoinedAt <= date && (!x.LeftAt.HasValue || date < x.LeftAt))
-        .OrderBy(x => x.Customer.User.FullName).ToListAsync(ct);
+        .OrderBy(x => x.Customer.FullName).ToListAsync(ct);
     public Task<List<AttendanceRecord>> GetSheetAsync(long entryId, DateTime date, CancellationToken ct) => Details
         .Where(x => x.TimetableEntryId == entryId && x.AttendanceDate == date).ToListAsync(ct);
     public Task<List<LeaveRequest>> GetLeavesAsync(long[] students, DateTime date, CancellationToken ct) => _context.LeaveRequests
@@ -114,9 +105,9 @@ public sealed class AttendanceRepository : GenericRepository<AttendanceRecord>, 
     public void AddAudit(AttendanceAuditLog audit) => _context.AttendanceAuditLogs.Add(audit);
     public void AddNotification(Notification notification) => _context.Notifications.Add(notification);
     public Task<List<Customer>> GetActiveParentsAsync(long[] studentIds, CancellationToken ct) => _context.Customers.AsNoTracking()
-        .Where(x => x.Children.Any(c => studentIds.Contains(c.Id)) && x.User.IsActive &&
-            x.User.UserRoles.Any(r => r.IsActive && r.Role.IsActive && r.Role.RoleCode == "PARENT"))
-        .Include(x => x.User).Include(x => x.Children).ToListAsync(ct);
+        .Where(x => x.Children.Any(c => studentIds.Contains(c.Id)) && x.IsActive &&
+            x.CustomerRoles.Any(r => r.IsActive && r.Role.IsActive && r.Role.RoleCode == "PARENT"))
+        .Include(x => x.Children).ToListAsync(ct);
     public async Task<(List<StudentClass> Roster, List<AttendanceRecord> Records)> GetOverviewAsync(long[] entries, long[] classes, DateTime date, CancellationToken ct)
     {
         var roster = await _context.StudentClasses.AsNoTracking().Where(x => classes.Contains(x.ClassId) && x.JoinedAt <= date && (!x.LeftAt.HasValue || date < x.LeftAt)).ToListAsync(ct);
@@ -143,12 +134,12 @@ public sealed class AttendanceRepository : GenericRepository<AttendanceRecord>, 
     }
     public Task<List<StudentChoice>> GetStudentChoicesAsync(long? customerId, bool isParent, CancellationToken ct) => _context.Customers.AsNoTracking()
         .Where(x => isParent ? customerId.HasValue && x.ParentId == customerId : x.Id == customerId)
-        .OrderBy(x => x.User.FullName).ThenBy(x => x.Id)
-        .Select(x => new StudentChoice(x.Id, x.User.FullName)).ToListAsync(ct);
+        .OrderBy(x => x.FullName).ThenBy(x => x.Id)
+        .Select(x => new StudentChoice(x.Id, x.FullName)).ToListAsync(ct);
     public async Task<AttendanceChoices> GetHistoryChoicesAsync(Expression<Func<AttendanceRecord, bool>> scope, CancellationToken ct)
     {
         var q = _context.AttendanceRecords.AsNoTracking().Where(scope);
-        var students = await q.Select(x => new { x.CustomerId, x.Customer.User.FullName }).Distinct().OrderBy(x => x.FullName).ToListAsync(ct);
+        var students = await q.Select(x => new { x.CustomerId, x.Customer.FullName }).Distinct().OrderBy(x => x.FullName).ToListAsync(ct);
         var classes = await q.Select(x => new { x.TimetableEntry.TeachingAssignment.ClassId, x.TimetableEntry.TeachingAssignment.Class.ClassName }).Distinct().OrderBy(x => x.ClassName).ToListAsync(ct);
         var subjects = await q.Select(x => new { x.TimetableEntry.TeachingAssignment.SubjectId, x.TimetableEntry.TeachingAssignment.Subject.SubjectName }).Distinct().OrderBy(x => x.SubjectName).ToListAsync(ct);
         return new(students.Select(x => new StudentChoice(x.CustomerId, x.FullName)).ToList(),
@@ -160,14 +151,14 @@ public sealed class AttendanceRepository : GenericRepository<AttendanceRecord>, 
             .GroupBy(x => x.CustomerId).AnyAsync(g => g.Count() > 1, ct);
     public Task<AttendanceRecord?> GetRecordAsync(long id, Expression<Func<AttendanceRecord, bool>> scope, CancellationToken ct) => Details.AsNoTracking().Where(scope).SingleOrDefaultAsync(x => x.Id == id, ct);
     public Task<List<AttendanceAuditLog>> GetAuditAsync(long recordId, CancellationToken ct) => _context.AttendanceAuditLogs.AsNoTracking()
-        .Include(x => x.ChangedByEmployee).ThenInclude(x => x.User).Where(x => x.AttendanceRecordId == recordId)
+        .Include(x => x.ChangedByEmployee).Where(x => x.AttendanceRecordId == recordId)
         .OrderByDescending(x => x.ChangedAt).ThenByDescending(x => x.Id).ToListAsync(ct);
     public Task<int> FlushAsync(CancellationToken ct) => _context.SaveChangesAsync(ct);
     public void DiscardChanges() => _context.ChangeTracker.Clear();
     public Task<List<TeachingAssignment>> GetStudentAssignmentsAsync(long studentId, CancellationToken ct) => _context.TeachingAssignments.AsNoTracking()
         .Include(x => x.Semester).ThenInclude(x => x.AcademicYear).Include(x => x.Subject)
         .Include(x => x.Class).ThenInclude(x => x.AcademicYear)
-        .Include(x => x.Employee).ThenInclude(x => x.User)
+        .Include(x => x.Employee)
         .Where(x =>
             (x.Status == "ACTIVE" && x.Class.StudentClasses.Any(s => s.CustomerId == studentId &&
                 s.JoinedAt <= x.Semester.EndDate && (!s.LeftAt.HasValue || s.LeftAt > x.Semester.StartDate)) &&

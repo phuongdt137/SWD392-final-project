@@ -141,7 +141,7 @@ public sealed class AttendanceService(IAttendanceRepository repo, ICurrentUserSe
                     throw new AppError("Nhập lý do khi thay đổi kết quả đã lưu.", "CHANGE_REASON_REQUIRED");
             }
             if (changes.Count > 0 && user.Has("STAFF") && !user.EmployeeId.HasValue)
-                user = user with { EmployeeId = await repo.EnsureStaffEmployeeAsync(user.UserId, ct) };
+                throw new AppError("Tài khoản không phải nhân viên.", "EMPLOYEE_REQUIRED", ErrorType.Forbidden);
             var parents = await repo.GetActiveParentsAsync(changes.Select(x => x.CustomerId).ToArray(), ct);
             var missingParents = 0;
             foreach (var row in changes)
@@ -161,7 +161,7 @@ public sealed class AttendanceService(IAttendanceRepository repo, ICurrentUserSe
                 if (parent == null) { missingParents++; continue; }
                 var student = roster.Single(x => x.CustomerId == row.CustomerId).Customer;
                 var text = $"{student.FullName} ({student.StudentCode}) — {e.TeachingAssignment.Class.ClassName}, {e.TeachingAssignment.Subject.SubjectName}, tiết {e.TimeSlot.PeriodNo}, {date:dd/MM/yyyy}: {AttendanceStatuses.Label(record.Status)}.";
-                var notification = new Notification(oldStatus == null ? "Kết quả điểm danh" : "Cập nhật điểm danh", text, parent.UserId, user.UserId);
+                var notification = new Notification(oldStatus == null ? "Kết quả điểm danh" : "Cập nhật điểm danh", text, recipientCustomerId: parent.Id, senderEmployeeId: user.EmployeeId);
                 notification.AttachAttendance(audit, $"/Attendance/History?studentId={row.CustomerId}&from={date:yyyy-MM-dd}&to={date:yyyy-MM-dd}", time.UtcNow);
                 repo.AddNotification(notification);
             }

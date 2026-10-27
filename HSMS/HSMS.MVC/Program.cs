@@ -25,6 +25,7 @@ builder.Services.AddAuthentication(CookieAuthenticationDefaults.AuthenticationSc
 });
 builder.Services.AddAuthorization();
 builder.Services.AddSignalR();
+builder.Services.AddSingleton<Microsoft.AspNetCore.SignalR.IUserIdProvider, AccountUserIdProvider>();
 builder.Services.AddSingleton(TimeProvider.System);
 builder.Services.AddSingleton<SchoolTime>();
 builder.Services.AddScoped<SchoolCookieEvents>();
@@ -49,7 +50,7 @@ builder.Services.AddSession(options =>
 
 // Dependency Injection (Repositories & Services)
 builder.Services.AddScoped(typeof(IGenericRepository<>), typeof(GenericRepository<>));
-builder.Services.AddScoped<IUserRepository, UserRepository>();
+builder.Services.AddScoped<IAccountRepository, AccountRepository>();
 builder.Services.AddScoped<IAuthService, AuthService>();
 builder.Services.AddScoped<IEmailService, EmailService>();
 builder.Services.AddScoped<IAssessmentTypeRepository, AssessmentTypeRepository>();
@@ -58,6 +59,9 @@ builder.Services.AddScoped<IAssessmentRepository, AssessmentRepository>();
 builder.Services.AddScoped<ICustomerRepository, CustomerRepository>();
 builder.Services.AddScoped<IStudentScoreRepository, StudentScoreRepository>();
 builder.Services.AddScoped<IScoreService, ScoreService>();
+
+builder.Services.AddScoped<ITimetableRepository, TimetableRepository>();
+builder.Services.AddScoped<ITimetableService, TimetableService>();
 
 var app = builder.Build();
 
@@ -93,3 +97,5 @@ app.MapControllerRoute(
 }
 
 app.Run();
+
+

@@ -1,0 +1,259 @@
+HƯỚNG DẪN HỌC CODE: TẠO VÀ XEM THỜI KHÓA BIỂU
+Dự án: HSMS.MVC — ASP.NET Core MVC, .NET 8, Entity Framework Core, SQL Server
+
+1. CHỨC NĂNG ĐÃ TRIỂN KHAI
+- STAFF: tạo lịch dạy; xem theo tuần; lọc lớp và giáo viên (hai điều kiện kết hợp AND).
+- TEACHER: xem lịch dạy của hồ sơ giáo viên liên kết tài khoản đăng nhập.
+- STUDENT: xem lịch lớp mà học sinh theo học vào ngày của từng tiết.
+- Kiểm tra dữ liệu bắt buộc, tham chiếu, vai trò giáo viên, lớp/phòng hoạt động,
+  năm học, khoảng hiệu lực, trùng giờ giáo viên/lớp/phòng.
+- Lưu phân công và lịch trong một transaction. Không thêm bảng/model trùng.
+- Mỗi lần Lưu tạo một tiết lặp hằng tuần trong khoảng ngày đã chọn.
+  Muốn tạo nhiều tiết, chọn từng tiết và lưu lần lượt.
+- Chưa bao gồm sửa/xóa lịch, tự động xếp thời khóa biểu, lịch nghỉ lễ hoặc tiết học bù.
+
+2. CHẠY TRONG VISUAL STUDIO
+1) Cài workload ASP.NET and web development và .NET 8 SDK.
+2) Mở HSMS.slnx nếu Visual Studio hỗ trợ; nếu bản đang dùng không hỗ trợ slnx,
+   mở HSMS.MVC/HSMS.MVC.csproj trực tiếp.
+3) Đặt HSMS.MVC làm Startup Project, Restore NuGet Packages, Build Solution.
+4) Dùng SQL Server của dự án. Kiểm tra ConnectionStrings:DefaultConnection
+   trong appsettings hoặc User Secrets của bạn. Không có thay đổi chuỗi kết nối
+   trong phần triển khai tính năng này.
+5) Database đã có các bảng TeachingAssignment, TimetableEntry, TimeSlot, Room,
+   Employee, Customer, EmployeeRole, CustomerRole, Role, Class, Semester, Subject và StudentClass.
+   Chạy migration AddEmployeeCustomerAccountSupport để bổ sung cột đăng nhập/đặt lại mật khẩu và nhật ký điểm danh.
+   Migration này không tạo User/UserRole. Với database mới, dùng hướng dẫn
+   database/README.txt của dự án để chuẩn bị schema/dữ liệu phù hợp.
+6) F5, đăng nhập tài khoản có vai trò tương ứng, dùng menu Thời khóa biểu/Lịch dạy.
+   Staff: /Timetable/Index và /Timetable/Create.
+   Giáo viên: /Timetable/Teacher. Học sinh: /Timetable/Student.
+7) Nếu dropdown rỗng, kiểm tra dữ liệu nền: giáo viên cần Employee hoạt động,
+   EmployeeRole TEACHER và Role đều hoạt động; lớp/phòng phải ACTIVE.
+   Lớp và học kỳ phải cùng AcademicYearId. TimeSlot phải có giờ bắt đầu < kết thúc.
+   Học sinh cần Customer và StudentClass với ngày tham gia phù hợp.
+   EmployeeId là Employee.Id; CustomerId là Customer.Id. Hai bảng có thể cùng ID nên cookie phải có AccountType.
+
+3. CÁC FILE VÀ TRÁCH NHIỆM
+Đường dẫn dưới đây tính từ thư mục HSMS.MVC:
+Controllers/TimetableController.cs: nhận HTTP, kiểm tra quyền, gọi service, trả View/JSON.
+Service/Interfaces/ITimetableService.cs: khai báo các hàm nghiệp vụ.
+Service/Implementations/TimetableService.cs: điều phối tạo lịch và chuyển model thành DTO.
+Repositories/Interfaces/ITimetableRepository.cs: khai báo các thao tác dữ liệu.
+Repositories/Implementations/TimetableRepository.cs: truy vấn/lưu EF Core, kiểm tra tham chiếu.
+DTOs/Timetable/TimetableDtos.cs: các object truyền dữ liệu giữa View/Controller/Service.
+ViewModels/Timetable/StaffTimetableViewModel.cs: gom bộ lọc, dropdown và bảng lịch của staff.
+Views/Timetable/Create.cshtml: form và JavaScript gọi API.
+Views/Timetable/Index.cshtml: trang staff lọc/xem lịch.
+Views/Timetable/Teacher.cshtml, Student.cshtml: chọn tuần và xem lịch cá nhân.
+Views/Timetable/_WeeklyGrid.cshtml: bảng dùng chung, hàng là tiết, cột là ngày.
+Views/Timetable/_ViewStart.cshtml: dùng _DashboardLayout.
+Program.cs: đăng ký ITimetableService/ITimetableRepository với DI.
+Views/Shared/_DashboardLayout.cshtml: nối menu hiện có tới chức năng mới.
+Models và Data/AppDbContext.cs: dùng lại của dự án, không sao chép model trong ZIP.
+
+4. KHÁI NIỆM CƠ BẢN
+MVC: Model chứa dữ liệu nghiệp vụ; View hiển thị; Controller nhận yêu cầu.
+Service xử lý thứ tự nghiệp vụ; Repository làm việc với database.
+DTO là object chỉ mang dữ liệu, không phải bảng database.
+Interface mô tả những hàm một lớp phải có. DI tạo và truyền implementation
+vào constructor, tránh viết new Repository/new DbContext ở Controller.
+AddScoped nghĩa là dùng một instance trong một HTTP request. Repository dùng
+chung AppDbContext của request nên cả hai lần SaveChanges ở cùng transaction.
+
+5. LUỒNG TẠO LỊCH — ĐỐI CHIẾU SEQUENCE DIAGRAM
+Bước 1: Staff mở Create. Controller.Create gọi GetFormOptions để tải dropdown.
+Staff chọn giáo viên, môn, lớp, học kỳ, phòng, tiết, thứ và khoảng áp dụng.
+
+Bước 2: click Lưu. JavaScript đọc các input, tạo JSON CreateAssignmentRequest,
+gửi POST /api/teaching-assignment. Header RequestVerificationToken lấy từ
+Html.AntiForgeryToken để chống request giả từ website khác.
+Button bị khóa trong lúc gửi, finally bật lại. Thông báo dùng textContent.
+
+Bước 3: Controller.CreateAssignment kiểm tra ModelState/body. Authorize chỉ
+cho STAFF; ValidateAntiForgeryToken kiểm tra token. Controller gọi
+service.CreateAssignmentAndTimetable(request).
+
+Bước 4–6: Service mở transaction rồi gọi repository.Validate.
+Validate trả List<string>. Rỗng nghĩa là hợp lệ; có lỗi thì trả kết quả thất bại.
+Ngày bỏ trống được gán bằng ngày đầu/cuối học kỳ; ngày được chuẩn hóa bỏ giờ.
+Khoảng áp dụng không được vượt học kỳ và phải chứa ít nhất một ngày đúng thứ.
+Transaction mở trước kiểm tra để bảo vệ cả đoạn đọc-trùng-lưu khi hai staff lưu
+đồng thời. Thứ tự nghiệp vụ trong diagram vẫn là validate -> conflict -> save.
+
+Bước 7–10: FindScheduleConflict đọc TimeSlot để lấy StartTime/EndTime rồi tìm
+lịch ACTIVE có phân công ACTIVE, cùng thứ, chồng giờ, chồng ngày và trùng ít nhất
+một tài nguyên (giáo viên HOẶC lớp HOẶC phòng).
+Sau truy vấn, kiểm tra khoảng giao thật sự chứa ngày đúng thứ trong học kỳ.
+Không tìm thấy thì trả null. Có lịch thì Service trả lỗi xung đột, không lưu.
+
+Bước 11–14: tạo TeachingAssignment bằng constructor hiện có, gọi SaveAssignment.
+Nếu chưa tồn tại bộ EmployeeId + SubjectId + ClassId + SemesterId, INSERT và
+SaveChanges để lấy khóa Id. Nếu đã có phân công ACTIVE cùng bộ khóa thì dùng
+lại Id, vì database có unique index. Không tạo phân công trùng cho từng tiết.
+Phân công đã ngừng hoạt động bị Validate từ chối để không vô tình bật lại lịch cũ.
+
+Bước 15–18: tạo TimetableEntry với assignmentId vừa nhận, phòng, tiết, thứ và
+ngày áp dụng. SaveTimetableEntry gọi Add + SaveChanges, trả timetableId.
+Commit chỉ chạy sau cả hai lần lưu. Nếu có exception, using dispose transaction
+chưa commit để database rollback. Không có phân công mới bị bỏ lại khi lưu lịch lỗi.
+
+Bước 19: tạo CreateAssignmentResult; MapToResponseDto chuyển thành JSON chứa
+Success, IsConflict, Message, AssignmentId, TimetableId. Controller trả HTTP 201.
+Bước 24: JavaScript nhận JSON, hiển thị thông báo thành công hoặc lỗi.
+Diagram ghi số 19 nhiều lần; code vẫn giữ đúng thứ tự kết quả -> DTO -> HTTP -> UI.
+
+6. TẠI SAO DATABASE KHÔNG LƯU date/startTime/endTime TRỰC TIẾP TRONG PHÂN CÔNG?
+Hình sequence mô tả nghiệp vụ tổng quát, còn model thực tế và ZIP dùng lịch lặp:
+TeachingAssignment = ai dạy môn gì, lớp nào, học kỳ nào.
+TimetableEntry = phân công đó dạy thứ nào, tiết nào, phòng nào, hiệu lực ngày nào.
+TimeSlot = giờ bắt đầu/kết thúc của tiết.
+Ngày học thực tế = thứ của tiết trong tuần người dùng đang chọn.
+Muốn lịch chỉ một ngày: chọn EffectiveFrom = EffectiveTo = ngày đó và chọn đúng thứ.
+
+7. QUY TẮC TRÙNG LỊCH VỚI VÍ DỤ
+Giờ cũ 07:00–07:45; giờ mới 07:30–08:15 => trùng.
+Giờ cũ 07:00–07:45; giờ mới 07:45–08:30 => không trùng.
+Công thức: old.Start < new.End && old.End > new.Start.
+Không chỉ so TimeSlotId: hai mã tiết khác nhau vẫn có thể chồng giờ.
+Cùng thứ/giờ nhưng không trùng ngày hiệu lực => được phép.
+Hai khoảng giao nhau thứ Ba–thứ Tư, nhưng tiết học thứ Hai => không trùng.
+Cùng giờ và phòng, khác giáo viên/lớp => vẫn xung đột.
+Phân công/lịch CANCELLED không chặn lịch mới.
+Ngày cuối hiệu lực được tính là còn hiệu lực (khoảng đóng).
+Serializable khóa đoạn đọc/ghi trong SQL Server; khi cạnh tranh có thể xảy ra
+ deadlock và một request bị SQL Server hủy. Controller trả 503 để người dùng tải
+lại/thử lại, không tự gửi lại vì có thể làm người dùng nhầm trạng thái lần lưu.
+
+8. LUỒNG XEM LỊCH
+Staff: Index -> GetStaffTimetable -> BuildWeekly -> GetEntries -> DTO -> _WeeklyGrid.
+Teacher: Teacher -> CurrentUserService.GetAsync -> EmployeeId ->
+GetTeacherTimetable -> BuildWeekly -> GetEntries(employeeId, ...).
+Student: Student -> CurrentUserService.GetAsync -> CustomerId ->
+GetStudentTimetable -> BuildWeekly -> GetEntries(..., customerId).
+Không nhận ?id= để thay hồ sơ người đang đăng nhập.
+Claim NameIdentifier là Employee.Id hoặc Customer.Id; claim AccountType phân biệt EMPLOYEE/CUSTOMER.
+CurrentUserService đọc đúng bảng theo AccountType; không dò sang bảng còn lại. Cookie cũ thiếu loại tài khoản bị từ chối, cần đăng nhập lại.
+
+BuildWeekly đổi ngày đã chọn thành thứ Hai bằng SchoolTime.Weekday.
+GetEntries lọc theo tuần, trạng thái và giáo viên/lớp nếu có. Ngày của mỗi tiết
+được tính monday.AddDays(DayOfWeek - 1). Chỉ hiển thị khi ngày này nằm trong
+cả học kỳ và hiệu lực lịch. Học sinh còn được kiểm tra StudentClass đúng ngày:
+JoinedAt <= ngày học và ngày học < LeftAt (nếu có LeftAt).
+Lịch sử chuyển lớp dùng cả ACTIVE/TRANSFERRED/WITHDRAWN với mốc tham gia/rời lớp.
+Chưa được xếp lớp hoặc không có lịch: bảng rỗng và thông báo rõ ràng.
+
+9. DANH MỤC HÀM
+Controller:
+- Create: trả form tạo lịch.
+- CreateAssignment: nhận JSON và chuyển kết quả service thành HTTP.
+- Index: nhận bộ lọc staff và dựng StaffTimetableViewModel.
+- Teacher/Student: lấy đúng hồ sơ từ tài khoản rồi trả trang cá nhân.
+- SafeDate: lấy ngày hợp lệ; mặc định ngày Việt Nam từ SchoolTime.
+Service:
+- CreateAssignmentAndTimetable: điều phối toàn bộ luồng tạo và transaction.
+- MapToResponseDto: đóng gói kết quả thành công.
+- Fail: tạo kết quả thất bại, phân biệt lỗi dữ liệu với trùng lịch.
+- BuildConflictMessage: báo trùng giáo viên, lớp hoặc phòng.
+- GetFormOptions: đổi dữ liệu tham chiếu thành Id/Text cho dropdown.
+- GetStaffTimetable/GetTeacherTimetable/GetStudentTimetable: chọn phạm vi lịch.
+- BuildWeekly: chuẩn hóa tuần và chuyển entity sang TimetableItemDto.
+- MapSlots: chuyển TimeSlot sang hàng của bảng (tiết và giờ hh:mm).
+Repository:
+- Validate: kiểm tra input/tham chiếu, chuẩn hóa ngày mặc định theo học kỳ.
+- HasLessonDate: xác định khoảng ngày có chứa ngày học đúng thứ hay không.
+- FindScheduleConflict: trả lịch đầu tiên bị xung đột hoặc null.
+- SaveAssignment: dùng lại phân công hoặc INSERT phân công mới; trả Id.
+- SaveTimetableEntry: INSERT lịch; trả Id.
+- BeginTransaction: mở transaction Serializable trên AppDbContext.
+- GetEntries: tải lịch đúng bộ lọc, tuần, hiệu lực và lịch sử lớp học sinh.
+- GetEmployeeName/GetStudentName: lấy tên trực tiếp từ Employee/Customer; GetClassName: lấy tên lớp.
+- GetEmployees/GetSubjects/GetClasses/GetSemesters/GetRooms/GetTimeSlots:
+  đọc các bảng tham chiếu cho dropdown, theo thứ tự hiển thị.
+JavaScript:
+- val: lấy giá trị input theo id.
+- showAlert: hiển thị thông báo bằng textContent, không chèn HTML từ server.
+- click handler: tạo JSON, gửi fetch, xử lý HTTP/JSON/mất mạng, bật lại nút.
+
+10. MÃ HTTP VÀ CÁCH ĐỌC LỖI
+201: tạo thành công, có assignmentId và timetableId.
+400: body/model sai, thiếu trường, tham chiếu/ngày sai hoặc token không hợp lệ.
+409: lịch xung đột, xem message để biết tài nguyên nào bị trùng.
+503: lỗi database khi lưu; server ghi log chi tiết, người dùng nhận thông báo chung.
+Chưa đăng nhập/sai vai trò: middleware cookie của dự án xử lý login/access denied.
+Frontend phát hiện redirect và hướng dẫn đăng nhập lại; không giả định HTML là JSON.
+
+11. KHÁC BIỆT CÓ CHỦ ĐÍCH SO VỚI ZIP
+- Dùng AppDbContext và Models có sẵn; không tạo TimetableDbContext/entities trùng.
+- Dùng constructor vì model dự án có private set.
+- FullName/IsActive là cột trực tiếp trên Employee/Customer. Giáo viên được lọc qua EmployeeRole và Role.
+- TimeSlot dùng TimeSpan, nên format hh:mm, không dùng HH của TimeOnly.
+- Database/module điểm danh dùng 1=thứ Hai ... 7=Chủ nhật. UI vẫn ghi Thứ 2...
+  Không dùng 2=thứ Hai của ZIP vì sẽ gây lệch ngày điểm danh.
+- Bảo vệ quyền theo actor, bỏ fallback ?id và thêm anti-forgery.
+- Bổ sung chọn tuần, giới hạn học kỳ, lịch sử lớp học sinh và transaction trước kiểm tra.
+- Giữ lớp/interface/hàm theo mẫu để dễ đọc; không thêm framework nghiệp vụ khác.
+
+12. KIỂM THỬ VÀ THỰC HÀNH
+Chạy: dotnet build HSMS.MVC --no-restore
+Chạy kiểm tra: dotnet run --project tests/TimetableChecks
+Bộ kiểm tra dùng repository giả để kiểm chứng sequence, lỗi validation, dispose
+transaction khi lần lưu thứ hai lỗi, phạm vi giáo viên/học sinh, chuẩn hóa tuần
+và ngày giao nhau. Đây không thay thế kiểm thử SQL Server hay trình duyệt.
+
+Các bước kiểm thử tích hợp trên database demo của bạn:
+1) Đăng nhập STAFF, tạo một lịch hợp lệ: nhận 201, xem đúng tuần thấy môn/lớp/GV/phòng.
+2) Lưu lại cùng lịch: 409; đếm bản ghi không tăng.
+3) Đổi lớp/phòng nhưng giữ giáo viên cùng giờ: 409.
+4) Đổi giáo viên/phòng nhưng giữ lớp cùng giờ: 409.
+5) Đổi giáo viên/lớp nhưng giữ phòng cùng giờ: 409.
+6) Tạo tiết liền kề không chồng giờ: thành công.
+7) Chọn ngày ngược, ngoài học kỳ, không có đúng thứ: 400, không ghi dữ liệu.
+8) Lớp/học kỳ khác năm học hoặc nhân viên không có TEACHER: 400.
+9) Tạo tiết thứ Hai; xem lịch/điểm danh thứ Hai để xác nhận không lệch ngày.
+10) Đăng nhập TEACHER: chỉ thấy lịch mình, không mở được trang tạo/staff.
+11) Đăng nhập STUDENT: chỉ thấy lịch lớp trong thời gian theo học, ?id khác không đổi lịch.
+12) Học sinh chuyển lớp giữa tuần: lịch trước/sau ngày chuyển ứng với đúng lớp.
+13) Chọn tuần ngoài hiệu lực/học kỳ: không thấy lịch cũ.
+14) Hai cửa sổ STAFF tạo cùng lịch đồng thời: một lịch hợp lệ, request kia bị
+    xung đột hoặc lỗi cạnh tranh; không có bản ghi phân công mới mồ côi.
+15) POST thiếu anti-forgery token: bị từ chối; dùng form hợp lệ thì gửi được.
+16) Ngắt mạng khi lưu: UI báo mất kết nối và bật lại nút; xem lại lịch trước khi gửi lại.
+
+13. CÁCH DEBUG ĐỂ HIỂU LUỒNG
+Đặt breakpoint tại CreateAssignment, CreateAssignmentAndTimetable, Validate,
+FindScheduleConflict, SaveAssignment và SaveTimetableEntry. F5 rồi bấm Lưu.
+Dùng F10 đi từng dòng, xem request trong Locals, quan sát assignmentId sau lần
+SaveChanges đầu, timetableId sau lần hai. Mở Network trong DevTools để đọc
+JSON request/response và status. Đọc code theo thứ tự View -> Controller ->
+Service -> Repository -> Model -> quay lại View, đối chiếu mục 5 với diagram.
+
+14. KẾT QUẢ XÁC MINH KHI BÀN GIAO
+- Build dự án thành công, 0 lỗi và 0 cảnh báo.
+- 20 kiểm tra tự động trong tests/TimetableChecks đã PASS (luồng tạo lịch, schema và phân biệt tài khoản).
+- JavaScript của Create.cshtml qua node --check, không lỗi cú pháp.
+- Đã áp dụng migration mới vào SQL Server local; xác minh không tồn tại bảng User.
+- Đã chạy ứng dụng và kiểm tra HTTP đăng nhập staff/teacher/student, tải lịch,
+  form tạo lịch, từ chối giáo viên/học sinh gọi API tạo lịch.
+- Chưa kiểm thử hiển thị trực quan bằng trình duyệt và cạnh tranh tạo lịch đồng thời.
+- Gói ZIP là bộ file tích hợp vào dự án HSMS hiện tại, không phải project độc lập.
+  Các file đã được đặt trực tiếp trong workspace. ZIP không chứa appsettings,
+  mật khẩu, database dump, bin hoặc obj. Program.cs và layout trong ZIP là bản
+  sau khi tích hợp của dự án hiện tại; khi áp dụng sang bản khác, đối chiếu thay đổi.
+
+15. CẤU TRÚC TÀI KHOẢN SAU KHI SỬA
+Employee giữ Username, Email, PasswordHash, FullName, IsActive và dữ liệu nhân viên.
+Customer giữ cùng dữ liệu đăng nhập và dữ liệu học sinh/phụ huynh.
+EmployeeRole và CustomerRole liên kết từng loại tài khoản tới Role.
+IAccount chỉ là interface C# để tái sử dụng code đăng nhập/đổi mật khẩu; không phải bảng.
+AccountRepository.GetAsync(id, accountType) chọn đúng một bảng theo loại tài khoản.
+FindByLoginAsync/FindByEmailAsync tìm cả hai bảng; nếu có nhiều tài khoản khớp thì từ chối
+để không đoán sai người. Quản lý dữ liệu cần giữ username/email không trùng giữa hai bảng.
+Notification và MessageLog dùng khóa ngoại Employee/Customer riêng như schema gốc.
+SignalR dùng khóa EMPLOYEE:id hoặc CUSTOMER:id để không gửi thông báo nhầm tài khoản.
+
+Các migration tạo User và PasswordResetTokenToUser chưa áp dụng đã được loại bỏ.
+Migration điểm danh chưa áp dụng được gộp vào AddEmployeeCustomerAccountSupport,
+được sinh từ migration thứ tư đã có trong database. Không đổi 4 migration đã áp dụng.
+Nếu đang chạy Debug trong Visual Studio, nhấn Stop Debugging rồi F5 lại để nạp code mới.
+Đăng xuất/đăng nhập lại vì cookie cũ không có AccountType.

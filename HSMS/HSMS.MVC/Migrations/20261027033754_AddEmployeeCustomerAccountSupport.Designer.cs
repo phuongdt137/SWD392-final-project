@@ -12,8 +12,8 @@ using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 namespace HSMS.MVC.Migrations
 {
     [DbContext(typeof(AppDbContext))]
-    [Migration("20261023132901_Add-Model-User-And-Refactor-Auth")]
-    partial class AddModelUserAndRefactorAuth
+    [Migration("20261027033754_AddEmployeeCustomerAccountSupport")]
+    partial class AddEmployeeCustomerAccountSupport
     {
         /// <inheritdoc />
         protected override void BuildTargetModel(ModelBuilder modelBuilder)
@@ -132,6 +132,59 @@ namespace HSMS.MVC.Migrations
                         });
                 });
 
+            modelBuilder.Entity("HSMS.MVC.Models.AttendanceAuditLog", b =>
+                {
+                    b.Property<long>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("bigint");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<long>("Id"));
+
+                    b.Property<long>("AttendanceRecordId")
+                        .HasColumnType("bigint");
+
+                    b.Property<string>("ChangeReason")
+                        .HasMaxLength(1000)
+                        .HasColumnType("nvarchar(1000)");
+
+                    b.Property<DateTime>("ChangedAt")
+                        .HasColumnType("datetime2");
+
+                    b.Property<long>("ChangedByEmployeeId")
+                        .HasColumnType("bigint");
+
+                    b.Property<string>("NewComment")
+                        .HasMaxLength(1000)
+                        .HasColumnType("nvarchar(1000)");
+
+                    b.Property<long?>("NewLeaveRequestId")
+                        .HasColumnType("bigint");
+
+                    b.Property<string>("NewStatus")
+                        .IsRequired()
+                        .HasMaxLength(30)
+                        .HasColumnType("nvarchar(30)");
+
+                    b.Property<string>("OldComment")
+                        .HasMaxLength(1000)
+                        .HasColumnType("nvarchar(1000)");
+
+                    b.Property<long?>("OldLeaveRequestId")
+                        .HasColumnType("bigint");
+
+                    b.Property<string>("OldStatus")
+                        .HasMaxLength(30)
+                        .HasColumnType("nvarchar(30)");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("ChangedByEmployeeId");
+
+                    b.HasIndex("AttendanceRecordId", "ChangedAt");
+
+                    b.ToTable("AttendanceAuditLog", (string)null);
+                });
+
             modelBuilder.Entity("HSMS.MVC.Models.AttendanceRecord", b =>
                 {
                     b.Property<long>("Id")
@@ -169,10 +222,26 @@ namespace HSMS.MVC.Migrations
                     b.Property<long>("TimetableEntryId")
                         .HasColumnType("bigint");
 
+                    b.Property<DateTime?>("UpdatedAt")
+                        .HasColumnType("datetime2");
+
+                    b.Property<long?>("UpdatedByEmployeeId")
+                        .HasColumnType("bigint");
+
+                    b.Property<Guid>("Version")
+                        .IsConcurrencyToken()
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uniqueidentifier")
+                        .HasDefaultValueSql("NEWID()");
+
                     b.HasKey("Id")
                         .HasName("PK_AttendanceRecord");
 
                     b.HasIndex("LeaveRequestId");
+
+                    b.HasIndex("UpdatedByEmployeeId");
+
+                    b.HasIndex("TimetableEntryId", "AttendanceDate");
 
                     b.HasIndex(new[] { "CustomerId" }, "IX_AttendanceRecord_Customer");
 
@@ -183,7 +252,10 @@ namespace HSMS.MVC.Migrations
                     b.HasIndex(new[] { "CustomerId", "TimetableEntryId", "AttendanceDate" }, "UQ_AttendanceRecord")
                         .IsUnique();
 
-                    b.ToTable("AttendanceRecord", (string)null);
+                    b.ToTable("AttendanceRecord", null, t =>
+                        {
+                            t.HasCheckConstraint("CK_AttendanceRecord_Status", "[Status] IN ('PRESENT','ABSENT','LATE','EXCUSED') AND (([Status] = 'EXCUSED' AND [LeaveRequestId] IS NOT NULL) OR ([Status] <> 'EXCUSED' AND [LeaveRequestId] IS NULL))");
+                        });
                 });
 
             modelBuilder.Entity("HSMS.MVC.Models.Class", b =>
@@ -288,16 +360,43 @@ namespace HSMS.MVC.Migrations
                     b.Property<DateTime?>("AdmissionDate")
                         .HasColumnType("date");
 
+                    b.Property<string>("AvatarUrl")
+                        .HasMaxLength(1000)
+                        .HasColumnType("nvarchar(1000)");
+
+                    b.Property<DateTime>("CreatedAt")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("datetime2")
+                        .HasDefaultValueSql("SYSDATETIME()");
+
                     b.Property<DateTime?>("DateOfBirth")
                         .HasColumnType("date");
+
+                    b.Property<string>("Email")
+                        .IsRequired()
+                        .HasMaxLength(255)
+                        .HasColumnType("nvarchar(255)");
 
                     b.Property<string>("EmergencyContact")
                         .HasMaxLength(255)
                         .HasColumnType("nvarchar(255)");
 
+                    b.Property<string>("FullName")
+                        .IsRequired()
+                        .HasMaxLength(200)
+                        .HasColumnType("nvarchar(200)");
+
                     b.Property<string>("Gender")
                         .HasMaxLength(20)
                         .HasColumnType("nvarchar(20)");
+
+                    b.Property<bool>("IsActive")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("bit")
+                        .HasDefaultValue(true);
+
+                    b.Property<DateTime?>("LastLoginAt")
+                        .HasColumnType("datetime2");
 
                     b.Property<string>("Occupation")
                         .HasMaxLength(150)
@@ -305,6 +404,22 @@ namespace HSMS.MVC.Migrations
 
                     b.Property<long?>("ParentId")
                         .HasColumnType("bigint");
+
+                    b.Property<string>("PasswordHash")
+                        .IsRequired()
+                        .HasMaxLength(500)
+                        .HasColumnType("nvarchar(500)");
+
+                    b.Property<string>("PasswordResetToken")
+                        .HasMaxLength(256)
+                        .HasColumnType("nvarchar(256)");
+
+                    b.Property<DateTime?>("PasswordResetTokenExpiry")
+                        .HasColumnType("datetime2");
+
+                    b.Property<string>("PhoneNumber")
+                        .HasMaxLength(30)
+                        .HasColumnType("nvarchar(30)");
 
                     b.Property<string>("RelationshipType")
                         .HasMaxLength(50)
@@ -317,15 +432,20 @@ namespace HSMS.MVC.Migrations
                     b.Property<DateTime?>("UpdatedAt")
                         .HasColumnType("datetime2");
 
-                    b.Property<long>("UserId")
-                        .HasColumnType("bigint");
+                    b.Property<string>("Username")
+                        .IsRequired()
+                        .HasMaxLength(100)
+                        .HasColumnType("nvarchar(100)");
 
                     b.HasKey("Id")
                         .HasName("PK_Customer");
 
                     b.HasIndex(new[] { "ParentId" }, "IX_Customer_ParentId");
 
-                    b.HasIndex(new[] { "UserId" }, "UQ_Customer_UserId")
+                    b.HasIndex(new[] { "Email" }, "UQ_Customer_Email")
+                        .IsUnique();
+
+                    b.HasIndex(new[] { "Username" }, "UQ_Customer_Username")
                         .IsUnique();
 
                     b.HasIndex(new[] { "StudentCode" }, "UX_Customer_StudentCode")
@@ -336,6 +456,43 @@ namespace HSMS.MVC.Migrations
                         {
                             t.HasCheckConstraint("CK_Customer_ParentNotSelf", "[ParentId] IS NULL OR [ParentId] <> [Id]");
                         });
+                });
+
+            modelBuilder.Entity("HSMS.MVC.Models.CustomerRole", b =>
+                {
+                    b.Property<long>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("bigint");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<long>("Id"));
+
+                    b.Property<DateTime>("AssignedAt")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("datetime2")
+                        .HasDefaultValueSql("SYSDATETIME()");
+
+                    b.Property<long>("CustomerId")
+                        .HasColumnType("bigint");
+
+                    b.Property<bool>("IsActive")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("bit")
+                        .HasDefaultValue(true);
+
+                    b.Property<long>("RoleId")
+                        .HasColumnType("bigint");
+
+                    b.HasKey("Id")
+                        .HasName("PK_CustomerRole");
+
+                    b.HasIndex(new[] { "CustomerId" }, "IX_CustomerRole_CustomerId");
+
+                    b.HasIndex(new[] { "RoleId" }, "IX_CustomerRole_RoleId");
+
+                    b.HasIndex(new[] { "CustomerId", "RoleId" }, "UQ_CustomerRole")
+                        .IsUnique();
+
+                    b.ToTable("CustomerRole", (string)null);
                 });
 
             modelBuilder.Entity("HSMS.MVC.Models.Employee", b =>
@@ -350,6 +507,15 @@ namespace HSMS.MVC.Migrations
                         .HasMaxLength(500)
                         .HasColumnType("nvarchar(500)");
 
+                    b.Property<string>("AvatarUrl")
+                        .HasMaxLength(1000)
+                        .HasColumnType("nvarchar(1000)");
+
+                    b.Property<DateTime>("CreatedAt")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("datetime2")
+                        .HasDefaultValueSql("SYSDATETIME()");
+
                     b.Property<DateTime?>("DateOfBirth")
                         .HasColumnType("date");
 
@@ -357,10 +523,20 @@ namespace HSMS.MVC.Migrations
                         .HasMaxLength(150)
                         .HasColumnType("nvarchar(150)");
 
+                    b.Property<string>("Email")
+                        .IsRequired()
+                        .HasMaxLength(255)
+                        .HasColumnType("nvarchar(255)");
+
                     b.Property<string>("EmployeeCode")
                         .IsRequired()
                         .HasMaxLength(50)
                         .HasColumnType("nvarchar(50)");
+
+                    b.Property<string>("FullName")
+                        .IsRequired()
+                        .HasMaxLength(200)
+                        .HasColumnType("nvarchar(200)");
 
                     b.Property<string>("Gender")
                         .HasMaxLength(20)
@@ -369,8 +545,32 @@ namespace HSMS.MVC.Migrations
                     b.Property<DateTime?>("HireDate")
                         .HasColumnType("date");
 
+                    b.Property<bool>("IsActive")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("bit")
+                        .HasDefaultValue(true);
+
+                    b.Property<DateTime?>("LastLoginAt")
+                        .HasColumnType("datetime2");
+
                     b.Property<int?>("MaxPeriodsPerWeek")
                         .HasColumnType("int");
+
+                    b.Property<string>("PasswordHash")
+                        .IsRequired()
+                        .HasMaxLength(500)
+                        .HasColumnType("nvarchar(500)");
+
+                    b.Property<string>("PasswordResetToken")
+                        .HasMaxLength(256)
+                        .HasColumnType("nvarchar(256)");
+
+                    b.Property<DateTime?>("PasswordResetTokenExpiry")
+                        .HasColumnType("datetime2");
+
+                    b.Property<string>("PhoneNumber")
+                        .HasMaxLength(30)
+                        .HasColumnType("nvarchar(30)");
 
                     b.Property<string>("Position")
                         .HasMaxLength(150)
@@ -387,22 +587,64 @@ namespace HSMS.MVC.Migrations
                     b.Property<DateTime?>("UpdatedAt")
                         .HasColumnType("datetime2");
 
-                    b.Property<long>("UserId")
-                        .HasColumnType("bigint");
+                    b.Property<string>("Username")
+                        .IsRequired()
+                        .HasMaxLength(100)
+                        .HasColumnType("nvarchar(100)");
 
                     b.HasKey("Id")
                         .HasName("PK_Employee");
 
+                    b.HasIndex(new[] { "Email" }, "UQ_Employee_Email")
+                        .IsUnique();
+
                     b.HasIndex(new[] { "EmployeeCode" }, "UQ_Employee_EmployeeCode")
                         .IsUnique();
 
-                    b.HasIndex(new[] { "UserId" }, "UQ_Employee_UserId")
+                    b.HasIndex(new[] { "Username" }, "UQ_Employee_Username")
                         .IsUnique();
 
                     b.ToTable("Employee", null, t =>
                         {
                             t.HasCheckConstraint("CK_Employee_MaxPeriodsPerWeek", "[MaxPeriodsPerWeek] IS NULL OR [MaxPeriodsPerWeek] >= 0");
                         });
+                });
+
+            modelBuilder.Entity("HSMS.MVC.Models.EmployeeRole", b =>
+                {
+                    b.Property<long>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("bigint");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<long>("Id"));
+
+                    b.Property<DateTime>("AssignedAt")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("datetime2")
+                        .HasDefaultValueSql("SYSDATETIME()");
+
+                    b.Property<long>("EmployeeId")
+                        .HasColumnType("bigint");
+
+                    b.Property<bool>("IsActive")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("bit")
+                        .HasDefaultValue(true);
+
+                    b.Property<long>("RoleId")
+                        .HasColumnType("bigint");
+
+                    b.HasKey("Id")
+                        .HasName("PK_EmployeeRole");
+
+                    b.HasIndex(new[] { "EmployeeId" }, "IX_EmployeeRole_EmployeeId");
+
+                    b.HasIndex(new[] { "RoleId" }, "IX_EmployeeRole_RoleId");
+
+                    b.HasIndex(new[] { "EmployeeId", "RoleId" }, "UQ_EmployeeRole")
+                        .IsUnique();
+
+                    b.ToTable("EmployeeRole", (string)null);
                 });
 
             modelBuilder.Entity("HSMS.MVC.Models.GradeLevel", b =>
@@ -519,7 +761,7 @@ namespace HSMS.MVC.Migrations
                         .HasColumnType("datetime2")
                         .HasDefaultValueSql("SYSDATETIME()");
 
-                    b.Property<long?>("CreatedByUserId")
+                    b.Property<long?>("CreatedByEmployeeId")
                         .HasColumnType("bigint");
 
                     b.Property<DateTime?>("DeliveredAt")
@@ -549,7 +791,10 @@ namespace HSMS.MVC.Migrations
                         .HasMaxLength(255)
                         .HasColumnType("nvarchar(255)");
 
-                    b.Property<long?>("RecipientUserId")
+                    b.Property<long?>("RecipientCustomerId")
+                        .HasColumnType("bigint");
+
+                    b.Property<long?>("RecipientEmployeeId")
                         .HasColumnType("bigint");
 
                     b.Property<int>("RetryCount")
@@ -582,15 +827,20 @@ namespace HSMS.MVC.Migrations
 
                     b.HasIndex(new[] { "CreatedAt" }, "IX_MessageLog_CreatedAt");
 
-                    b.HasIndex(new[] { "CreatedByUserId" }, "IX_MessageLog_CreatedByUserId");
+                    b.HasIndex(new[] { "CreatedByEmployeeId" }, "IX_MessageLog_CreatedByEmployee");
 
                     b.HasIndex(new[] { "NotificationId" }, "IX_MessageLog_Notification");
 
                     b.HasIndex(new[] { "RecipientAddress" }, "IX_MessageLog_RecipientAddress");
 
-                    b.HasIndex(new[] { "RecipientUserId" }, "IX_MessageLog_RecipientUserId");
+                    b.HasIndex(new[] { "RecipientCustomerId" }, "IX_MessageLog_RecipientCustomer");
 
-                    b.ToTable("MessageLog", (string)null);
+                    b.HasIndex(new[] { "RecipientEmployeeId" }, "IX_MessageLog_RecipientEmployee");
+
+                    b.ToTable("MessageLog", null, t =>
+                        {
+                            t.HasCheckConstraint("CK_MessageLog_Recipient", "[RecipientCustomerId] IS NULL OR [RecipientEmployeeId] IS NULL");
+                        });
                 });
 
             modelBuilder.Entity("HSMS.MVC.Models.Notification", b =>
@@ -601,22 +851,44 @@ namespace HSMS.MVC.Migrations
 
                     SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<long>("Id"));
 
+                    b.Property<long?>("AttendanceAuditLogId")
+                        .HasColumnType("bigint");
+
                     b.Property<string>("Content")
                         .IsRequired()
                         .HasColumnType("nvarchar(max)");
+
+                    b.Property<int>("DeliveryAttempts")
+                        .HasColumnType("int");
+
+                    b.Property<DateTime?>("DispatchedAt")
+                        .HasColumnType("datetime2");
 
                     b.Property<bool>("IsRead")
                         .ValueGeneratedOnAdd()
                         .HasColumnType("bit")
                         .HasDefaultValue(false);
 
+                    b.Property<string>("Link")
+                        .HasMaxLength(500)
+                        .HasColumnType("nvarchar(500)");
+
+                    b.Property<DateTime?>("NextDeliveryAttemptAt")
+                        .HasColumnType("datetime2");
+
                     b.Property<DateTime?>("ReadAt")
                         .HasColumnType("datetime2");
 
-                    b.Property<long>("RecipientId")
+                    b.Property<long?>("RecipientCustomerId")
                         .HasColumnType("bigint");
 
-                    b.Property<long?>("SenderId")
+                    b.Property<long?>("RecipientEmployeeId")
+                        .HasColumnType("bigint");
+
+                    b.Property<long?>("SenderCustomerId")
+                        .HasColumnType("bigint");
+
+                    b.Property<long?>("SenderEmployeeId")
                         .HasColumnType("bigint");
 
                     b.Property<DateTime>("SentAt")
@@ -632,13 +904,31 @@ namespace HSMS.MVC.Migrations
                     b.HasKey("Id")
                         .HasName("PK_Notification");
 
+                    b.HasIndex("AttendanceAuditLogId")
+                        .IsUnique()
+                        .HasFilter("[AttendanceAuditLogId] IS NOT NULL");
+
+                    b.HasIndex("SenderCustomerId");
+
+                    b.HasIndex("SenderEmployeeId");
+
+                    b.HasIndex("DispatchedAt", "NextDeliveryAttemptAt")
+                        .HasFilter("[AttendanceAuditLogId] IS NOT NULL AND [DispatchedAt] IS NULL");
+
+                    b.HasIndex("RecipientCustomerId", "IsRead", "SentAt");
+
                     b.HasIndex(new[] { "IsRead" }, "IX_Notification_IsRead");
 
-                    b.HasIndex(new[] { "RecipientId" }, "IX_Notification_RecipientId");
+                    b.HasIndex(new[] { "RecipientCustomerId" }, "IX_Notification_RecipientCustomer");
 
-                    b.HasIndex(new[] { "SenderId" }, "IX_Notification_SenderId");
+                    b.HasIndex(new[] { "RecipientEmployeeId" }, "IX_Notification_RecipientEmployee");
 
-                    b.ToTable("Notification", (string)null);
+                    b.ToTable("Notification", null, t =>
+                        {
+                            t.HasCheckConstraint("CK_Notification_Recipient", "([RecipientCustomerId] IS NOT NULL AND [RecipientEmployeeId] IS NULL) OR ([RecipientCustomerId] IS NULL AND [RecipientEmployeeId] IS NOT NULL)");
+
+                            t.HasCheckConstraint("CK_Notification_Sender", "[SenderCustomerId] IS NULL OR [SenderEmployeeId] IS NULL");
+                        });
                 });
 
             modelBuilder.Entity("HSMS.MVC.Models.Role", b =>
@@ -1396,104 +1686,6 @@ namespace HSMS.MVC.Migrations
                         });
                 });
 
-            modelBuilder.Entity("HSMS.MVC.Models.User", b =>
-                {
-                    b.Property<long>("Id")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("bigint");
-
-                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<long>("Id"));
-
-                    b.Property<string>("AvatarUrl")
-                        .HasMaxLength(500)
-                        .HasColumnType("nvarchar(500)");
-
-                    b.Property<DateTime>("CreatedAt")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("datetime2")
-                        .HasDefaultValueSql("SYSDATETIME()");
-
-                    b.Property<string>("Email")
-                        .IsRequired()
-                        .HasMaxLength(100)
-                        .HasColumnType("nvarchar(100)");
-
-                    b.Property<string>("FullName")
-                        .IsRequired()
-                        .HasMaxLength(100)
-                        .HasColumnType("nvarchar(100)");
-
-                    b.Property<bool>("IsActive")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("bit")
-                        .HasDefaultValue(true);
-
-                    b.Property<DateTime?>("LastLoginAt")
-                        .HasColumnType("datetime2");
-
-                    b.Property<string>("PasswordHash")
-                        .IsRequired()
-                        .HasMaxLength(255)
-                        .HasColumnType("nvarchar(255)");
-
-                    b.Property<string>("PhoneNumber")
-                        .HasMaxLength(20)
-                        .HasColumnType("nvarchar(20)");
-
-                    b.Property<string>("Username")
-                        .IsRequired()
-                        .HasMaxLength(50)
-                        .HasColumnType("nvarchar(50)");
-
-                    b.HasKey("Id")
-                        .HasName("PK_User");
-
-                    b.HasIndex(new[] { "Email" }, "UQ_User_Email")
-                        .IsUnique();
-
-                    b.HasIndex(new[] { "Username" }, "UQ_User_Username")
-                        .IsUnique();
-
-                    b.ToTable("User", (string)null);
-                });
-
-            modelBuilder.Entity("HSMS.MVC.Models.UserRole", b =>
-                {
-                    b.Property<long>("Id")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("bigint");
-
-                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<long>("Id"));
-
-                    b.Property<DateTime>("AssignedAt")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("datetime2")
-                        .HasDefaultValueSql("SYSDATETIME()");
-
-                    b.Property<bool>("IsActive")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("bit")
-                        .HasDefaultValue(true);
-
-                    b.Property<long>("RoleId")
-                        .HasColumnType("bigint");
-
-                    b.Property<long>("UserId")
-                        .HasColumnType("bigint");
-
-                    b.HasKey("Id")
-                        .HasName("PK_UserRole");
-
-                    b.HasIndex(new[] { "RoleId" }, "IX_UserRole_RoleId");
-
-                    b.HasIndex(new[] { "UserId" }, "IX_UserRole_UserId");
-
-                    b.HasIndex(new[] { "UserId", "RoleId" }, "UQ_UserRole")
-                        .IsUnique();
-
-                    b.ToTable("UserRole", (string)null);
-                });
-
             modelBuilder.Entity("HSMS.MVC.Models.Assessment", b =>
                 {
                     b.HasOne("HSMS.MVC.Models.AssessmentType", "AssessmentType")
@@ -1511,6 +1703,25 @@ namespace HSMS.MVC.Migrations
                     b.Navigation("AssessmentType");
 
                     b.Navigation("TeachingAssignment");
+                });
+
+            modelBuilder.Entity("HSMS.MVC.Models.AttendanceAuditLog", b =>
+                {
+                    b.HasOne("HSMS.MVC.Models.AttendanceRecord", "AttendanceRecord")
+                        .WithMany()
+                        .HasForeignKey("AttendanceRecordId")
+                        .OnDelete(DeleteBehavior.NoAction)
+                        .IsRequired();
+
+                    b.HasOne("HSMS.MVC.Models.Employee", "ChangedByEmployee")
+                        .WithMany()
+                        .HasForeignKey("ChangedByEmployeeId")
+                        .OnDelete(DeleteBehavior.NoAction)
+                        .IsRequired();
+
+                    b.Navigation("AttendanceRecord");
+
+                    b.Navigation("ChangedByEmployee");
                 });
 
             modelBuilder.Entity("HSMS.MVC.Models.AttendanceRecord", b =>
@@ -1538,6 +1749,11 @@ namespace HSMS.MVC.Migrations
                         .IsRequired()
                         .HasConstraintName("FK_AttendanceRecord_TimetableEntry");
 
+                    b.HasOne("HSMS.MVC.Models.Employee", "UpdatedByEmployee")
+                        .WithMany()
+                        .HasForeignKey("UpdatedByEmployeeId")
+                        .OnDelete(DeleteBehavior.NoAction);
+
                     b.Navigation("Customer");
 
                     b.Navigation("LeaveRequest");
@@ -1545,6 +1761,8 @@ namespace HSMS.MVC.Migrations
                     b.Navigation("RecordedByEmployee");
 
                     b.Navigation("TimetableEntry");
+
+                    b.Navigation("UpdatedByEmployee");
                 });
 
             modelBuilder.Entity("HSMS.MVC.Models.Class", b =>
@@ -1608,28 +1826,47 @@ namespace HSMS.MVC.Migrations
                         .OnDelete(DeleteBehavior.Restrict)
                         .HasConstraintName("FK_Customer_Parent");
 
-                    b.HasOne("HSMS.MVC.Models.User", "User")
-                        .WithOne("CustomerProfile")
-                        .HasForeignKey("HSMS.MVC.Models.Customer", "UserId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired()
-                        .HasConstraintName("FK_Customer_User");
-
                     b.Navigation("Parent");
-
-                    b.Navigation("User");
                 });
 
-            modelBuilder.Entity("HSMS.MVC.Models.Employee", b =>
+            modelBuilder.Entity("HSMS.MVC.Models.CustomerRole", b =>
                 {
-                    b.HasOne("HSMS.MVC.Models.User", "User")
-                        .WithOne("EmployeeProfile")
-                        .HasForeignKey("HSMS.MVC.Models.Employee", "UserId")
+                    b.HasOne("HSMS.MVC.Models.Customer", "Customer")
+                        .WithMany("CustomerRoles")
+                        .HasForeignKey("CustomerId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired()
-                        .HasConstraintName("FK_Employee_User");
+                        .HasConstraintName("FK_CustomerRole_Customer");
 
-                    b.Navigation("User");
+                    b.HasOne("HSMS.MVC.Models.Role", "Role")
+                        .WithMany("CustomerRoles")
+                        .HasForeignKey("RoleId")
+                        .IsRequired()
+                        .HasConstraintName("FK_CustomerRole_Role");
+
+                    b.Navigation("Customer");
+
+                    b.Navigation("Role");
+                });
+
+            modelBuilder.Entity("HSMS.MVC.Models.EmployeeRole", b =>
+                {
+                    b.HasOne("HSMS.MVC.Models.Employee", "Employee")
+                        .WithMany("EmployeeRoles")
+                        .HasForeignKey("EmployeeId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired()
+                        .HasConstraintName("FK_EmployeeRole_Employee");
+
+                    b.HasOne("HSMS.MVC.Models.Role", "Role")
+                        .WithMany("EmployeeRoles")
+                        .HasForeignKey("RoleId")
+                        .IsRequired()
+                        .HasConstraintName("FK_EmployeeRole_Role");
+
+                    b.Navigation("Employee");
+
+                    b.Navigation("Role");
                 });
 
             modelBuilder.Entity("HSMS.MVC.Models.LeaveRequest", b =>
@@ -1660,45 +1897,71 @@ namespace HSMS.MVC.Migrations
 
             modelBuilder.Entity("HSMS.MVC.Models.MessageLog", b =>
                 {
-                    b.HasOne("HSMS.MVC.Models.User", "CreatedByUser")
-                        .WithMany("CreatedMessageLogs")
-                        .HasForeignKey("CreatedByUserId")
-                        .HasConstraintName("FK_MessageLog_CreatedByUser");
+                    b.HasOne("HSMS.MVC.Models.Employee", "CreatedByEmployee")
+                        .WithMany("SentMessageLogs")
+                        .HasForeignKey("CreatedByEmployeeId")
+                        .HasConstraintName("FK_MessageLog_CreatedByEmployee");
 
                     b.HasOne("HSMS.MVC.Models.Notification", "Notification")
                         .WithMany("MessageLogs")
                         .HasForeignKey("NotificationId")
                         .HasConstraintName("FK_MessageLog_Notification");
 
-                    b.HasOne("HSMS.MVC.Models.User", "RecipientUser")
+                    b.HasOne("HSMS.MVC.Models.Customer", "RecipientCustomer")
                         .WithMany("ReceivedMessageLogs")
-                        .HasForeignKey("RecipientUserId")
-                        .HasConstraintName("FK_MessageLog_RecipientUser");
+                        .HasForeignKey("RecipientCustomerId")
+                        .HasConstraintName("FK_MessageLog_RecipientCustomer");
 
-                    b.Navigation("CreatedByUser");
+                    b.HasOne("HSMS.MVC.Models.Employee", "RecipientEmployee")
+                        .WithMany("ReceivedMessageLogs")
+                        .HasForeignKey("RecipientEmployeeId")
+                        .HasConstraintName("FK_MessageLog_RecipientEmployee");
+
+                    b.Navigation("CreatedByEmployee");
 
                     b.Navigation("Notification");
 
-                    b.Navigation("RecipientUser");
+                    b.Navigation("RecipientCustomer");
+
+                    b.Navigation("RecipientEmployee");
                 });
 
             modelBuilder.Entity("HSMS.MVC.Models.Notification", b =>
                 {
-                    b.HasOne("HSMS.MVC.Models.User", "Recipient")
+                    b.HasOne("HSMS.MVC.Models.AttendanceAuditLog", "AttendanceAuditLog")
+                        .WithMany()
+                        .HasForeignKey("AttendanceAuditLogId")
+                        .OnDelete(DeleteBehavior.NoAction);
+
+                    b.HasOne("HSMS.MVC.Models.Customer", "RecipientCustomer")
                         .WithMany("ReceivedNotifications")
-                        .HasForeignKey("RecipientId")
-                        .OnDelete(DeleteBehavior.Restrict)
-                        .IsRequired()
-                        .HasConstraintName("FK_Notification_RecipientUser");
+                        .HasForeignKey("RecipientCustomerId")
+                        .HasConstraintName("FK_Notification_RecipientCustomer");
 
-                    b.HasOne("HSMS.MVC.Models.User", "Sender")
+                    b.HasOne("HSMS.MVC.Models.Employee", "RecipientEmployee")
+                        .WithMany("ReceivedNotifications")
+                        .HasForeignKey("RecipientEmployeeId")
+                        .HasConstraintName("FK_Notification_RecipientEmployee");
+
+                    b.HasOne("HSMS.MVC.Models.Customer", "SenderCustomer")
                         .WithMany("SentNotifications")
-                        .HasForeignKey("SenderId")
-                        .HasConstraintName("FK_Notification_SenderUser");
+                        .HasForeignKey("SenderCustomerId")
+                        .HasConstraintName("FK_Notification_SenderCustomer");
 
-                    b.Navigation("Recipient");
+                    b.HasOne("HSMS.MVC.Models.Employee", "SenderEmployee")
+                        .WithMany("SentNotifications")
+                        .HasForeignKey("SenderEmployeeId")
+                        .HasConstraintName("FK_Notification_SenderEmployee");
 
-                    b.Navigation("Sender");
+                    b.Navigation("AttendanceAuditLog");
+
+                    b.Navigation("RecipientCustomer");
+
+                    b.Navigation("RecipientEmployee");
+
+                    b.Navigation("SenderCustomer");
+
+                    b.Navigation("SenderEmployee");
                 });
 
             modelBuilder.Entity("HSMS.MVC.Models.ScoreAuditLog", b =>
@@ -1954,26 +2217,6 @@ namespace HSMS.MVC.Migrations
                     b.Navigation("TimeSlot");
                 });
 
-            modelBuilder.Entity("HSMS.MVC.Models.UserRole", b =>
-                {
-                    b.HasOne("HSMS.MVC.Models.Role", "Role")
-                        .WithMany("UserRoles")
-                        .HasForeignKey("RoleId")
-                        .IsRequired()
-                        .HasConstraintName("FK_UserRole_Role");
-
-                    b.HasOne("HSMS.MVC.Models.User", "User")
-                        .WithMany("UserRoles")
-                        .HasForeignKey("UserId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired()
-                        .HasConstraintName("FK_UserRole_User");
-
-                    b.Navigation("Role");
-
-                    b.Navigation("User");
-                });
-
             modelBuilder.Entity("HSMS.MVC.Models.AcademicYear", b =>
                 {
                     b.Navigation("Classes");
@@ -2012,9 +2255,17 @@ namespace HSMS.MVC.Migrations
 
                     b.Navigation("ConductEvaluations");
 
+                    b.Navigation("CustomerRoles");
+
+                    b.Navigation("ReceivedMessageLogs");
+
+                    b.Navigation("ReceivedNotifications");
+
                     b.Navigation("RequestedLeaveRequests");
 
                     b.Navigation("SemesterReports");
+
+                    b.Navigation("SentNotifications");
 
                     b.Navigation("StudentAnnualReports");
 
@@ -2033,11 +2284,17 @@ namespace HSMS.MVC.Migrations
                 {
                     b.Navigation("ConductEvaluations");
 
+                    b.Navigation("EmployeeRoles");
+
                     b.Navigation("FinalizedSemesterReports");
 
                     b.Navigation("FinalizedStudentAnnualReports");
 
                     b.Navigation("HomeroomClasses");
+
+                    b.Navigation("ReceivedMessageLogs");
+
+                    b.Navigation("ReceivedNotifications");
 
                     b.Navigation("RecordedAttendanceRecords");
 
@@ -2046,6 +2303,10 @@ namespace HSMS.MVC.Migrations
                     b.Navigation("ReviewedLeaveRequests");
 
                     b.Navigation("ScoreAuditLogs");
+
+                    b.Navigation("SentMessageLogs");
+
+                    b.Navigation("SentNotifications");
 
                     b.Navigation("TeachingAssignments");
                 });
@@ -2067,7 +2328,9 @@ namespace HSMS.MVC.Migrations
 
             modelBuilder.Entity("HSMS.MVC.Models.Role", b =>
                 {
-                    b.Navigation("UserRoles");
+                    b.Navigation("CustomerRoles");
+
+                    b.Navigation("EmployeeRoles");
                 });
 
             modelBuilder.Entity("HSMS.MVC.Models.Room", b =>
@@ -2118,23 +2381,6 @@ namespace HSMS.MVC.Migrations
             modelBuilder.Entity("HSMS.MVC.Models.TimetableEntry", b =>
                 {
                     b.Navigation("AttendanceRecords");
-                });
-
-            modelBuilder.Entity("HSMS.MVC.Models.User", b =>
-                {
-                    b.Navigation("CreatedMessageLogs");
-
-                    b.Navigation("CustomerProfile");
-
-                    b.Navigation("EmployeeProfile");
-
-                    b.Navigation("ReceivedMessageLogs");
-
-                    b.Navigation("ReceivedNotifications");
-
-                    b.Navigation("SentNotifications");
-
-                    b.Navigation("UserRoles");
                 });
 #pragma warning restore 612, 618
         }

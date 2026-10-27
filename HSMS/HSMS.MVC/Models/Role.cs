@@ -1,4 +1,4 @@
-﻿using HSMS.MVC.Common;
+using HSMS.MVC.Common;
 
 namespace HSMS.MVC.Models;
 
@@ -11,7 +11,8 @@ public class Role
     public bool IsActive { get; private set; } = true;
     public DateTime CreatedAt { get; private set; }
 
-    public virtual ICollection<UserRole> UserRoles { get; private set; } = new List<UserRole>();
+    public virtual ICollection<CustomerRole> CustomerRoles { get; private set; } = new List<CustomerRole>();
+    public virtual ICollection<EmployeeRole> EmployeeRoles { get; private set; } = new List<EmployeeRole>();
 
     protected Role() { }
 

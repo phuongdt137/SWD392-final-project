@@ -24,7 +24,7 @@ public sealed class NotificationDispatcher(IServiceScopeFactory scopes, IHubCont
                     try
                     {
                         if (await repo.CanDeliverAsync(n, stoppingToken))
-                            await hub.Clients.User(n.RecipientId.ToString()).SendAsync("AttendanceNotification",
+                            await hub.Clients.User("CUSTOMER:" + n.RecipientCustomerId).SendAsync("AttendanceNotification",
                                 new NotificationItem(n.Id, n.Title, n.Content, n.IsRead, n.SentAt, n.Link), stoppingToken);
                         // A removed parent relationship must not receive an old queued payload.
                         n.Delivered(time.UtcNow);
