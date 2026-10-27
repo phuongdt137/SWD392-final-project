@@ -27,8 +27,8 @@ public class StudentScore
         if (assessmentId <= 0)
             throw new AppError("Id bài kiểm tra không hợp lệ.", "INVALID_ASSESSMENT_ID");
 
-        if (score.HasValue && (score.Value < 0 || score.Value > 10))
-            throw new AppError("Điểm số phải nằm trong khoảng từ 0 đến 10.", "INVALID_SCORE");
+        if (score.HasValue)
+            ValidateScore(score.Value);
 
         CustomerId = customerId;
         AssessmentId = assessmentId;
@@ -43,22 +43,20 @@ public class StudentScore
         if (IsLocked)
             throw new AppError("Bảng điểm đã bị khóa, không thể nhập điểm.", "SCORE_LOCKED");
 
-        if (score < 0 || score > 10)
-            throw new AppError("Điểm số phải nằm trong khoảng từ 0 đến 10.", "INVALID_SCORE");
+        ValidateScore(score);
 
         Score = score;
         Comment = comment;
         UpdatedAt = DateTime.UtcNow;
     }
 
-    public void UpdateScore(decimal newScore, string reason, Employee employee, string? ipAddress = null)
+    public ScoreAuditLog UpdateScore(decimal newScore, string reason, Employee employee, string? ipAddress = null)
     {
         ArgumentNullException.ThrowIfNull(employee);
         if (IsLocked)
             throw new AppError("Bảng điểm đã bị khóa, không thể chỉnh sửa điểm.", "SCORE_LOCKED");
 
-        if (newScore < 0 || newScore > 10)
-            throw new AppError("Điểm số phải nằm trong khoảng từ 0 đến 10.", "INVALID_SCORE");
+        ValidateScore(newScore);
 
         if (string.IsNullOrWhiteSpace(reason))
             throw new AppError("Lý do sửa điểm không được để trống.", "REASON_REQUIRED");
@@ -78,6 +76,7 @@ public class StudentScore
         ScoreAuditLogs.Add(auditLog);
         Score = newScore;
         UpdatedAt = DateTime.UtcNow;
+        return auditLog;
     }
 
     public void Lock()
@@ -87,4 +86,10 @@ public class StudentScore
     }
 
     public ICollection<ScoreAuditLog> GetAuditLogs() => ScoreAuditLogs;
+
+    private static void ValidateScore(decimal score)
+    {
+        if (score < 0 || score > 10)
+            throw new AppError("Điểm số phải nằm trong khoảng từ 0 đến 10.", "INVALID_SCORE");
+    }
 }

@@ -38,4 +38,11 @@ public class AssessmentType
         MinEntries = minEntries;
         MaxEntries = maxEntries;
     }
+
+    public decimal GetWeight() => Weight;
+
+    /// <summary>
+    /// Kiểm tra số đầu điểm có vượt quá giới hạn tối đa của loại bài kiểm tra hay không.
+    /// </summary>
+    public bool IsValidEntryCount(int count) => count >= 0 && (!MaxEntries.HasValue || count <= MaxEntries.Value);
 }

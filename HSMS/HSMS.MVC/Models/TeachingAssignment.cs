@@ -45,5 +45,15 @@ public class TeachingAssignment
     public void Activate() => Status = "ACTIVE";
     public void Cancel() => Status = "CANCELLED";
     public int TotalPeriodsPerWeek() => TimetableEntries.Count(te => te.Status == "ACTIVE");
+    public bool IsTaughtBy(long employeeId) => EmployeeId == employeeId && Status == "ACTIVE";
+
+    public void AddAssessment(Assessment assessment)
+    {
+        ArgumentNullException.ThrowIfNull(assessment);
+        if (assessment.TeachingAssignmentId != Id)
+            throw new AppError("Bài kiểm tra không thuộc phân công giảng dạy này.", "ASSESSMENT_ASSIGNMENT_MISMATCH");
+
+        Assessments.Add(assessment);
+    }
     public TeachingAssignment GetAssignments() => this;
 }

@@ -33,6 +33,24 @@ public class Assessment
         ConductedAt = conductedAt;
     }
 
+    public StudentScore AddStudentScore(long customerId, decimal? score = null, string? comment = null)
+    {
+        if (StudentScores.Any(s => s.CustomerId == customerId))
+            throw new AppError("Học sinh đã có điểm trong bài kiểm tra này.", "DUPLICATE_STUDENT_SCORE");
+
+        var studentScore = new StudentScore(customerId, Id, score, comment);
+        StudentScores.Add(studentScore);
+        return studentScore;
+    }
+
+    public void LockAllScores()
+    {
+        foreach (var studentScore in StudentScores)
+            studentScore.Lock();
+    }
+
+    public bool IsFullyLocked() => StudentScores.Count > 0 && StudentScores.All(s => s.IsLocked);
+
     public decimal CalculateAverage()
     {
         var validScores = StudentScores.Where(s => s.Score.HasValue).Select(s => s.Score!.Value).ToList();

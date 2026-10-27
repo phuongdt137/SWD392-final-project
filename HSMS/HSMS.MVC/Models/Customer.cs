@@ -111,6 +111,11 @@ public class Customer
         UpdatedAt = DateTime.UtcNow;
     }
 
+    /// <summary>
+    /// Kiểm tra hồ sơ hiện tại có phải là phụ huynh (người giám hộ) của học sinh được truyền vào hay không.
+    /// </summary>
+    public bool IsGuardianOf(Customer student) => student != null && student.ParentId == Id;
+
     public void RemoveParent()
     {
         ParentId = null;

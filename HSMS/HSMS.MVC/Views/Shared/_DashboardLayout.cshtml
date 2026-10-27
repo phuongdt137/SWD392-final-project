@@ -166,11 +166,11 @@
                         <i class="bi bi-calendar-check"></i>
                         <span>Điểm danh</span>
                     </a>
-                    <a href="#grades" class="sidebar-link">
+                    <a asp-controller="Score" asp-action="Index" class="sidebar-link @(currentController == "Score" ? "active" : "")">
                         <i class="bi bi-card-checklist"></i>
                         <span>Sổ điểm</span>
                     </a>
-                    <a href="#assignments" class="sidebar-link">
+                    <a asp-controller="Score" asp-action="Index" class="sidebar-link">
                         <i class="bi bi-journal-text"></i>
                         <span>Bài tập & Đánh giá</span>
                     </a>
@@ -198,7 +198,7 @@
                         <i class="bi bi-calendar3"></i>
                         <span>Thời khóa biểu</span>
                     </a>
-                    <a href="#scores" class="sidebar-link">
+                    <a asp-controller="Score" asp-action="MyScores" class="sidebar-link @(currentController == "Score" ? "active" : "")">
                         <i class="bi bi-award-fill"></i>
                         <span>Bảng điểm & Học tập</span>
                     </a>
@@ -230,7 +230,7 @@
                         <i class="bi bi-person-hearts"></i>
                         <span>Hồ sơ con cái</span>
                     </a>
-                    <a href="#scores" class="sidebar-link">
+                    <a asp-controller="Score" asp-action="MyScores" class="sidebar-link @(currentController == "Score" ? "active" : "")">
                         <i class="bi bi-award-fill"></i>
                         <span>Kết quả học tập</span>
                     </a>
