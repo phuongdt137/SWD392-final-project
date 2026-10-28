@@ -17,7 +17,7 @@ public sealed class AttendanceController(IAttendanceService attendance) : Contro
         // ModelState chứa lỗi chuyển kiểu và validation dữ liệu request; có lỗi thì trả HTTP 400.
         if (!ModelState.IsValid) return BadRequest("Bộ lọc điểm danh không hợp lệ.");
         // Dẫn học sinh/phụ huynh sang lịch sử; chuyển hướng không thay thế kiểm tra quyền.
-        if (!User.IsInRole("TEACHER") && !User.IsInRole("ADMIN") && !User.IsInRole("STAFF") && !User.IsInRole("PRINCIPAL"))
+        if (!User.IsInRole("TEACHER") && !User.IsInRole("STAFF") && !User.IsInRole("PRINCIPAL"))
             return RedirectToAction(nameof(History));
         var result = await attendance.IndexAsync(filter, ct);
         return result.IsSuccess ? View(result.Data) : Failure(result);
@@ -62,7 +62,7 @@ public sealed class AttendanceController(IAttendanceService attendance) : Contro
     public async Task<IActionResult> History(AttendanceFilter filter, CancellationToken ct)
     {
         if (!ModelState.IsValid) return BadRequest("Bộ lọc không hợp lệ.");
-        if ((User.IsInRole("STUDENT") || User.IsInRole("PARENT")) && !User.IsInRole("TEACHER") && !User.IsInRole("ADMIN") && !User.IsInRole("STAFF") && !User.IsInRole("PRINCIPAL"))
+        if ((User.IsInRole("STUDENT") || User.IsInRole("PARENT")) && !User.IsInRole("TEACHER") && !User.IsInRole("STAFF") && !User.IsInRole("PRINCIPAL"))
         {
             var studentResult = await attendance.StudentHistoryAsync(filter, ct);
             return studentResult.IsSuccess ? View("StudentHistory", studentResult.Data) : Failure(studentResult);

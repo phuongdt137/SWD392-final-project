@@ -78,7 +78,9 @@ public class AuthService : IAuthService
                 user.Email,
                 userType,
                 roles,
-                user.AvatarUrl
+                user.AvatarUrl,
+                user.EmployeeProfile?.Id,
+                user.CustomerProfile?.Id
             );
 
             return ServiceResult<LoginResponseDto>.Success(responseDto, "Đăng nhập thành công.");

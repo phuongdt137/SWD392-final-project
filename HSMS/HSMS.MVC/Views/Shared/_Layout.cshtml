@@ -7,7 +7,7 @@
     LoginResponseDto? currentUser = null;
     try
     {
-        var currentUserJson = Context.Session.GetString("CurrentUser");
+        var currentUserJson = Context.Session.GetString(SessionKeys.CurrentUser);
         if (!string.IsNullOrWhiteSpace(currentUserJson))
         {
             currentUser = JsonSerializer.Deserialize<LoginResponseDto>(currentUserJson);

@@ -5,37 +5,40 @@ using HSMS.MVC.Repositories.Implementations;
 using HSMS.MVC.Service;
 using HSMS.MVC.Common;
 using HSMS.MVC.Service.Notifications;
-using Microsoft.AspNetCore.Authentication;
+using Microsoft.AspNetCore.Authentication.Cookies;
 
 var builder = WebApplication.CreateBuilder(args);
 
 // Add services to the container.
-// Thông báo qua Redirect (TempData) cũng dùng Session thay vì cookie TempData riêng.
 builder.Services.AddControllersWithViews().AddSessionStateTempDataProvider();
 builder.Services.AddHttpContextAccessor();
 builder.Services.AddDistributedMemoryCache();
-// Xác thực duy nhất từ Session, không tạo cookie đăng nhập riêng.
-builder.Services.AddAuthentication(UserPrincipal.SessionScheme)
-    .AddScheme<AuthenticationSchemeOptions, SessionAuthenticationHandler>(UserPrincipal.SessionScheme, _ => { });
+
+// Cấu hình đường dẫn chuyển hướng mặc định cho [Authorize] (Login & AccessDenied)
+builder.Services.AddAuthentication(CookieAuthenticationDefaults.AuthenticationScheme)
+    .AddCookie(options =>
+    {
+        options.LoginPath = "/Auth/Login";
+        options.AccessDeniedPath = "/Auth/AccessDenied";
+    });
 builder.Services.AddAuthorization();
+
 builder.Services.AddSingleton(TimeProvider.System);
 builder.Services.AddSingleton<SchoolTime>();
-// Đăng ký theo request: Controller nhận interface, DI cấp đúng Service/Repository Attendance.
-builder.Services.AddScoped<ICurrentUserService, CurrentUserService>();
 builder.Services.AddScoped<IAttendanceRepository, AttendanceRepository>();
 builder.Services.AddScoped<IAttendanceService, AttendanceService>();
 builder.Services.AddScoped<INotificationRepository, NotificationRepository>();
 builder.Services.AddScoped<INotificationService, NotificationService>();
-// Tác vụ nền gửi email từ thông báo/MessageLog đã commit, không đẩy dữ liệu real-time.
 builder.Services.AddSingleton<NotificationDispatchSignal>();
 builder.Services.AddHostedService<NotificationDispatcher>();
 
 builder.Services.AddDbContext<AppDbContext>(options =>
     options.UseSqlServer(builder.Configuration.GetConnectionString("DefaultConnection")));
 
-// Session có sẵn lưu dữ liệu ở server; cookie dưới đây chỉ chứa mã phiên, không phải vé đăng nhập.
+// Session lưu dữ liệu userJson ở server; trình duyệt chỉ giữ cookie chứa SessionId.
 builder.Services.AddSession(options =>
 {
+    options.Cookie.Name = ".HSMS.SessionId";
     options.IdleTimeout = TimeSpan.FromHours(2);
     options.Cookie.HttpOnly = true;
     options.Cookie.IsEssential = true;
@@ -68,8 +71,8 @@ app.UseStaticFiles();
 app.UseRouting();
 
 app.UseSession();
-// Session phải sẵn sàng trước khi SessionAuthenticationHandler dựng User cho request.
-app.UseAuthentication();
+// Middleware truy vấn Session theo SessionId từ cookie và nạp vào UserPrincipal (HttpContext.User)
+app.UseMiddleware<SessionAuthMiddleware>();
 app.UseAuthorization();
 
 app.MapControllerRoute(
@@ -87,3 +90,4 @@ app.MapControllerRoute(
 }
 
 app.Run();
+

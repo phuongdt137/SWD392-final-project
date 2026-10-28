@@ -1,7 +1,9 @@
 using System.Security.Cryptography;
 using System.Text;
+using System.Text.Json;
 using HSMS.MVC.Common;
 using HSMS.MVC.DTOs.Attendance;
+using HSMS.MVC.DTOs.Auth;
 using HSMS.MVC.Models;
 using HSMS.MVC.Repositories.Interfaces;
 using HSMS.MVC.Service.Notifications;
@@ -13,11 +15,11 @@ namespace HSMS.MVC.Service;
 
 // Luồng chính: Controller -> Service -> Repository -> AppDbContext -> SQL Server.
 // Service điều phối quyền, quy tắc nghiệp vụ và transaction của mỗi lần lưu.
-public sealed class AttendanceService(IAttendanceRepository repo, ICurrentUserService current, SchoolTime time,
+public sealed class AttendanceService(IAttendanceRepository repo, IHttpContextAccessor http, SchoolTime time,
     NotificationDispatchSignal dispatch, ILogger<AttendanceService> logger) : IAttendanceService
 {
     // Lấy danh tính/vai trò từ server qua CurrentUserService, không nhận người ghi từ biểu mẫu.
-    private async Task<CurrentUser> User(CancellationToken ct) => await current.GetAsync(ct) ??
+    private LoginResponseDto User() => (http.HttpContext?.Session.GetString(SessionKeys.CurrentUser) is { Length: > 0 } json ? JsonSerializer.Deserialize<LoginResponseDto>(json) : null) ??
         throw new AppError("Vui lòng đăng nhập lại.", "UNAUTHORIZED", ErrorType.Unauthorized);
     private static AppError Forbidden() => new("Bạn không có quyền truy cập bảng điểm danh này.", "FORBIDDEN", ErrorType.Forbidden);
     private static AppError Conflict() => new("Dữ liệu đã thay đổi. Vui lòng tải lại bảng và đối chiếu.", "ATTENDANCE_CONFLICT", ErrorType.Conflict);
@@ -63,7 +65,7 @@ public sealed class AttendanceService(IAttendanceRepository repo, ICurrentUserSe
             if (filter.Status != null && filter.Status is not ("COMPLETED" or "PENDING" or "UPCOMING" or "LOCKED"))
                 throw new AppError("Tình trạng điểm danh không hợp lệ.");
             var date = filter.Date.Value;
-            var user = await User(ct);
+            var user = User();
             var localNow = SchoolTime.Local(time.UtcNow);
             var locked = time.IsLocked(date) && !AttendanceAccess.CanEditAfterDeadline(user);
             var data = await repo.GetSchedulePageAsync(filter, AttendanceAccess.Schedules(user), localNow, locked, ct);
@@ -85,7 +87,7 @@ public sealed class AttendanceService(IAttendanceRepository repo, ICurrentUserSe
     {
         try
         {
-            date = date.Date; var user = await User(ct);
+            date = date.Date; var user = User();
             var e = await repo.GetLessonAsync(entryId, ct) ?? throw new AppError("Không tìm thấy tiết học.", "NOT_FOUND", ErrorType.NotFound);
             if (!AttendanceAccess.CanViewSheet(user, e)) throw Forbidden();
             ValidateLesson(e, date, false);
@@ -119,7 +121,7 @@ public sealed class AttendanceService(IAttendanceRepository repo, ICurrentUserSe
             // 1. Transaction bao phủ kết quả, audit và thông báo. Lỗi trước commit được rollback
             // khi await using giải phóng transaction; catch sau đó bỏ các entity đang theo dõi.
             await using var tx = await repo.BeginAsync(ct);
-            var user = await User(ct);
+            var user = User();
             var date = input.Date.Date;
             // 2. Đọc lại lịch/quyền/thời gian hiện tại, không tin trạng thái từ giao diện.
             var e = await repo.GetLessonAsync(input.TimetableEntryId, ct) ?? throw new AppError("Không tìm thấy tiết học.", "NOT_FOUND", ErrorType.NotFound);
@@ -161,7 +163,7 @@ public sealed class AttendanceService(IAttendanceRepository repo, ICurrentUserSe
             }
             // 5. STAFF thiếu Employee chỉ được bổ sung hồ sơ khi thực sự ghi, trong cùng transaction.
             if (changes.Count > 0 && user.Has("STAFF") && !user.EmployeeId.HasValue)
-                user = user with { EmployeeId = await repo.EnsureStaffEmployeeAsync(user.UserId, ct) };
+                user.EmployeeId = await repo.EnsureStaffEmployeeAsync(user.Id, ct);
             // Lấy phụ huynh hợp lệ một lần cho tập học sinh có thay đổi.
             var parents = await repo.GetActiveParentsAsync(changes.Select(x => x.CustomerId).ToArray(), ct);
             var missingParents = 0;
@@ -185,13 +187,13 @@ public sealed class AttendanceService(IAttendanceRepository repo, ICurrentUserSe
                 if (parent == null) { missingParents++; continue; }
                 var student = roster.Single(x => x.CustomerId == row.CustomerId).Customer;
                 var text = $"{student.FullName} ({student.StudentCode}) — {e.TeachingAssignment.Class.ClassName}, {e.TeachingAssignment.Subject.SubjectName}, tiết {e.TimeSlot.PeriodNo}, {date:dd/MM/yyyy}: {AttendanceStatuses.Label(record.Status)}.";
-                var notification = new Notification(oldStatus == null ? "Kết quả điểm danh" : "Cập nhật điểm danh", text, parent.UserId, user.UserId);
+                var notification = new Notification(oldStatus == null ? "Kết quả điểm danh" : "Cập nhật điểm danh", text, parent.UserId, user.Id);
                 notification.AttachAttendance(audit, $"/Attendance/History?studentId={row.CustomerId}&from={date:yyyy-MM-dd}&to={date:yyyy-MM-dd}", time.UtcNow);
                 // Tái sử dụng MessageLog để xếp email cùng transaction với kết quả/audit/thông báo.
                 // Thêm qua navigation giúp EF tự gắn NotificationId sau khi tạo khóa trong database.
                 notification.MessageLogs.Add(new MessageLog("EMAIL", parent.User.Email, text,
                     subject: notification.Title, provider: "SMTP", templateCode: "ATTENDANCE",
-                    recipientUserId: parent.UserId, createdByUserId: user.UserId));
+                    recipientUserId: parent.UserId, createdByUserId: user.Id));
                 repo.AddNotification(notification);
             }
             time.EnsureWritable(date, e.TimeSlot.StartTime, AttendanceAccess.CanEditAfterDeadline(user));
@@ -219,7 +221,7 @@ public sealed class AttendanceService(IAttendanceRepository repo, ICurrentUserSe
     {
         try
         {
-            var user = await User(ct); f.Page = Math.Clamp(f.Page, 1, 100000);
+            var user = User(); f.Page = Math.Clamp(f.Page, 1, 100000);
             f.From ??= time.Today.AddDays(-30); f.To ??= time.Today;
             if (f.From > f.To) throw new AppError("Ngày bắt đầu phải trước ngày kết thúc.");
             if (!string.IsNullOrWhiteSpace(f.Status)) f.Status = AttendanceStatuses.Validate(f.Status); else f.Status = null;
@@ -236,7 +238,7 @@ public sealed class AttendanceService(IAttendanceRepository repo, ICurrentUserSe
     {
         try
         {
-            var user = await User(ct);
+            var user = User();
             var record = await repo.GetRecordAsync(recordId, AttendanceAccess.Records(user), ct) ?? throw new AppError("Không tìm thấy kết quả trong phạm vi truy cập.", "NOT_FOUND", ErrorType.NotFound);
             if (!user.SchoolReader && !user.Has("TEACHER")) throw Forbidden();
             return ServiceResult<AttendanceAudit>.Success(new(record, await repo.GetAuditAsync(recordId, ct)));
@@ -248,7 +250,7 @@ public sealed class AttendanceService(IAttendanceRepository repo, ICurrentUserSe
     {
         try
         {
-            var user = await User(ct);
+            var user = User();
             if ((!user.Has("STUDENT") && !user.Has("PARENT")) || !user.CustomerId.HasValue)
                 throw Forbidden();
             var isParent = user.Has("PARENT");

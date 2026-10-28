@@ -1,5 +1,7 @@
 using System.Globalization;
+using System.Text.Json;
 using HSMS.MVC.Common;
+using HSMS.MVC.DTOs.Auth;
 using HSMS.MVC.DTOs.Notifications;
 using HSMS.MVC.Models;
 using HSMS.MVC.Repositories.Interfaces;
@@ -9,50 +11,53 @@ namespace HSMS.MVC.Service;
 public sealed class NotificationService : INotificationService
 {
     private readonly INotificationRepository _repo;
-    private readonly ICurrentUserService _current;
+    private readonly IHttpContextAccessor _http;
     private readonly IGenericRepository<Notification> _notificationRepository;
     private readonly ILogger<NotificationService> _logger;
 
     public NotificationService(
         INotificationRepository repo,
-        ICurrentUserService current,
+        IHttpContextAccessor http,
         IGenericRepository<Notification> notificationRepository,
         ILogger<NotificationService> logger)
     {
         _repo = repo;
-        _current = current;
+        _http = http;
         _notificationRepository = notificationRepository;
         _logger = logger;
     }
 
+    private LoginResponseDto? GetCurrentUser()
+    {
+        var json = _http.HttpContext?.Session.GetString(SessionKeys.CurrentUser);
+        if (string.IsNullOrEmpty(json)) return null;
+        try { return JsonSerializer.Deserialize<LoginResponseDto>(json); }
+        catch { return null; }
+    }
+
     public async Task<ServiceResult<NotificationFeed>> FeedAsync(CancellationToken ct = default)
     {
-        var user = await _current.GetAsync(ct);
+        var user = GetCurrentUser();
         return user == null
             ? ServiceResult<NotificationFeed>.Failed(AuthErrors.MissingCredentials)
-            : ServiceResult<NotificationFeed>.Success(await _repo.FeedAsync(user.UserId, ct));
+            : ServiceResult<NotificationFeed>.Success(await _repo.FeedAsync(user.Id, ct));
     }
-    // Chuông thông báo lấy số chưa đọc của tài khoản Session khi render trang.
+
     public async Task<int> UnreadCountAsync(CancellationToken ct = default)
     {
-        var user = await _current.GetAsync(ct);
-
+        var user = GetCurrentUser();
         return user == null
             ? 0
-            : await _repo.UnreadCountAsync(user.UserId, ct);
-    }
-    // Chỉ đánh dấu đã đọc khi thông báo thuộc phạm vi người dùng hiện tại.
-    public async Task<ServiceResult> ReadAsync(long id, CancellationToken ct = default)
-    {
-        var user = await _current.GetAsync(ct);
-        if (user == null) return ServiceResult.Unauthorized();
-        return await _repo.ReadAsync(user.UserId, id, ct) ? ServiceResult.Success() : ServiceResult.NotFound();
+            : await _repo.UnreadCountAsync(user.Id, ct);
     }
 
-    /// <summary>
-    /// Gửi thông báo cho học sinh và phụ huynh khi điểm bị thay đổi.
-    /// Lỗi gửi thông báo không làm thất bại thao tác cập nhật điểm.
-    /// </summary>
+    public async Task<ServiceResult> ReadAsync(long id, CancellationToken ct = default)
+    {
+        var user = GetCurrentUser();
+        if (user == null) return ServiceResult.Unauthorized();
+        return await _repo.ReadAsync(user.Id, id, ct) ? ServiceResult.Success() : ServiceResult.NotFound();
+    }
+
     public async Task NotifyScoreChangedAsync(StudentScore score, decimal? oldScore, long senderUserId)
     {
         try
@@ -89,3 +94,4 @@ public sealed class NotificationService : INotificationService
             : "chưa có";
     }
 }
+
