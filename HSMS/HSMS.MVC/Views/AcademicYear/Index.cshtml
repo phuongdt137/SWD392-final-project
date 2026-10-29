@@ -1,0 +1,49 @@
+﻿@model List<HSMS.MVC.DTOs.Academic.AcademicYearListItemDto>
+@{
+    ViewData["Title"] = "Năm học - High School Management System";
+    Layout = "_DashboardLayout";
+}
+
+@if (TempData["SuccessMessage"] is string successMessage)
+{
+    <div class="alert alert-success">@successMessage</div>
+}
+
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <h1 class="welcome-title h3 mb-0">Năm học & Học kỳ</h1>
+    <a asp-action="Create" class="btn btn-primary">Thêm năm học</a>
+</div>
+
+<div class="card border-0 shadow-sm">
+    <div class="card-body p-0">
+        <table class="table align-middle mb-0">
+            <thead>
+                <tr>
+                    <th>Mã năm học</th>
+                    <th>Bắt đầu</th>
+                    <th>Kết thúc</th>
+                    <th class="text-center">Học kỳ</th>
+                    <th class="text-center">Lớp</th>
+                    <th>Trạng thái</th>
+                    <th></th>
+                </tr>
+            </thead>
+            <tbody>
+                @foreach (var y in Model)
+                {
+                    <tr>
+                        <td class="fw-semibold">@y.YearCode</td>
+                        <td>@y.StartDate.ToString("dd/MM/yyyy")</td>
+                        <td>@y.EndDate.ToString("dd/MM/yyyy")</td>
+                        <td class="text-center">@y.SemesterCount</td>
+                        <td class="text-center">@y.ClassCount</td>
+                        <td>@(y.IsCurrent ? "Đang diễn ra" : "")</td>
+                        <td class="text-end">
+                            <a asp-action="Edit" asp-route-id="@y.Id" class="btn btn-sm btn-outline-primary">Sửa / Học kỳ</a>
+                        </td>
+                    </tr>
+                }
+            </tbody>
+        </table>
+    </div>
+</div>
