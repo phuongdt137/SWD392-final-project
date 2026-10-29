@@ -1,11 +1,13 @@
-using Microsoft.EntityFrameworkCore;
-using HSMS.MVC.Data;
-using HSMS.MVC.Repositories.Interfaces;
-using HSMS.MVC.Repositories.Implementations;
-using HSMS.MVC.Service;
 using HSMS.MVC.Common;
+using HSMS.MVC.Data;
+using HSMS.MVC.Repositories.Implementations;
+using HSMS.MVC.Repositories.Interfaces;
+using HSMS.MVC.Service;
+using HSMS.MVC.Service.Implementations;
+using HSMS.MVC.Service.Interfaces;
 using HSMS.MVC.Service.Notifications;
-using Microsoft.AspNetCore.Authentication.Cookies;
+using Microsoft.AspNetCore.Authentication;
+using Microsoft.EntityFrameworkCore;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -55,6 +57,10 @@ builder.Services.AddScoped<IStudentScoreRepository, StudentScoreRepository>();
 builder.Services.AddScoped<IScoreService, ScoreService>();
 builder.Services.AddScoped<IAttendanceRepository, AttendanceRepository>();
 builder.Services.AddScoped<IAttendanceService, AttendanceService>();
+builder.Services.AddScoped<ISubjectRepository, SubjectRepository>();
+builder.Services.AddScoped<ISubjectService, SubjectService>();
+builder.Services.AddScoped<IAcademicYearRepository, AcademicYearRepository>();
+builder.Services.AddScoped<IAcademicYearService, AcademicYearService>();
 
 var app = builder.Build();
 

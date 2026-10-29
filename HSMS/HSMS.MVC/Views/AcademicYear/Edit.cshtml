@@ -1,0 +1,81 @@
+﻿@model HSMS.MVC.DTOs.Academic.SaveAcademicYearDto
+@{
+    ViewData["Title"] = "Sửa năm học - High School Management System";
+    Layout = "_DashboardLayout";
+    var semesters = ViewBag.Semesters as List<HSMS.MVC.DTOs.Academic.SemesterDto>;
+}
+
+@if (TempData["SuccessMessage"] is string successMessage)
+{
+    <div class="alert alert-success">@successMessage</div>
+}
+
+<h1 class="welcome-title h3 mb-4">Sửa năm học</h1>
+
+<div class="card border-0 shadow-sm mb-4">
+    <div class="card-body p-4">
+        <form asp-action="Edit" method="post" class="row g-3">
+            <div asp-validation-summary="ModelOnly" class="text-danger col-12"></div>
+            <input type="hidden" asp-for="Id" />
+
+            <div class="col-md-4">
+                <label asp-for="YearCode" class="form-label"></label>
+                <input asp-for="YearCode" class="form-control" />
+                <span asp-validation-for="YearCode" class="text-danger"></span>
+            </div>
+            <div class="col-md-4">
+                <label asp-for="StartDate" class="form-label"></label>
+                <input asp-for="StartDate" class="form-control" />
+                <span asp-validation-for="StartDate" class="text-danger"></span>
+            </div>
+            <div class="col-md-4">
+                <label asp-for="EndDate" class="form-label"></label>
+                <input asp-for="EndDate" class="form-control" />
+                <span asp-validation-for="EndDate" class="text-danger"></span>
+            </div>
+
+            <div class="col-12 d-flex gap-2">
+                <button type="submit" class="btn btn-primary">Lưu thay đổi</button>
+                <a asp-action="Index" class="btn btn-light">Quay lại</a>
+            </div>
+        </form>
+    </div>
+</div>
+
+<div class="card border-0 shadow-sm">
+    <div class="card-body p-4">
+        <div class="d-flex justify-content-between align-items-center mb-3">
+            <h5 class="fw-bold mb-0">Học kỳ của năm học</h5>
+            <a asp-action="CreateSemester" asp-route-academicYearId="@Model.Id" class="btn btn-sm btn-primary">Thêm học kỳ</a>
+        </div>
+
+        @if (semesters == null || semesters.Count == 0)
+        {
+            <div class="text-muted">Năm học này chưa có học kỳ nào.</div>
+        }
+        else
+        {
+            <table class="table align-middle mb-0">
+                <thead>
+                    <tr>
+                        <th>Mã</th>
+                        <th>Tên học kỳ</th>
+                        <th>Bắt đầu</th>
+                        <th>Kết thúc</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @foreach (var s in semesters)
+                    {
+                        <tr>
+                            <td class="fw-semibold">@s.SemesterCode</td>
+                            <td>@s.SemesterName</td>
+                            <td>@s.StartDate.ToString("dd/MM/yyyy")</td>
+                            <td>@s.EndDate.ToString("dd/MM/yyyy")</td>
+                        </tr>
+                    }
+                </tbody>
+            </table>
+        }
+    </div>
+</div>

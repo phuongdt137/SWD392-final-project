@@ -1,0 +1,50 @@
+﻿@model HSMS.MVC.DTOs.Academic.SaveSemesterDto
+@{
+    ViewData["Title"] = "Thêm học kỳ - High School Management System";
+    Layout = "_DashboardLayout";
+    var year = ViewBag.Year as HSMS.MVC.DTOs.Academic.AcademicYearDetailDto;
+}
+
+<h1 class="welcome-title h3 mb-1">Thêm học kỳ</h1>
+@if (year != null)
+{
+    <p class="text-muted mb-4">
+        Năm học <strong>@year.YearCode</strong>
+        (@year.StartDate.ToString("dd/MM/yyyy") – @year.EndDate.ToString("dd/MM/yyyy"))
+    </p>
+}
+
+<div class="card border-0 shadow-sm">
+    <div class="card-body p-4">
+        <form asp-action="CreateSemester" method="post" class="row g-3">
+            <div asp-validation-summary="ModelOnly" class="text-danger col-12"></div>
+            <input type="hidden" asp-for="AcademicYearId" />
+
+            <div class="col-md-4">
+                <label asp-for="SemesterCode" class="form-label"></label>
+                <input asp-for="SemesterCode" class="form-control" placeholder="HK2-2026" />
+                <span asp-validation-for="SemesterCode" class="text-danger"></span>
+            </div>
+            <div class="col-md-8">
+                <label asp-for="SemesterName" class="form-label"></label>
+                <input asp-for="SemesterName" class="form-control" placeholder="Học kỳ 2 (2026-2027)" />
+                <span asp-validation-for="SemesterName" class="text-danger"></span>
+            </div>
+            <div class="col-md-6">
+                <label asp-for="StartDate" class="form-label"></label>
+                <input asp-for="StartDate" class="form-control" />
+                <span asp-validation-for="StartDate" class="text-danger"></span>
+            </div>
+            <div class="col-md-6">
+                <label asp-for="EndDate" class="form-label"></label>
+                <input asp-for="EndDate" class="form-control" />
+                <span asp-validation-for="EndDate" class="text-danger"></span>
+            </div>
+
+            <div class="col-12 d-flex gap-2">
+                <button type="submit" class="btn btn-primary">Lưu</button>
+                <a asp-action="Edit" asp-route-id="@Model.AcademicYearId" class="btn btn-light">Quay lại</a>
+            </div>
+        </form>
+    </div>
+</div>

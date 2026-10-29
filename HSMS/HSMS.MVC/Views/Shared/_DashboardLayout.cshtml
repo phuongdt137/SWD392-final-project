@@ -131,6 +131,16 @@
                         <i class="bi bi-calendar3"></i>
                         <span>Thời khóa biểu</span>
                     </a>
+
+                    <a asp-controller="AcademicYear" asp-action="Index" class="sidebar-link">
+                        <i class="bi bi-calendar-range"></i>
+                        <span>Năm học & Học kỳ</span>
+                    </a>
+                    <a asp-controller="Subject" asp-action="Index" class="sidebar-link">
+                        <i class="bi bi-journal-bookmark"></i>
+                        <span>Quản lý Môn học</span>
+                    </a>
+
                     <a href="#reports" class="sidebar-link">
                         <i class="bi bi-bar-chart-line-fill"></i>
                         <span>Báo cáo & Thống kê</span>
@@ -328,14 +338,14 @@
     <script src="~/lib/jquery/dist/jquery.min.js"></script>
     <script src="~/lib/bootstrap/dist/js/bootstrap.bundle.min.js"></script>
     <script>
-        // Sidebar Toggle for Mobile / Responsive
-        const sidebarToggle = document.getElementById('sidebarToggle');
-        const sidebar = document.getElementById('dashboardSidebar');
-        if (sidebarToggle && sidebar) {
-            sidebarToggle.addEventListener('click', () => {
-                sidebar.classList.toggle('show');
-            });
-        }
+            // Sidebar Toggle for Mobile / Responsive
+            const sidebarToggle = document.getElementById('sidebarToggle');
+            const sidebar = document.getElementById('dashboardSidebar');
+            if (sidebarToggle && sidebar) {
+                sidebarToggle.addEventListener('click', () => {
+                    sidebar.classList.toggle('show');
+                });
+            }
     </script>
     @await RenderSectionAsync("Scripts", required: false)
 </body>
