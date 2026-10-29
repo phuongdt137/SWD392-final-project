@@ -14,11 +14,12 @@ public sealed class NotificationRepository(AppDbContext db) : INotificationRepos
         n.AttendanceAuditLog.AttendanceRecord.Customer.Parent.UserId == userId &&
         n.Recipient.IsActive && n.Recipient.UserRoles.Any(r => r.IsActive && r.Role.IsActive && r.Role.RoleCode == "PARENT"))));
     // Đếm toàn bộ số chưa đọc trong phạm vi, nhưng chỉ trả tối đa 100 thông báo mới nhất.
-    public async Task<NotificationFeed> FeedAsync(long userId, CancellationToken ct)
+    public async Task<NotificationFeed> FeedAsync(long userId, bool unreadOnly, CancellationToken ct)
     {
         var q = Visible(userId).AsNoTracking();
         var unread = await q.CountAsync(x => !x.IsRead, ct);
-        var items = await q.OrderByDescending(x => x.SentAt).ThenByDescending(x => x.Id).Take(100)
+        var list = unreadOnly ? q.Where(x => !x.IsRead) : q;
+        var items = await list.OrderByDescending(x => x.SentAt).ThenByDescending(x => x.Id).Take(100)
             .Select(x => new NotificationItem(x.Id, x.Title, x.Content, x.IsRead, x.SentAt, x.Link,
                 x.MessageLogs.Where(m => m.Channel == "EMAIL" && m.TemplateCode == "ATTENDANCE")
                     .OrderByDescending(m => m.Id).Select(m => m.Status).FirstOrDefault())).ToListAsync(ct);
@@ -34,6 +35,39 @@ public sealed class NotificationRepository(AppDbContext db) : INotificationRepos
         if (item == null) return false;
         if (!item.IsRead) { item.MarkAsRead(); await db.SaveChangesAsync(ct); }
         return true;
+    }
+    public async Task<int> ReadAllAsync(long userId, CancellationToken ct)
+    {
+        var items = await Visible(userId).Where(x => !x.IsRead).ToListAsync(ct);
+        foreach (var item in items) item.MarkAsRead();
+        if (items.Count > 0) await db.SaveChangesAsync(ct);
+        return items.Count;
+    }
+    public async Task<IReadOnlyList<NotificationClassOption>> ClassesAsync(CancellationToken ct) =>
+        await db.Classes.AsNoTracking().Where(c => c.Status == "ACTIVE")
+            .OrderBy(c => c.ClassName).Select(c => new NotificationClassOption(c.Id, c.ClassName)).ToListAsync(ct);
+
+    public async Task<int> SendAnnouncementAsync(long senderId, string targetType, string? roleCode, long? classId, string title, string content, CancellationToken ct)
+    {
+        var users = db.Users.AsNoTracking().Where(u => u.IsActive);
+        switch (targetType)
+        {
+            case "ALL": break;
+            case "ROLE":
+                users = users.Where(u => u.UserRoles.Any(r => r.IsActive && r.Role.IsActive && r.Role.RoleCode == roleCode));
+                break;
+            case "CLASS":
+                users = users.Where(u => u.CustomerProfile != null &&
+                    (u.CustomerProfile.StudentClasses.Any(sc => sc.ClassId == classId && sc.Status == "ACTIVE") ||
+                     db.Customers.Any(student => student.ParentId == u.CustomerProfile.Id && student.StudentClasses.Any(sc => sc.ClassId == classId && sc.Status == "ACTIVE"))));
+                break;
+            default: return 0;
+        }
+        var recipientIds = await users.Select(u => u.Id).Distinct().ToListAsync(ct);
+        foreach (var recipientId in recipientIds)
+            db.Notifications.Add(new Notification(title, content, recipientId, senderId));
+        await db.SaveChangesAsync(ct);
+        return recipientIds.Count;
     }
     // Chỉ xử lý thông báo có email được xếp hàng; không gửi bù email cho các thông báo real-time cũ.
     // Nạp người nhận hiện tại và MessageLog để kiểm tra địa chỉ, ghi trạng thái gửi/thử lại.
