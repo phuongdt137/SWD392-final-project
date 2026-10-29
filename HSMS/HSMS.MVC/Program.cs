@@ -25,8 +25,6 @@ builder.Services.AddAuthorization();
 
 builder.Services.AddSingleton(TimeProvider.System);
 builder.Services.AddSingleton<SchoolTime>();
-builder.Services.AddScoped<IAttendanceRepository, AttendanceRepository>();
-builder.Services.AddScoped<IAttendanceService, AttendanceService>();
 builder.Services.AddScoped<INotificationRepository, NotificationRepository>();
 builder.Services.AddScoped<INotificationService, NotificationService>();
 builder.Services.AddSingleton<NotificationDispatchSignal>();
@@ -55,6 +53,8 @@ builder.Services.AddScoped<IAssessmentRepository, AssessmentRepository>();
 builder.Services.AddScoped<ICustomerRepository, CustomerRepository>();
 builder.Services.AddScoped<IStudentScoreRepository, StudentScoreRepository>();
 builder.Services.AddScoped<IScoreService, ScoreService>();
+builder.Services.AddScoped<IAttendanceRepository, AttendanceRepository>();
+builder.Services.AddScoped<IAttendanceService, AttendanceService>();
 
 var app = builder.Build();
 
@@ -79,14 +79,12 @@ app.MapControllerRoute(
     name: "default",
     pattern: "{controller=Home}/{action=Index}/{id?}");
 
-// Reuse the existing account seed; academic demo data is limited to Development.
+// Seed the existing accounts and score demo data.
 {
     using var scope = app.Services.CreateScope();
     var context = scope.ServiceProvider.GetRequiredService<AppDbContext>();
     await DbSeeder.SeedAdminAccountsAsync(context);
     await ScoreSeeder.SeedAsync(context);
-    if (app.Environment.IsDevelopment() && builder.Configuration.GetValue<bool>("DemoData:AttendanceEnabled"))
-        await DbSeeder.SeedAttendanceDemoAsync(context, scope.ServiceProvider.GetRequiredService<SchoolTime>());
 }
 
 app.Run();

@@ -1,3 +1,5 @@
+using HSMS.MVC.Common;
+
 namespace HSMS.MVC.Models;
 
 /// <summary>Immutable history of an attendance result, including the first recording.</summary>
@@ -23,9 +25,34 @@ public class AttendanceAuditLog
     public AttendanceAuditLog(AttendanceRecord record, string? oldStatus, string? oldComment,
         long? oldLeaveRequestId, string? reason, long employeeId, DateTime utcNow)
     {
-        AttendanceRecord = record; AttendanceRecordId = record.Id;
-        OldStatus = oldStatus; NewStatus = record.Status; OldComment = oldComment; NewComment = record.Comment;
-        OldLeaveRequestId = oldLeaveRequestId; NewLeaveRequestId = record.LeaveRequestId;
-        ChangeReason = reason; ChangedByEmployeeId = employeeId; ChangedAt = utcNow;
+        ArgumentNullException.ThrowIfNull(record);
+
+        if (employeeId <= 0)
+            throw new AppError("Id người thực hiện không hợp lệ.", "INVALID_EMPLOYEE_ID");
+
+        if (oldStatus != null)
+        {
+            oldStatus = AttendanceStatuses.Validate(oldStatus);
+            if (string.IsNullOrWhiteSpace(reason))
+                throw new AppError("Chỉnh sửa điểm danh phải có lý do.", "CHANGE_REASON_REQUIRED");
+        }
+
+        if (reason?.Length > 1000)
+            throw new AppError("Lý do chỉnh sửa tối đa 1.000 ký tự.", "CHANGE_REASON_TOO_LONG");
+
+        if (oldComment?.Length > 1000)
+            throw new AppError("Ghi chú cũ tối đa 1.000 ký tự.", "COMMENT_TOO_LONG");
+
+        AttendanceRecord = record;
+        AttendanceRecordId = record.Id;
+        OldStatus = oldStatus;
+        NewStatus = record.Status;
+        OldComment = oldComment;
+        NewComment = record.Comment;
+        OldLeaveRequestId = oldLeaveRequestId;
+        NewLeaveRequestId = record.LeaveRequestId;
+        ChangeReason = string.IsNullOrWhiteSpace(reason) ? null : reason.Trim();
+        ChangedByEmployeeId = employeeId;
+        ChangedAt = utcNow;
     }
 }

@@ -4,7 +4,6 @@
     ViewData["Title"] = "Student Dashboard - High School Management System";
     Layout = "_DashboardLayout";
 
-    var attendance = ViewData["AttendanceSummary"] as HSMS.MVC.DTOs.Attendance.AttendanceSummary ?? new(0, 0, 0, 0);
     var displayName = Model?.FullName ?? Model?.Username ?? "Học sinh";
 }
 
@@ -46,25 +45,6 @@
                     <div class="kpi-title">Điểm Trung Bình (GPA)</div>
                     <div class="kpi-value">8.4 <span class="fs-6 text-success fw-bold">/10</span></div>
                     <div class="kpi-subtext">Học lực: <strong>Giỏi</strong> (Top 5 lớp)</div>
-                </div>
-            </div>
-            <div class="kpi-arrow-btn">
-                <i class="bi bi-chevron-right"></i>
-            </div>
-        </div>
-    </div>
-
-    <!-- Attendance -->
-    <div class="col-12 col-sm-6 col-xl-3">
-        <div class="kpi-card">
-            <div class="d-flex align-items-center">
-                <div class="kpi-icon-wrap kpi-icon-green">
-                    <i class="bi bi-calendar-check-fill"></i>
-                </div>
-                <div class="kpi-content">
-                    <div class="kpi-title">Tỷ lệ Chuyên cần</div>
-                    <div class="kpi-value">@(attendance.Rate.HasValue ? attendance.Rate + "%" : "—")</div>
-                    <div class="kpi-subtext">@attendance.Excused tiết vắng có phép hôm nay</div>
                 </div>
             </div>
             <div class="kpi-arrow-btn">
