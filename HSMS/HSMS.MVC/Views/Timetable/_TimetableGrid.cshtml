@@ -1,0 +1,93 @@
+@model HSMS.MVC.ViewModels.Timetable.TimetableIndexViewModel
+
+<div class="table-responsive shadow-sm rounded-4 bg-white border">
+    <table class="table table-bordered align-middle mb-0 text-center" style="min-width: 900px;">
+        <thead class="table-light">
+            <tr class="align-middle">
+                <th style="width: 120px;" class="py-3 bg-light text-secondary fw-bold text-uppercase small">
+                    <i class="bi bi-clock me-1"></i> Tiết / Giờ
+                </th>
+                @foreach (var day in Model.DaysOfWeek)
+                {
+                    <th class="py-3 text-primary fw-bold">
+                        @Model.GetDayName(day)
+                    </th>
+                }
+            </tr>
+        </thead>
+        <tbody>
+            @if (Model.TimeSlots.Count == 0)
+            {
+                <tr>
+                    <td colspan="8" class="text-center py-4 text-muted">
+                        Chưa có dữ liệu tiết học trong hệ thống.
+                    </td>
+                </tr>
+            }
+            else
+            {
+                @foreach (var slot in Model.TimeSlots)
+                {
+                    <tr>
+                        <td class="bg-light-subtle text-secondary py-3 fw-semibold">
+                            <div class="fw-bold text-dark">Tiết @slot.PeriodNo</div>
+                            <div class="small text-muted">
+                                @slot.StartTime.ToString(@"hh\:mm") - @slot.EndTime.ToString(@"hh\:mm")
+                            </div>
+                            <span class="badge bg-secondary-subtle text-secondary mt-1" style="font-size: 0.7rem;">@slot.SlotCode</span>
+                        </td>
+                        @foreach (var day in Model.DaysOfWeek)
+                        {
+                            var items = Model.GetItemsForCell(day, slot.Id);
+                            <td class="p-2 align-top text-start" style="height: 105px; min-width: 140px; background-color: @(items.Count > 0 ? "#f8fbff" : "#ffffff");">
+                                @if (items.Count == 0)
+                                {
+                                    <div class="text-center text-muted-opacity py-4" style="color: #cbd5e1;">—</div>
+                                }
+                                else
+                                {
+                                    @foreach (var item in items)
+                                    {
+                                        <div class="p-2 mb-2 rounded-3 border border-primary-subtle shadow-sm bg-white position-relative" style="border-left: 4px solid #0d6efd !important;">
+                                            <div class="fw-bold text-primary text-truncate" title="@item.SubjectName">
+                                                <i class="bi bi-journal-bookmark me-1"></i>@item.SubjectName
+                                            </div>
+                                            <div class="small text-dark fw-semibold mt-1 text-truncate">
+                                                @if (Model.UserRole == "TEACHER")
+                                                {
+                                                    <span class="text-success"><i class="bi bi-people-fill me-1"></i>Lớp @item.ClassName</span>
+                                                }
+                                                else
+                                                {
+                                                    <span><i class="bi bi-person-badge me-1"></i>@item.TeacherName</span>
+                                                }
+                                            </div>
+                                            @if (Model.UserRole != "TEACHER")
+                                            {
+                                                <div class="small text-secondary text-truncate">
+                                                    <i class="bi bi-building me-1"></i>Lớp: @item.ClassName
+                                                </div>
+                                            }
+                                            <div class="d-flex justify-content-between align-items-center mt-2 pt-1 border-top" style="font-size: 0.75rem;">
+                                                <span class="badge bg-light text-dark border">
+                                                    <i class="bi bi-geo-alt me-1 text-danger"></i>@item.RoomCode
+                                                </span>
+                                                @if (item.EffectiveFrom.HasValue || item.EffectiveTo.HasValue)
+                                                {
+                                                    <span class="text-muted" title="Hiệu lực: @(item.EffectiveFrom?.ToString("dd/MM") ?? "~") - @(item.EffectiveTo?.ToString("dd/MM") ?? "~")">
+                                                        <i class="bi bi-calendar-event"></i>
+                                                    </span>
+                                                }
+                                            </div>
+                                        </div>
+                                    }
+                                }
+                            </td>
+                        }
+                    </tr>
+                }
+            }
+        </tbody>
+    </table>
+</div>
+
