@@ -1,0 +1,32 @@
+/* Chỉ áp dụng cho giao diện Attendance, không đổi style của Notifications hoặc Dashboard. */
+.attendance-module { max-width: 1440px; margin-inline: auto; }
+.attendance-module .am-heading { display: flex; align-items: center; justify-content: space-between; gap: 16px; flex-wrap: wrap; margin-bottom: 24px; }
+.attendance-module h1 { font-size: 1.6rem; font-weight: 700; margin-bottom: 8px; }
+.attendance-module .am-heading p { color: #64748b; margin-bottom: 0; }
+.attendance-module .am-filters { display: flex; flex-direction: row; align-items: end; flex-wrap: wrap; gap: 16px; }
+.attendance-module .am-filters > div { flex: 1 1 170px; }
+.attendance-module label { display: block; font-size: .9rem; margin-bottom: 6px; }
+.attendance-module .table th { background: #f8fafc; color: #475569; white-space: nowrap; }
+.attendance-module .table td, .attendance-module .table th { padding: 14px; }
+.attendance-module .table small { color: #64748b; }
+.attendance-module .am-sheet { min-width: 1000px; }
+.attendance-module .am-sheet td:nth-child(2) { min-width: 190px; }
+.attendance-module .am-sheet td:nth-child(3) { min-width: 230px; }
+.attendance-module .am-sheet td:nth-child(4) { min-width: 220px; }
+.attendance-module .am-pagination { display: flex; gap: 12px; margin-block: 20px; }
+.attendance-module .am-badge { display: inline-block; padding: 5px 10px; border-radius: 6px; white-space: nowrap; font-size: .85rem; }
+.attendance-module .am-present { color: #065f46; background: #d1fae5; }
+.attendance-module .am-absent { color: #991b1b; background: #fee2e2; }
+.attendance-module .am-late { color: #92400e; background: #fef3c7; }
+.attendance-module .am-excused { color: #1e40af; background: #dbeafe; }
+.attendance-module .am-learner-filters { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 18px 24px; padding: 22px; border: 1px solid #e5e7f3; border-radius: 16px; background: #fff; }
+.attendance-module .am-learner-filters > div { min-width: 0; }
+.attendance-module .am-learner-filters .am-wide { grid-column: span 2; }
+.attendance-module .am-learner-filters .am-child { grid-column: 1 / -1; }
+.attendance-module .am-learner-filters label { color: #64748b; font-weight: 600; }
+.attendance-module .am-learner-filters .form-select, .attendance-module .am-learner-filters .form-control { min-height: 42px; border-color: #dfe3f3; border-radius: 10px; }
+.attendance-module .am-filter-actions { grid-column: span 2; display: flex; justify-content: flex-end; align-items: end; gap: 10px; }
+@media (max-width: 700px) {
+    .attendance-module .am-learner-filters { grid-template-columns: repeat(2, minmax(0, 1fr)); padding: 16px; gap: 16px; }
+    .attendance-module .am-learner-filters .am-wide { grid-column: 1 / -1; }
+}
