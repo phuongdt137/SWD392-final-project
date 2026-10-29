@@ -7,6 +7,7 @@ using HSMS.MVC.Service.Implementations;
 using HSMS.MVC.Service.Interfaces;
 using HSMS.MVC.Service.Notifications;
 using Microsoft.AspNetCore.Authentication;
+using Microsoft.AspNetCore.Authentication.Cookies;
 using Microsoft.EntityFrameworkCore;
 
 var builder = WebApplication.CreateBuilder(args);
