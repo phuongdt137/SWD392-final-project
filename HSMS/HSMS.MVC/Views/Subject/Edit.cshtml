@@ -1,0 +1,37 @@
+﻿@model HSMS.MVC.DTOs.Academic.SaveSubjectDto
+@{
+    ViewData["Title"] = "Sửa môn học - High School Management System";
+    Layout = "_DashboardLayout";
+}
+
+<h1 class="welcome-title h3 mb-4">Sửa môn học</h1>
+
+<div class="card border-0 shadow-sm">
+    <div class="card-body p-4">
+        <form asp-action="Edit" method="post" class="row g-3">
+            <div asp-validation-summary="ModelOnly" class="text-danger col-12"></div>
+            <input type="hidden" asp-for="Id" />
+
+            <div class="col-md-3">
+                <label asp-for="SubjectCode" class="form-label"></label>
+                <input asp-for="SubjectCode" class="form-control" />
+                <span asp-validation-for="SubjectCode" class="text-danger"></span>
+            </div>
+            <div class="col-md-6">
+                <label asp-for="SubjectName" class="form-label"></label>
+                <input asp-for="SubjectName" class="form-control" />
+                <span asp-validation-for="SubjectName" class="text-danger"></span>
+            </div>
+            <div class="col-md-3">
+                <label asp-for="EvaluationType" class="form-label"></label>
+                <input asp-for="EvaluationType" class="form-control" />
+                <span asp-validation-for="EvaluationType" class="text-danger"></span>
+            </div>
+
+            <div class="col-12 d-flex gap-2">
+                <button type="submit" class="btn btn-primary">Lưu thay đổi</button>
+                <a asp-action="Index" class="btn btn-light">Quay lại</a>
+            </div>
+        </form>
+    </div>
+</div>
