@@ -52,6 +52,8 @@ builder.Services.AddScoped<IAssessmentRepository, AssessmentRepository>();
 builder.Services.AddScoped<ICustomerRepository, CustomerRepository>();
 builder.Services.AddScoped<IStudentScoreRepository, StudentScoreRepository>();
 builder.Services.AddScoped<IScoreService, ScoreService>();
+builder.Services.AddScoped<ISubjectRepository, SubjectRepository>();
+builder.Services.AddScoped<ISubjectService, SubjectService>();
 
 var app = builder.Build();
 
