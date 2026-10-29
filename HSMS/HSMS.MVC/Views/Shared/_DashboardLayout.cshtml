@@ -68,13 +68,6 @@
 
             <!-- Navigation Menu by Role -->
             <nav class="sidebar-nav">
-                @if (currentUser?.Roles?.Any(r => r is "TEACHER" or "STAFF" or "PRINCIPAL" or "STUDENT" or "PARENT") == true)
-                {
-                    <a asp-controller="Attendance" asp-action="Index" class="sidebar-link @(currentController == "Attendance" ? "active" : "")">
-                        <i class="bi bi-calendar-check"></i>
-                        <span>Điểm danh</span>
-                    </a>
-                }
                 @if (primaryRole == "PRINCIPAL")
                 {
                     <a asp-controller="Dashboard" asp-action="Principal" class="sidebar-link @(currentController == "Dashboard" && (currentAction == "Principal" || currentAction == "Index") ? "active" : "")">
@@ -239,6 +232,13 @@
                     <a asp-controller="Dashboard" asp-action="Index" class="sidebar-link @(isDashboardPage ? "active" : "")">
                         <i class="bi bi-grid-1x2-fill"></i>
                         <span>Dashboard</span>
+                    </a>
+                }
+                @if (currentUser?.Roles?.Any(r => r is "TEACHER" or "STAFF" or "PRINCIPAL" or "STUDENT" or "PARENT") == true)
+                {
+                    <a asp-controller="Attendance" asp-action="Index" class="sidebar-link @(currentController == "Attendance" ? "active" : "")">
+                        <i class="bi bi-calendar-check"></i>
+                        <span>Điểm danh</span>
                     </a>
                 }
             </nav>
