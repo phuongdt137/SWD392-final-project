@@ -4,7 +4,6 @@
     ViewData["Title"] = "Staff Dashboard - High School Management System";
     Layout = "_DashboardLayout";
 
-    var attendance = ViewData["AttendanceSummary"] as HSMS.MVC.DTOs.Attendance.AttendanceSummary ?? new(0, 0, 0, 0);
     var displayName = Model?.FullName ?? Model?.Username ?? "Cán bộ học vụ";
 }
 
@@ -242,18 +241,9 @@
         </div>
     </div>
 
-    <!-- Column 3: School Attendance & Rooms Analytics -->
+    <!-- Column 3: Rooms Analytics -->
     <div class="col-12 col-lg-4">
         <div class="dash-card h-100">
-            <div class="d-flex align-items-center justify-content-between mb-3">
-                <h2 class="dash-card-title mb-0">Tỷ lệ Chuyên cần Toàn trường</h2>
-                <span class="badge bg-success-subtle text-success small fw-semibold">Hôm nay</span>
-            </div>
-
-            <partial name="_AttendanceSummary" model="attendance" />
-
-            <hr class="my-3 text-muted opacity-25">
-
             <!-- Room Utilization Status -->
             <div>
                 <div class="d-flex align-items-center justify-content-between mb-2">

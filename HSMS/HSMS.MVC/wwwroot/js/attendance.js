@@ -1,28 +1,49 @@
-// Hỗ trợ biểu mẫu; quyền và thời hạn vẫn được Service kiểm tra độc lập khi POST.
+// Khởi tạo tương tác của bảng điểm danh: chọn đơn nghỉ, yêu cầu lý do sửa và khóa khi hết hạn.
 (() => {
     "use strict";
     const form = document.getElementById("attendance-form");
     if (!form) return;
-    const fields = document.getElementById("attendance-fields");
-    // Qua 00h khóa ô nhập của giáo viên; STAFF/ADMIN có cờ miễn hạn không bị khóa.
-    const checkLock = () => {
-        if (form.dataset.canEditAfterDeadline !== "true" && Date.now() >= Date.parse(form.dataset.cutoff)) {
-            fields.disabled = true;
-            document.getElementById("attendance-lock-message").classList.remove("d-none");
-        }
+
+    // Trình duyệt chỉ hỗ trợ giao diện; server kiểm tra lại quyền và hạn khi lưu.
+    const save = document.getElementById("attendance-save");
+    const deadline = Date.parse(form.dataset.deadline);
+    // Khóa ô nhập và nút lưu, đồng thời hiện thông báo khi đã đến hạn điểm danh.
+    const checkDeadline = () => {
+        if (!save || Date.now() < deadline) return;
+        save.disabled = true;
+        form.querySelectorAll("select, textarea, input:not([type=hidden])").forEach(input => input.disabled = true);
+        document.getElementById("attendance-expired").classList.remove("d-none");
     };
-    checkLock();
-    window.setInterval(checkLock, 1000);
-    // Chỉ điền PRESENT cho dòng chưa chọn và không có đơn nghỉ để người ghi đối chiếu thực tế.
-    document.getElementById("mark-present")?.addEventListener("click", () => {
-        form.querySelectorAll("tbody tr").forEach(row => {
-            const select = row.querySelector(".attendance-status");
-            if (select && !select.value && row.dataset.hasLeave !== "true") select.value = "PRESENT";
-        });
+    form.querySelectorAll(".am-status").forEach(select => {
+        const leave = select.closest("tr").querySelector(".am-leave");
+        // Bắt buộc chọn đơn nghỉ nếu trạng thái của học sinh là Vắng có phép.
+        const update = () => { leave.required = select.value === "EXCUSED"; };
+        select.addEventListener("change", update);
+        update();
     });
-    // Kiểm tra lại hạn ngay khi gửi, kể cả khi tab vừa được kích hoạt lại.
+    const reason = document.getElementById("reason");
+    // Bật yêu cầu nhập lý do khi kết quả đã lưu thay đổi và báo lỗi nếu lý do chỉ có khoảng trắng.
+    const updateReason = () => {
+        if (!reason) return;
+        // Chỉ yêu cầu lý do khi kết quả đã lưu thực sự thay đổi.
+        reason.required = [...form.querySelectorAll('tr[data-recorded="true"]')].some(row => {
+            const status = row.querySelector(".am-status");
+            if (!status) return false; // Dòng chỉ được xem.
+            const comment = row.querySelector(".am-comment").value.trim();
+            const leave = status.value === "EXCUSED" ? row.querySelector(".am-leave").value : "";
+            return status.value !== row.dataset.status || comment !== (row.dataset.comment || "") ||
+                leave !== (row.dataset.leave || "");
+        });
+        reason.setCustomValidity(reason.required && !reason.value.trim() ? "Vui lòng nhập lý do chỉnh sửa điểm danh." : "");
+    };
+    form.addEventListener("input", updateReason);
+    form.addEventListener("change", updateReason);
+    updateReason();
+    checkDeadline();
+    if (save) window.setInterval(checkDeadline, 1000);
+    // Kiểm tra hạn lần cuối trên giao diện trước khi gửi biểu mẫu lưu điểm danh.
     form.addEventListener("submit", event => {
-        checkLock();
-        if (fields.disabled) event.preventDefault();
+        checkDeadline();
+        if (save?.disabled) event.preventDefault();
     });
 })();

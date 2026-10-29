@@ -11,8 +11,8 @@ public partial class AppDbContext
     {
         builder.Entity<AttendanceRecord>(e =>
         {
-            // ConcurrencyToken đưa Version vào điều kiện UPDATE để phát hiện người khác đã sửa.
-            e.Property(x => x.Version).IsConcurrencyToken().HasDefaultValueSql("NEWID()");
+            // Giữ cột Version sẵn có trong database; không dùng nó để chống ghi đè.
+            e.Property<Guid>("Version").HasDefaultValueSql("NEWID()");
             e.HasIndex(x => new { x.TimetableEntryId, x.AttendanceDate });
             // Chỉ bốn trạng thái; EXCUSED phải có đơn nghỉ và trạng thái khác không được giữ liên kết đơn.
             e.ToTable("AttendanceRecord", t => t.HasCheckConstraint("CK_AttendanceRecord_Status",

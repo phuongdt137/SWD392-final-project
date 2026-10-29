@@ -1,82 +1,94 @@
+using System.Text.Json;
 using HSMS.MVC.Common;
 using HSMS.MVC.DTOs.Attendance;
+using HSMS.MVC.DTOs.Auth;
 using HSMS.MVC.Service;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 
 namespace HSMS.MVC.Controllers;
 
-// Mọi action cần đăng nhập; Service tiếp tục kiểm tra quyền trên từng lớp/học sinh.
-[Authorize]
-public sealed class AttendanceController(IAttendanceService attendance) : Controller
+[Authorize(Roles = "TEACHER,STAFF,PRINCIPAL,STUDENT,PARENT")]
+public class AttendanceController : Controller
 {
+    private readonly IAttendanceService _attendance;
+
+    /// <summary>Nhận service xử lý điểm danh để các action gọi nghiệp vụ.</summary>
+    public AttendanceController(IAttendanceService attendance)
+    {
+        _attendance = attendance;
+    }
+
+    // [Authorize] đã kiểm tra đăng nhập; dùng thông tin do Auth lưu ở Session phía server.
+    private LoginResponseDto CurrentUser => JsonSerializer.Deserialize<LoginResponseDto>(
+        HttpContext.Session.GetString(SessionKeys.CurrentUser)!)!;
+
+    /// <summary>Hiển thị lịch điểm danh; chuyển học sinh và phụ huynh sang màn hình xem kết quả.</summary>
     [HttpGet]
-    // GET /Attendance: danh sách tiết học và bộ lọc cho giáo viên/nhóm quản lý.
     public async Task<IActionResult> Index(AttendanceScheduleFilter filter, CancellationToken ct)
     {
-        // ModelState chứa lỗi chuyển kiểu và validation dữ liệu request; có lỗi thì trả HTTP 400.
-        if (!ModelState.IsValid) return BadRequest("Bộ lọc điểm danh không hợp lệ.");
-        // Dẫn học sinh/phụ huynh sang lịch sử; chuyển hướng không thay thế kiểm tra quyền.
         if (!User.IsInRole("TEACHER") && !User.IsInRole("STAFF") && !User.IsInRole("PRINCIPAL"))
             return RedirectToAction(nameof(History));
-        var result = await attendance.IndexAsync(filter, ct);
-        return result.IsSuccess ? View(result.Data) : Failure(result);
+        if (!ModelState.IsValid) return BadRequest("Bộ lọc lịch học không hợp lệ.");
+        var result = await _attendance.IndexAsync(CurrentUser, filter, ct);
+        return result.IsSuccess ? View(result.Data) : StatusCode(result.StatusCode, result.Message);
     }
+
+    /// <summary>Mở bảng học sinh và kết quả điểm danh của tiết, ngày được chọn.</summary>
     [HttpGet]
-    // GET /Attendance/Mark: Service đọc bảng và xác định có được sửa hay chỉ xem.
-    public async Task<IActionResult> Mark(long timetableEntryId, DateTime date, string? returnUrl, CancellationToken ct)
+    [Authorize(Roles = "TEACHER,STAFF,PRINCIPAL")]
+    public async Task<IActionResult> Mark(long timetableEntryId, DateTime date, CancellationToken ct)
     {
-        if (!ModelState.IsValid) return BadRequest("Ngày học không hợp lệ.");
-        var result = await attendance.SheetAsync(timetableEntryId, date, ct);
-        // Chỉ dùng địa chỉ nội bộ cho nút quay lại để tránh chuyển hướng sang website khác.
-        ViewData["AttendanceReturnUrl"] = Url.IsLocalUrl(returnUrl) ? returnUrl : Url.Action(nameof(Index), new { date });
-        return result.IsSuccess ? View(result.Data) : Failure(result);
+        if (!ModelState.IsValid) return BadRequest("Ngày hoặc tiết học không hợp lệ.");
+        var result = await _attendance.SheetAsync(CurrentUser, timetableEntryId, date, ct);
+        return result.IsSuccess ? View(result.Data) : StatusCode(result.StatusCode, result.Message);
     }
+
+    /// <summary>Nhận biểu mẫu, gọi lưu điểm danh và trả thông báo thành công hoặc hiển thị lỗi trên bảng.</summary>
     [HttpPost, ValidateAntiForgeryToken]
-    // POST /Attendance/Save: kiểm tra biểu mẫu rồi chuyển nghiệp vụ lưu cho Service.
-    public async Task<IActionResult> Save(SaveAttendanceDto input, string? returnUrl, CancellationToken ct)
+    [Authorize(Roles = "TEACHER,STAFF")]
+    public async Task<IActionResult> Save(SaveAttendanceDto input, CancellationToken ct)
     {
         if (ModelState.IsValid)
         {
-            var result = await attendance.SaveAsync(input, ct);
+            var result = await _attendance.SaveAsync(CurrentUser, input, ct);
             if (result.IsSuccess)
             {
-                // TempData giữ thông báo qua chuyển hướng: POST -> 302 -> GET Mark -> HTML mới.
-                TempData["SuccessMessage"] = $"Đã lưu {result.Data!.Changed} kết quả thay đổi.";
-                if (result.Data.MissingParents > 0) TempData["WarningMessage"] = $"{result.Data.MissingParents} kết quả chưa có phụ huynh hoạt động được liên kết để nhận thông báo.";
-                return RedirectToAction(nameof(Mark), new { input.TimetableEntryId, input.Date, ReturnUrl = Url.IsLocalUrl(returnUrl) ? returnUrl : null });
+                TempData["AttendanceSuccess"] = $"Đã lưu {result.Data!.Changed} kết quả thay đổi.";
+                if (result.Data.MissingParents > 0 || result.Data.MissingEmails > 0)
+                    TempData["AttendanceWarning"] = $"{result.Data.MissingParents} cảnh báo thiếu phụ huynh hợp lệ; " +
+                        $"{result.Data.MissingEmails} cảnh báo đã tạo thông báo nhưng chưa gửi được email do địa chỉ không hợp lệ.";
+                return RedirectToAction(nameof(Mark), new { input.TimetableEntryId, Date = input.Date.ToString("yyyy-MM-dd") });
             }
-            if (result.StatusCode is 401 or 403 or 404) return Failure(result);
-            ModelState.AddModelError("", result.Error!.Description);
+            if (result.StatusCode is 401 or 403 or 404) return StatusCode(result.StatusCode, result.Message);
+            ModelState.AddModelError(string.Empty, result.Message ?? "Không thể lưu điểm danh.");
             Response.StatusCode = result.StatusCode;
         }
-        // Khi lỗi nhập liệu/lưu, tải lại dữ liệu nền và giữ Attempt để hiển thị nội dung đã nhập.
-        var sheet = await attendance.SheetAsync(input.TimetableEntryId, input.Date, ct);
-        if (!sheet.IsSuccess) return Failure(sheet);
+        else Response.StatusCode = 400;
+
+        var sheet = await _attendance.SheetAsync(CurrentUser, input.TimetableEntryId, input.Date, ct);
+        if (!sheet.IsSuccess) return StatusCode(sheet.StatusCode, sheet.Message);
         sheet.Data!.Attempt = input;
-        ViewData["AttendanceReturnUrl"] = Url.IsLocalUrl(returnUrl) ? returnUrl : Url.Action(nameof(Index), new { date = input.Date });
         return View("Mark", sheet.Data);
     }
+
+    /// <summary>Hiển thị kết quả điểm danh theo các bộ lọc phù hợp với người dùng.</summary>
     [HttpGet]
-    // GET /Attendance/History: học sinh/phụ huynh có giao diện riêng và phạm vi dữ liệu riêng.
-    public async Task<IActionResult> History(AttendanceFilter filter, CancellationToken ct)
+    [Authorize(Roles = "STAFF,PRINCIPAL,STUDENT,PARENT")]
+    public async Task<IActionResult> History(AttendanceHistoryFilter filter, CancellationToken ct)
     {
-        if (!ModelState.IsValid) return BadRequest("Bộ lọc không hợp lệ.");
-        if ((User.IsInRole("STUDENT") || User.IsInRole("PARENT")) && !User.IsInRole("TEACHER") && !User.IsInRole("STAFF") && !User.IsInRole("PRINCIPAL"))
-        {
-            var studentResult = await attendance.StudentHistoryAsync(filter, ct);
-            return studentResult.IsSuccess ? View("StudentHistory", studentResult.Data) : Failure(studentResult);
-        }
-        var result = await attendance.HistoryAsync(filter, ct);
-        return result.IsSuccess ? View(result.Data) : Failure(result);
+        if (!ModelState.IsValid) return BadRequest("Bộ lọc lịch sử không hợp lệ.");
+        var result = await _attendance.HistoryAsync(CurrentUser, filter, ct);
+        return result.IsSuccess ? View(result.Data) : StatusCode(result.StatusCode, result.Message);
     }
+
+    /// <summary>Hiển thị nhật ký thay đổi của một kết quả cho Staff hoặc Principal.</summary>
     [HttpGet]
-    // Đọc nhật ký một kết quả; Service kiểm tra quyền và phạm vi trước khi trả dữ liệu.
+    [Authorize(Roles = "STAFF,PRINCIPAL")]
     public async Task<IActionResult> Audit(long id, CancellationToken ct)
     {
-        var result = await attendance.AuditAsync(id, ct);
-        return result.IsSuccess ? View(result.Data) : Failure(result);
+        if (!ModelState.IsValid) return BadRequest("Mã kết quả không hợp lệ.");
+        var result = await _attendance.AuditAsync(id, ct);
+        return result.IsSuccess ? View(result.Data) : StatusCode(result.StatusCode, result.Message);
     }
-    // Chuyển mã lỗi nghiệp vụ sang HTTP status tương ứng (ví dụ 403, 404, 409).
-    private IActionResult Failure(ServiceResult result) => StatusCode(result.StatusCode, result.Error?.Description);
 }

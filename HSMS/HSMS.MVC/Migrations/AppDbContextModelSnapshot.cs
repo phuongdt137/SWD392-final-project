@@ -226,7 +226,6 @@ namespace HSMS.MVC.Migrations
                         .HasColumnType("bigint");
 
                     b.Property<Guid>("Version")
-                        .IsConcurrencyToken()
                         .ValueGeneratedOnAdd()
                         .HasColumnType("uniqueidentifier")
                         .HasDefaultValueSql("NEWID()");
