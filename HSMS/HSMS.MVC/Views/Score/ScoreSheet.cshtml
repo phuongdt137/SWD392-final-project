@@ -1,0 +1,200 @@
+@using System.Globalization
+@model HSMS.MVC.DTOs.Score.ScoreSheetDto
+@{
+    ViewData["Title"] = "Bảng điểm - High School Management System";
+    Layout = "_DashboardLayout";
+    var hasUnscoredRows = Model.Rows.Any(r => !r.ScoreId.HasValue);
+}
+
+@if (TempData["SuccessMessage"] is string successMessage)
+{
+    <div class="alert alert-success">@successMessage</div>
+}
+@if (TempData["ErrorMessage"] is string errorMessage)
+{
+    <div class="alert alert-danger">
+        <div>@errorMessage</div>
+        @if (TempData["ErrorDetails"] is string errorDetails)
+        {
+            <ul class="mb-0 mt-2">
+                @foreach (var detail in errorDetails.Split('\n'))
+                {
+                    <li>@detail</li>
+                }
+            </ul>
+        }
+    </div>
+}
+
+<div class="d-flex justify-content-between align-items-start flex-wrap gap-3 mb-4">
+    <div>
+        <a asp-action="Index" class="small text-decoration-none"><i class="bi bi-arrow-left"></i> Sổ điểm</a>
+        <h1 class="welcome-title h3 mb-1 mt-1">@Model.AssessmentName</h1>
+        <div class="text-muted">@Model.SubjectName · Lớp @Model.ClassName · @Model.TypeName</div>
+    </div>
+    <div>
+        @if (Model.IsLocked)
+        {
+            <span class="badge bg-secondary px-3 py-2"><i class="bi bi-lock-fill"></i> Đã khóa</span>
+        }
+        else
+        {
+            <form asp-action="LockScores" method="post"
+                  onsubmit="return confirm('Khóa bảng điểm? Sau khi khóa sẽ không thể nhập hoặc sửa điểm.');">
+                <input type="hidden" name="assessmentId" value="@Model.AssessmentId" />
+                <button type="submit" class="btn btn-outline-danger"><i class="bi bi-lock"></i> Khóa bảng điểm</button>
+            </form>
+        }
+    </div>
+</div>
+
+<div class="card border-0 shadow-sm">
+    <div class="card-body p-4">
+        @if (!Model.Rows.Any())
+        {
+            <p class="text-muted mb-0">Lớp chưa có học sinh đang hoạt động.</p>
+        }
+        else
+        {
+            <form asp-action="EnterScores" method="post" id="enterScoresForm">
+                <input type="hidden" name="AssessmentId" value="@Model.AssessmentId" />
+                <div class="table-responsive">
+                    <table class="table align-middle">
+                        <thead>
+                            <tr>
+                                <th>Mã HS</th>
+                                <th>Họ tên</th>
+                                <th style="width: 150px;">Điểm (0–10)</th>
+                                <th>Nhận xét</th>
+                                <th class="text-end">Thao tác</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            @for (var i = 0; i < Model.Rows.Count; i++)
+                            {
+                                var row = Model.Rows[i];
+                                <tr>
+                                    <td>@row.StudentCode</td>
+                                    <td>
+                                        @row.FullName
+                                        <input type="hidden" name="Items[@i].CustomerId" value="@row.CustomerId" />
+                                    </td>
+                                    @if (row.ScoreId.HasValue || Model.IsLocked)
+                                    {
+                                        <td class="fw-bold">@(row.Score?.ToString(CultureInfo.InvariantCulture) ?? "—")</td>
+                                        <td class="text-muted">@(row.Comment ?? "")</td>
+                                    }
+                                    else
+                                    {
+                                        <td>
+                                            <input type="number" name="Items[@i].Score" class="form-control form-control-sm"
+                                                   min="0" max="10" step="0.01" />
+                                        </td>
+                                        <td>
+                                            <input type="text" name="Items[@i].Comment" class="form-control form-control-sm" maxlength="1000" />
+                                        </td>
+                                    }
+                                    <td class="text-end">
+                                        @if (row.ScoreId.HasValue && !Model.IsLocked)
+                                        {
+                                            <button type="button" class="btn btn-sm btn-outline-primary"
+                                                    data-bs-toggle="modal" data-bs-target="#editScoreModal"
+                                                    data-score-id="@row.ScoreId"
+                                                    data-current="@(row.Score?.ToString(CultureInfo.InvariantCulture))"
+                                                    data-student="@row.FullName">
+                                                <i class="bi bi-pencil"></i> Sửa
+                                            </button>
+                                        }
+                                        @if (row.ScoreId.HasValue)
+                                        {
+                                            <button type="button" class="btn btn-sm btn-outline-secondary"
+                                                    data-bs-toggle="modal" data-bs-target="#historyModal"
+                                                    data-url="@Url.Action("ScoreHistory", "Score", new { scoreId = row.ScoreId })">
+                                                <i class="bi bi-clock-history"></i> Lịch sử
+                                            </button>
+                                        }
+                                    </td>
+                                </tr>
+                            }
+                        </tbody>
+                    </table>
+                </div>
+
+                @if (!Model.IsLocked && hasUnscoredRows)
+                {
+                    <div class="d-flex justify-content-end mt-3">
+                        <button type="submit" class="btn btn-primary"><i class="bi bi-save"></i> Lưu điểm</button>
+                    </div>
+                }
+            </form>
+        }
+    </div>
+</div>
+
+<!-- Modal sửa điểm -->
+<div class="modal fade" id="editScoreModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <form asp-action="UpdateScore" method="post">
+                <input type="hidden" name="AssessmentId" value="@Model.AssessmentId" />
+                <input type="hidden" name="ScoreId" id="editScoreId" />
+                <div class="modal-header">
+                    <h5 class="modal-title">Sửa điểm — <span id="editStudentName"></span></h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Đóng"></button>
+                </div>
+                <div class="modal-body">
+                    <div class="mb-3">
+                        <label for="editNewScore" class="form-label">Điểm mới (0–10)</label>
+                        <input type="number" name="NewScore" id="editNewScore" class="form-control" min="0" max="10" step="0.01" required />
+                    </div>
+                    <div class="mb-3">
+                        <label for="editReason" class="form-label">Lý do sửa điểm</label>
+                        <textarea name="Reason" id="editReason" class="form-control" rows="2" maxlength="1000" required></textarea>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-light" data-bs-dismiss="modal">Hủy</button>
+                    <button type="submit" class="btn btn-primary">Lưu thay đổi</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<!-- Modal lịch sử -->
+<div class="modal fade" id="historyModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Lịch sử chỉnh sửa điểm</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Đóng"></button>
+            </div>
+            <div class="modal-body" id="historyBody">Đang tải...</div>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <script>
+        (function () {
+            var editModal = document.getElementById('editScoreModal');
+            editModal.addEventListener('show.bs.modal', function (event) {
+                var button = event.relatedTarget;
+                document.getElementById('editScoreId').value = button.dataset.scoreId;
+                document.getElementById('editNewScore').value = button.dataset.current;
+                document.getElementById('editStudentName').textContent = button.dataset.student;
+                document.getElementById('editReason').value = '';
+            });
+
+            var historyModal = document.getElementById('historyModal');
+            historyModal.addEventListener('show.bs.modal', function (event) {
+                var body = document.getElementById('historyBody');
+                body.textContent = 'Đang tải...';
+                fetch(event.relatedTarget.dataset.url, { credentials: 'same-origin' })
+                    .then(function (response) { return response.text(); })
+                    .then(function (html) { body.innerHTML = html; })
+                    .catch(function () { body.textContent = 'Không tải được lịch sử.'; });
+            });
+        })();
+    </script>
+}

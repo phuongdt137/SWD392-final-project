@@ -1,0 +1,87 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="2200" height="1955" viewBox="0 0 2200 1955"><title>Attendance — simplified record and update sequence</title><defs><marker id="call" markerWidth="16" markerHeight="14" refX="14" refY="7" orient="auto" markerUnits="userSpaceOnUse"><path d="M0,0 L15,7 L0,14 Z" fill="#3C5870"/></marker><marker id="return" markerWidth="16" markerHeight="14" refX="14" refY="7" orient="auto" markerUnits="userSpaceOnUse"><path d="M1,1 L14,7 L1,13" fill="none" stroke="#3C5870" stroke-width="2"/></marker></defs><rect width="100%" height="100%" fill="#FFFFFF"/>
+<text x="35" y="43" font-family="Arial,sans-serif" font-size="28" fill="#304C64" text-anchor="start" font-weight="bold"><tspan x="35" dy="0">ATTENDANCE — SIMPLIFIED RECORD / UPDATE</tspan></text>
+<text x="35" y="79" font-family="Arial,sans-serif" font-size="18" fill="#304C64" text-anchor="start"><tspan x="35" dy="0">Based on the supplied diagram; actual MVC names. Intermediate returns and helper calls are omitted.</tspan></text>
+<rect x="25" y="1025" width="2150" height="670" fill="#F8FBFF" stroke="#8AA0B5" stroke-width="1.5"/><path d="M25,1025 h75 v29 l-12,12 h-63 Z" fill="#EAF1FA" stroke="#8AA0B5"/>
+<text x="40" y="1054" font-family="Arial,sans-serif" font-size="20" fill="#304C64" text-anchor="start" font-weight="bold"><tspan x="40" dy="0">alt</tspan></text>
+<text x="125" y="1056" font-family="Arial,sans-serif" font-size="19" fill="#304C64" text-anchor="start"><tspan x="125" dy="0">[Valid data and save succeeds]</tspan></text>
+<text x="180" y="119" font-family="Arial,sans-serif" font-size="21" fill="#304C64" text-anchor="middle" font-weight="bold"><tspan x="180" dy="0">User</tspan></text>
+<line x1="180" y1="245" x2="180" y2="1710" stroke="#A1AFBD" stroke-width="1.5" stroke-dasharray="8 7"/>
+<text x="180" y="144" font-family="Arial,sans-serif" font-size="17" fill="#304C64" text-anchor="middle"><tspan x="180" dy="0">Teacher / STAFF / ADMIN</tspan></text>
+<circle cx="180" cy="174" r="13" fill="#FFFFFF" stroke="#516579" stroke-width="2"/><path d="M180,187 v29 m-23,-16 h46 m-23,16 l-22,24 m22,-24 l22,24" fill="none" stroke="#516579" stroke-width="2"/>
+<text x="640" y="119" font-family="Arial,sans-serif" font-size="21" fill="#304C64" text-anchor="middle" font-weight="bold"><tspan x="640" dy="0">AttendanceController</tspan></text>
+<line x1="640" y1="245" x2="640" y2="1710" stroke="#A1AFBD" stroke-width="1.5" stroke-dasharray="8 7"/>
+<circle cx="640" cy="192" r="35" fill="#FFFFFF" stroke="#516579" stroke-width="2"/><path d="M649,155 L632,157 L645,166" fill="none" stroke="#516579" stroke-width="2"/>
+<text x="1100" y="119" font-family="Arial,sans-serif" font-size="21" fill="#304C64" text-anchor="middle" font-weight="bold"><tspan x="1100" dy="0">AttendanceService</tspan></text>
+<line x1="1100" y1="245" x2="1100" y2="1710" stroke="#A1AFBD" stroke-width="1.5" stroke-dasharray="8 7"/>
+<circle cx="1100" cy="192" r="35" fill="#FFFFFF" stroke="#516579" stroke-width="2"/><path d="M1109,155 L1092,157 L1105,166" fill="none" stroke="#516579" stroke-width="2"/>
+<text x="1560" y="119" font-family="Arial,sans-serif" font-size="21" fill="#304C64" text-anchor="middle" font-weight="bold"><tspan x="1560" dy="0">AttendanceRepository</tspan></text>
+<line x1="1560" y1="245" x2="1560" y2="1710" stroke="#A1AFBD" stroke-width="1.5" stroke-dasharray="8 7"/>
+<circle cx="1560" cy="192" r="35" fill="#FFFFFF" stroke="#516579" stroke-width="2"/><path d="M1569,155 L1552,157 L1565,166" fill="none" stroke="#516579" stroke-width="2"/>
+<text x="2020" y="119" font-family="Arial,sans-serif" font-size="21" fill="#304C64" text-anchor="middle" font-weight="bold"><tspan x="2020" dy="0">Database</tspan></text>
+<line x1="2020" y1="245" x2="2020" y2="1710" stroke="#A1AFBD" stroke-width="1.5" stroke-dasharray="8 7"/>
+<path d="M1990,172 v49 a30,10 0 0 0 60,0 v-49" fill="#FFFFFF" stroke="#516579" stroke-width="2"/><ellipse cx="2020" cy="172" rx="30" ry="10" fill="#FFFFFF" stroke="#516579" stroke-width="2"/>
+<text x="2020" y="147" font-family="Arial,sans-serif" font-size="17" fill="#304C64" text-anchor="middle"><tspan x="2020" dy="0">SQL Server</tspan></text>
+<rect x="35" y="260" width="2130" height="36" fill="#EAF1FA"/>
+<text x="50" y="285" font-family="Arial,sans-serif" font-size="18" fill="#304C64" text-anchor="start" font-weight="bold"><tspan x="50" dy="0">OPEN ATTENDANCE SHEET — GET (no database writes)</tspan></text>
+<rect x="35" y="640" width="2130" height="36" fill="#EAF1FA"/>
+<text x="50" y="665" font-family="Arial,sans-serif" font-size="18" fill="#304C64" text-anchor="start" font-weight="bold"><tspan x="50" dy="0">RECORD / UPDATE — POST</tspan></text>
+<path d="M180,365 L640,365" fill="none" stroke="#647C91" stroke-width="2.3" marker-end="url(#call)"/>
+<rect x="293.05" y="299" width="233.9" height="58" fill="#FFFFFF"/>
+<text x="410" y="319" font-family="Arial,sans-serif" font-size="19" fill="#304C64" text-anchor="middle"><tspan x="410" dy="0">1  GET /Attendance/Mark</tspan><tspan x="410" dy="25">(timetableEntryId, date)</tspan></text>
+<path d="M640,400 L1100,400" fill="none" stroke="#647C91" stroke-width="2.3" marker-end="url(#call)"/>
+<rect x="729.8" y="359" width="280.40000000000003" height="33" fill="#FFFFFF"/>
+<text x="870" y="379" font-family="Arial,sans-serif" font-size="19" fill="#304C64" text-anchor="middle"><tspan x="870" dy="0">2  SheetAsync(entryId, date)</tspan></text>
+<path d="M1100,465 L1560,465" fill="none" stroke="#647C91" stroke-width="2.3" marker-end="url(#call)"/>
+<rect x="1161.9" y="399" width="336.20000000000005" height="58" fill="#FFFFFF"/>
+<text x="1330" y="419" font-family="Arial,sans-serif" font-size="19" fill="#304C64" text-anchor="middle"><tspan x="1330" dy="0">3  Load lesson, roster, results</tspan><tspan x="1330" dy="25">and approved leave (grouped reads)</tspan></text>
+<path d="M1560,530 L2020,530" fill="none" stroke="#647C91" stroke-width="2.3" marker-end="url(#call)"/>
+<rect x="1696.3" y="489" width="187.4" height="33" fill="#FFFFFF"/>
+<text x="1790" y="509" font-family="Arial,sans-serif" font-size="19" fill="#304C64" text-anchor="middle"><tspan x="1790" dy="0">4  Read sheet data</tspan></text>
+<path d="M640,595 L180,595" fill="none" stroke="#647C91" stroke-width="2.3" stroke-dasharray="9 6" marker-end="url(#return)"/>
+<rect x="227.95" y="554" width="364.1" height="33" fill="#FFFFFF"/>
+<text x="410" y="574" font-family="Arial,sans-serif" font-size="19" fill="#304C64" text-anchor="middle"><tspan x="410" dy="0">5  Display editable / read-only sheet</tspan></text>
+<path d="M180,715 L640,715" fill="none" stroke="#647C91" stroke-width="2.3" marker-end="url(#call)"/>
+<rect x="255.85" y="674" width="308.3" height="33" fill="#FFFFFF"/>
+<text x="410" y="694" font-family="Arial,sans-serif" font-size="19" fill="#304C64" text-anchor="middle"><tspan x="410" dy="0">6  POST /Attendance/Save(input)</tspan></text>
+<path d="M640,780 L1100,780" fill="none" stroke="#647C91" stroke-width="2.3" marker-end="url(#call)"/>
+<rect x="771.65" y="739" width="196.70000000000002" height="33" fill="#FFFFFF"/>
+<text x="870" y="759" font-family="Arial,sans-serif" font-size="19" fill="#304C64" text-anchor="middle"><tspan x="870" dy="0">7  SaveAsync(input)</tspan></text>
+<path d="M1100,845 L1560,845" fill="none" stroke="#647C91" stroke-width="2.3" marker-end="url(#call)"/>
+<rect x="1152.6" y="804" width="354.8" height="33" fill="#FFFFFF"/>
+<text x="1330" y="824" font-family="Arial,sans-serif" font-size="19" fill="#304C64" text-anchor="middle"><tspan x="1330" dy="0">8  BeginAsync(); reload current data</tspan></text>
+<path d="M1560,910 L2020,910" fill="none" stroke="#647C91" stroke-width="2.3" marker-end="url(#call)"/>
+<rect x="1654.45" y="869" width="271.1" height="33" fill="#FFFFFF"/>
+<text x="1790" y="889" font-family="Arial,sans-serif" font-size="19" fill="#304C64" text-anchor="middle"><tspan x="1790" dy="0">9  Begin transaction + read</tspan></text>
+<path d="M1100,975 L1370,975 L1370,1003 L1100,1003" fill="none" stroke="#647C91" stroke-width="2.3" marker-end="url(#call)"/>
+<rect x="1118.05" y="909" width="233.9" height="58" fill="#FFFFFF"/>
+<text x="1235" y="929" font-family="Arial,sans-serif" font-size="19" fill="#304C64" text-anchor="middle"><tspan x="1235" dy="0">10  Check access, time,</tspan><tspan x="1235" dy="25">roster and results</tspan></text>
+<path d="M1100,1125 L1560,1125" fill="none" stroke="#647C91" stroke-width="2.3" marker-end="url(#call)"/>
+<rect x="1175.85" y="1084" width="308.3" height="33" fill="#FFFFFF"/>
+<text x="1330" y="1104" font-family="Arial,sans-serif" font-size="19" fill="#304C64" text-anchor="middle"><tspan x="1330" dy="0">11  Stage changes; FlushAsync()</tspan></text>
+<path d="M1560,1190 L2020,1190" fill="none" stroke="#647C91" stroke-width="2.3" marker-end="url(#call)"/>
+<rect x="1626.55" y="1124" width="326.90000000000003" height="58" fill="#FFFFFF"/>
+<text x="1790" y="1144" font-family="Arial,sans-serif" font-size="19" fill="#304C64" text-anchor="middle"><tspan x="1790" dy="0">12  Write changed results + audit</tspan><tspan x="1790" dy="25">+ applicable notifications</tspan></text>
+<path d="M1100,1255 L2020,1255" fill="none" stroke="#647C91" stroke-width="2.3" marker-end="url(#call)"/>
+<rect x="1396.55" y="1214" width="326.90000000000003" height="33" fill="#FFFFFF"/>
+<text x="1560" y="1234" font-family="Arial,sans-serif" font-size="19" fill="#304C64" text-anchor="middle"><tspan x="1560" dy="0">13  Commit after deadline recheck</tspan></text>
+<path d="M1100,1320 L640,1320" fill="none" stroke="#647C91" stroke-width="2.3" stroke-dasharray="9 6" marker-end="url(#return)"/>
+<rect x="748.4" y="1279" width="243.20000000000002" height="33" fill="#FFFFFF"/>
+<text x="870" y="1299" font-family="Arial,sans-serif" font-size="19" fill="#304C64" text-anchor="middle"><tspan x="870" dy="0">14  SaveAttendanceResult</tspan></text>
+<path d="M640,1385 L180,1385" fill="none" stroke="#647C91" stroke-width="2.3" stroke-dasharray="9 6" marker-end="url(#return)"/>
+<rect x="246.54999999999998" y="1319" width="326.90000000000003" height="58" fill="#FFFFFF"/>
+<text x="410" y="1339" font-family="Arial,sans-serif" font-size="19" fill="#304C64" text-anchor="middle"><tspan x="410" dy="0">15  HTTP 302 to Mark</tspan><tspan x="410" dy="25">then updated sheet + confirmation</tspan></text>
+<line x1="25" y1="1430" x2="2175" y2="1430" stroke="#8AA0B5" stroke-width="1.5" stroke-dasharray="9 6"/>
+<text x="45" y="1460" font-family="Arial,sans-serif" font-size="19" fill="#304C64" text-anchor="start"><tspan x="45" dy="0">[Invalid data, no permission, conflict or save failure]</tspan></text>
+<path d="M1100,1510 L2020,1510" fill="none" stroke="#647C91" stroke-width="2.3" marker-end="url(#call)"/>
+<rect x="1419.8" y="1469" width="280.40000000000003" height="33" fill="#FFFFFF"/>
+<text x="1560" y="1489" font-family="Arial,sans-serif" font-size="19" fill="#304C64" text-anchor="middle"><tspan x="1560" dy="0">16  Roll back if uncommitted</tspan></text>
+<path d="M1100,1575 L640,1575" fill="none" stroke="#647C91" stroke-width="2.3" stroke-dasharray="9 6" marker-end="url(#return)"/>
+<rect x="748.4" y="1534" width="243.20000000000002" height="33" fill="#FFFFFF"/>
+<text x="870" y="1554" font-family="Arial,sans-serif" font-size="19" fill="#304C64" text-anchor="middle"><tspan x="870" dy="0">17  Failed ServiceResult</tspan></text>
+<path d="M640,1640 L180,1640" fill="none" stroke="#647C91" stroke-width="2.3" stroke-dasharray="9 6" marker-end="url(#return)"/>
+<rect x="241.89999999999998" y="1599" width="336.20000000000005" height="33" fill="#FFFFFF"/>
+<text x="410" y="1619" font-family="Arial,sans-serif" font-size="19" fill="#304C64" text-anchor="middle"><tspan x="410" dy="0">18  Show error; reload on conflict</tspan></text>
+<rect x="35" y="1740" width="2130" height="135" rx="4" fill="#FFF8DF" stroke="#C7AD61"/>
+<text x="50" y="1769" font-family="Arial,sans-serif" font-size="17" fill="#304C64" text-anchor="start"><tspan x="50" dy="0">READABILITY: intermediate returns, helper calls and per-student loops are omitted; grouped reads reuse AttendanceRepository.GetLeavesAsync().</tspan><tspan x="50" dy="25">VALIDATION: PRESENT / ABSENT / LATE / EXCUSED; EXCUSED requires approved leave. Corrections require a reason; stale data requires reload.</tspan><tspan x="50" dy="25">TIME: no marking before lesson start. Teacher locks at 00:00 next day (Vietnam time); STAFF / ADMIN are exempt from that deadline.</tspan><tspan x="50" dy="25">ATOMIC SAVE: results + audit + applicable notifications commit together. Unchanged save: no new audit / notification. Delivery runs in the background after commit.</tspan></text>
+<text x="35" y="1920" font-family="Arial,sans-serif" font-size="17" fill="#304C64" text-anchor="start"><tspan x="35" dy="0">Solid arrows = calls/actions. Dashed arrows = returns. Vertical dashed lines = lifelines. The alt frame summarizes success / failure outcomes.</tspan></text>
+</svg>

@@ -1,0 +1,75 @@
+@model IReadOnlyList<HSMS.MVC.DTOs.Score.TeachingAssignmentSummaryDto>
+@{
+    ViewData["Title"] = "Sổ điểm & Bài kiểm tra - High School Management System";
+    Layout = "_DashboardLayout";
+}
+
+@if (TempData["SuccessMessage"] is string successMessage)
+{
+    <div class="alert alert-success">@successMessage</div>
+}
+@if (TempData["ErrorMessage"] is string errorMessage)
+{
+    <div class="alert alert-danger">@errorMessage</div>
+}
+
+<div class="d-flex justify-content-between align-items-center flex-wrap gap-2 mb-4">
+    <h1 class="welcome-title h3 mb-0">Sổ điểm & Bài kiểm tra</h1>
+</div>
+
+@if (!Model.Any())
+{
+    <div class="alert alert-info">Bạn chưa có phân công giảng dạy nào.</div>
+}
+
+@foreach (var assignment in Model)
+{
+    <div class="card border-0 shadow-sm mb-4">
+        <div class="card-body">
+            <div class="d-flex justify-content-between align-items-start flex-wrap gap-2 mb-3">
+                <div>
+                    <h5 class="fw-bold mb-1">@assignment.SubjectName - Lớp @assignment.ClassName</h5>
+                    <div class="text-muted small">@assignment.SemesterName</div>
+                </div>
+                <a asp-action="CreateAssessment" asp-route-assignmentId="@assignment.AssignmentId" class="btn btn-sm btn-primary">
+                    <i class="bi bi-plus-lg"></i> Tạo bài kiểm tra
+                </a>
+            </div>
+
+            @if (!assignment.Assessments.Any())
+            {
+                <p class="text-muted mb-0">Chưa có bài kiểm tra nào.</p>
+            }
+            else
+            {
+                <div class="table-responsive">
+                    <table class="table align-middle mb-0">
+                        <thead>
+                            <tr>
+                                <th>Bài kiểm tra</th>
+                                <th>Loại</th>
+                                <th>Ngày tổ chức</th>
+                                <th class="text-end"></th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            @foreach (var assessment in assignment.Assessments)
+                            {
+                                <tr>
+                                    <td>@assessment.AssessmentName</td>
+                                    <td>@assessment.TypeName</td>
+                                    <td>@(assessment.ConductedAt?.ToString("dd/MM/yyyy") ?? "—")</td>
+                                    <td class="text-end">
+                                        <a asp-action="ScoreSheet" asp-route-id="@assessment.Id" class="btn btn-sm btn-outline-primary">
+                                            <i class="bi bi-pencil-square"></i> Nhập điểm
+                                        </a>
+                                    </td>
+                                </tr>
+                            }
+                        </tbody>
+                    </table>
+                </div>
+            }
+        </div>
+    </div>
+}

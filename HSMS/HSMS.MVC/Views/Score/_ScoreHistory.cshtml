@@ -1,0 +1,37 @@
+@using System.Globalization
+@model IReadOnlyList<HSMS.MVC.DTOs.Score.ScoreAuditLogDto>
+
+@if (!Model.Any())
+{
+    <p class="text-muted mb-0">Chưa có lần chỉnh sửa nào.</p>
+}
+else
+{
+    <div class="table-responsive">
+        <table class="table table-sm align-middle mb-0">
+            <thead>
+                <tr>
+                    <th>Thời gian</th>
+                    <th>Điểm cũ → mới</th>
+                    <th>Chênh lệch</th>
+                    <th>Lý do</th>
+                    <th>Người sửa</th>
+                    <th>IP</th>
+                </tr>
+            </thead>
+            <tbody>
+                @foreach (var log in Model)
+                {
+                    <tr>
+                        <td>@log.ChangedAt.ToString("dd/MM/yyyy HH:mm")</td>
+                        <td>@(log.OldScore?.ToString(CultureInfo.InvariantCulture) ?? "—") → @(log.NewScore?.ToString(CultureInfo.InvariantCulture) ?? "—")</td>
+                        <td>@log.Difference.ToString("+0.##;-0.##;0", CultureInfo.InvariantCulture)</td>
+                        <td>@log.ChangeReason</td>
+                        <td>@log.ChangedByName</td>
+                        <td>@(log.IpAddress ?? "—")</td>
+                    </tr>
+                }
+            </tbody>
+        </table>
+    </div>
+}
