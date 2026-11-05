@@ -33,6 +33,10 @@ builder.Services.AddScoped<INotificationService, NotificationService>();
 builder.Services.AddSingleton<NotificationDispatchSignal>();
 builder.Services.AddHostedService<NotificationDispatcher>();
 
+// Hàng đợi ưu tiên gửi Email bất đồng bộ dưới nền (PriorityQueue + SemaphoreSlim)
+builder.Services.AddSingleton<IEmailPriorityQueue, EmailPriorityQueue>();
+builder.Services.AddHostedService<EmailBackgroundWorker>();
+
 builder.Services.AddDbContext<AppDbContext>(options =>
     options.UseSqlServer(builder.Configuration.GetConnectionString("DefaultConnection")));
 
@@ -95,4 +99,3 @@ app.MapControllerRoute(
 }
 
 app.Run();
-
