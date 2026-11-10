@@ -43,13 +43,37 @@ public class Assessment
         return studentScore;
     }
 
-    public void LockAllScores()
+    public IReadOnlyList<StudentScore> GetStudentScores() => StudentScores.ToList();
+
+    public StudentScore? FindStudentScore(long customerId) => StudentScores.FirstOrDefault(s => s.CustomerId == customerId);
+
+    /// <summary>
+    /// Khóa toàn bộ bảng điểm. Mọi học sinh đang học lớp đều được khóa, kể cả học sinh chưa có điểm
+    /// (sẽ có một dòng điểm trống đã khóa), để không còn ai có thể nhập điểm sau khi khóa.
+    /// </summary>
+    public void LockAllScores(IEnumerable<long> rosterCustomerIds)
     {
+        ArgumentNullException.ThrowIfNull(rosterCustomerIds);
+
+        var roster = rosterCustomerIds.Distinct().ToList();
+        if (roster.Count == 0)
+            throw ScoreErrors.NoStudentsInClass;
+
+        foreach (var customerId in roster)
+        {
+            if (!StudentScores.Any(s => s.CustomerId == customerId))
+                AddStudentScore(customerId);
+        }
+
         foreach (var studentScore in StudentScores)
             studentScore.Lock();
     }
 
+    public bool HasLockedScores() => StudentScores.Any(s => s.IsLocked);
+
     public bool IsFullyLocked() => StudentScores.Count > 0 && StudentScores.All(s => s.IsLocked);
+
+    public Assessment GetAssessmentDetails() => this;
 
     public decimal CalculateAverage()
     {

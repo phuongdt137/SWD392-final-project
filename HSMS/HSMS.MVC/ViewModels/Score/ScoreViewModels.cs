@@ -1,4 +1,6 @@
 using System.ComponentModel.DataAnnotations;
+using HSMS.MVC.Common;
+using Microsoft.AspNetCore.Mvc;
 
 namespace HSMS.MVC.ViewModels.Score;
 
@@ -26,6 +28,7 @@ public class ScoreEntryViewModel
 {
     public long CustomerId { get; set; }
 
+    [ModelBinder(typeof(InvariantDecimalModelBinder))]
     [Range(0, 10, ErrorMessage = "Điểm số phải nằm trong khoảng từ 0 đến 10.")]
     public decimal? Score { get; set; }
 
@@ -48,6 +51,7 @@ public class UpdateScoreViewModel
     [Required]
     public long AssessmentId { get; set; }
 
+    [ModelBinder(typeof(InvariantDecimalModelBinder))]
     [Required(ErrorMessage = "Vui lòng nhập điểm mới.")]
     [Range(0, 10, ErrorMessage = "Điểm số phải nằm trong khoảng từ 0 đến 10.")]
     [Display(Name = "Điểm mới")]

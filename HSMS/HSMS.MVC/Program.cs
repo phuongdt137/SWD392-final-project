@@ -1,5 +1,6 @@
 using HSMS.MVC.Common;
 using HSMS.MVC.Data;
+using HSMS.MVC.Hubs;
 using HSMS.MVC.Repositories.Implementations;
 using HSMS.MVC.Repositories.Interfaces;
 using HSMS.MVC.Service;
@@ -16,6 +17,7 @@ var builder = WebApplication.CreateBuilder(args);
 builder.Services.AddControllersWithViews().AddSessionStateTempDataProvider();
 builder.Services.AddHttpContextAccessor();
 builder.Services.AddDistributedMemoryCache();
+builder.Services.AddSignalR();
 
 // Cấu hình đường dẫn chuyển hướng mặc định cho [Authorize] (Login & AccessDenied)
 builder.Services.AddAuthentication(CookieAuthenticationDefaults.AuthenticationScheme)
@@ -60,6 +62,7 @@ builder.Services.AddScoped<IAssessmentRepository, AssessmentRepository>();
 builder.Services.AddScoped<ICustomerRepository, CustomerRepository>();
 builder.Services.AddScoped<IStudentScoreRepository, StudentScoreRepository>();
 builder.Services.AddScoped<IScoreService, ScoreService>();
+builder.Services.AddScoped<IScoreRealtimeNotifier, ScoreRealtimeNotifier>();
 builder.Services.AddScoped<IAttendanceRepository, AttendanceRepository>();
 builder.Services.AddScoped<IAttendanceService, AttendanceService>();
 builder.Services.AddScoped<ISubjectRepository, SubjectRepository>();
@@ -89,6 +92,8 @@ app.UseAuthorization();
 app.MapControllerRoute(
     name: "default",
     pattern: "{controller=Home}/{action=Index}/{id?}");
+
+app.MapHub<ScoreHub>("/hubs/scores");
 
 // Seed the existing accounts and score demo data.
 {

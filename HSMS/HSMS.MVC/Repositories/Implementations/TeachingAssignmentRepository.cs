@@ -38,4 +38,13 @@ public class TeachingAssignmentRepository : GenericRepository<TeachingAssignment
             .OrderByDescending(ta => ta.Semester.StartDate)
             .ToListAsync();
     }
+
+    public async Task<IReadOnlyList<Assessment>> GetAssessmentsInScopeAsync(long subjectId, long classId, long semesterId)
+    {
+        return await _dbSet
+            .AsNoTracking()
+            .Where(ta => ta.SubjectId == subjectId && ta.ClassId == classId && ta.SemesterId == semesterId)
+            .SelectMany(ta => ta.Assessments)
+            .ToListAsync();
+    }
 }

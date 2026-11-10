@@ -15,6 +15,7 @@
     <div class="text-muted">@Model.StudentName</div>
 </div>
 
+<div id="myScoresRoot" data-student-id="@Model.StudentCustomerId">
 <form method="get" asp-action="MyScores" class="row g-2 align-items-end mb-4">
     @if (Model.Children.Count > 0)
     {
@@ -62,6 +63,7 @@
                             <th>Loại</th>
                             <th class="text-end">Trọng số</th>
                             <th class="text-end">Điểm</th>
+                            <th class="text-end"></th>
                         </tr>
                     </thead>
                     <tbody>
@@ -71,7 +73,17 @@
                                 <td>@item.AssessmentName</td>
                                 <td>@item.TypeName</td>
                                 <td class="text-end">@item.Weight%</td>
-                                <td class="text-end">@(item.Score?.ToString("0.##", CultureInfo.InvariantCulture) ?? "—")</td>
+                                <td class="text-end">@(item.Score?.ToString("0.00", CultureInfo.InvariantCulture) ?? "—")</td>
+                                <td class="text-end">
+                                    @if (item.ChangeCount > 0)
+                                    {
+                                        <button type="button" class="btn btn-sm btn-outline-secondary"
+                                                data-bs-toggle="modal" data-bs-target="#historyModal"
+                                                data-url="@Url.Action("MyScoreHistory", "Score", new { scoreId = item.ScoreId, studentId = Model.StudentCustomerId })">
+                                            <i class="bi bi-clock-history"></i> Đã sửa @item.ChangeCount lần
+                                        </button>
+                                    }
+                                </td>
                             </tr>
                         }
                     </tbody>
@@ -79,4 +91,42 @@
             </div>
         </div>
     </div>
+}
+</div>
+
+<!-- Modal lịch sử chỉnh sửa điểm -->
+<div class="modal fade" id="historyModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Lịch sử chỉnh sửa điểm</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Đóng"></button>
+            </div>
+            <div class="modal-body" id="historyBody">Đang tải...</div>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <script src="https://cdn.jsdelivr.net/npm/@@microsoft/signalr@8.0.7/dist/browser/signalr.min.js"></script>
+    <script src="~/js/score-realtime.js" asp-append-version="true"></script>
+    <script>
+        (function () {
+            var historyModal = document.getElementById('historyModal');
+            historyModal.addEventListener('show.bs.modal', function (event) {
+                var body = document.getElementById('historyBody');
+                body.textContent = 'Đang tải...';
+                fetch(event.relatedTarget.dataset.url, { credentials: 'same-origin' })
+                    .then(function (response) { return response.text(); })
+                    .then(function (html) { body.innerHTML = html; })
+                    .catch(function () { body.textContent = 'Không tải được lịch sử.'; });
+            });
+
+            var myScoresRoot = document.getElementById('myScoresRoot');
+            ScoreRealtime.start({
+                rootId: 'myScoresRoot',
+                joins: [{ method: 'JoinStudentScores', argument: Number(myScoresRoot.dataset.studentId) }]
+            });
+        })();
+    </script>
 }

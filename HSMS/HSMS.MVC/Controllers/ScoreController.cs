@@ -105,6 +105,22 @@ public class ScoreController : Controller
         var userJson = HttpContext.Session.GetString(SessionKeys.CurrentUser)!;
         var user = JsonSerializer.Deserialize<LoginResponseDto>(userJson)!;
 
+        if (!ModelState.IsValid)
+        {
+            var details = ModelState.Values
+                .SelectMany(v => v.Errors)
+                .Select(e => e.ErrorMessage)
+                .Where(m => !string.IsNullOrWhiteSpace(m))
+                .Distinct()
+                .ToList();
+
+            TempData["ErrorMessage"] = ScoreErrors.InvalidScoreEntries.Description;
+            if (details.Count > 0)
+                TempData["ErrorDetails"] = string.Join("\n", details);
+
+            return RedirectToAction(nameof(ScoreSheet), new { id = model.AssessmentId });
+        }
+
         var dto = new EnterScoresDto
         {
             AssessmentId = model.AssessmentId,
@@ -191,6 +207,19 @@ public class ScoreController : Controller
             TempData["ErrorMessage"] = result.Message;
 
         return View(result.Data ?? new StudentScoreReportDto());
+    }
+
+    [Authorize(Roles = "STUDENT,PARENT")]
+    [HttpGet]
+    public async Task<IActionResult> MyScoreHistory(long scoreId, long? studentId)
+    {
+        var userJson = HttpContext.Session.GetString(SessionKeys.CurrentUser)!;
+        var user = JsonSerializer.Deserialize<LoginResponseDto>(userJson)!;
+        var result = await _scoreService.GetMyScoreHistoryAsync(scoreId, studentId, user.Id);
+        if (!result.IsSuccess)
+            return StatusCode(result.StatusCode, result.Message);
+
+        return PartialView("_MyScoreHistory", result.Data ?? Array.Empty<ScoreAuditLogDto>());
     }
 
     private async Task PopulateCreateOptionsAsync(long userId)

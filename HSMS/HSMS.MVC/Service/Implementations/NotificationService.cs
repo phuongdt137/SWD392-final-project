@@ -94,7 +94,9 @@ public sealed class NotificationService : INotificationService
             var subjectName = score.Assessment.TeachingAssignment.Subject.SubjectName;
 
             var title = "Điểm số đã được cập nhật";
-            var content = $"Điểm {score.Assessment.AssessmentName} môn {subjectName} đã thay đổi từ " +
+            var studentName = student.FullName;
+            var studentPart = string.IsNullOrWhiteSpace(studentName) ? string.Empty : $" của học sinh {studentName}";
+            var content = $"Điểm {score.Assessment.AssessmentName} môn {subjectName}{studentPart} đã thay đổi từ " +
                           $"{FormatScore(oldScore)} thành {FormatScore(score.Score)}.";
 
             var recipientUserIds = new List<long> { student.UserId };
@@ -118,7 +120,7 @@ public sealed class NotificationService : INotificationService
     private static string FormatScore(decimal? score)
     {
         return score.HasValue
-            ? score.Value.ToString("0.##", CultureInfo.InvariantCulture)
+            ? score.Value.ToString("0.00", CultureInfo.InvariantCulture)
             : "chưa có";
     }
 }

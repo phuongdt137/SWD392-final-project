@@ -54,4 +54,19 @@ public interface IScoreService
     /// Học sinh xem của chính mình; phụ huynh xem của con.
     /// </summary>
     Task<ServiceResult<StudentScoreReportDto>> GetStudentScoresAsync(long? studentCustomerId, long? semesterId, long userId);
+
+    /// <summary>
+    /// Xem nhật ký chỉnh sửa của một điểm do học sinh (hoặc phụ huynh của học sinh) thực hiện; không lộ địa chỉ IP.
+    /// </summary>
+    Task<ServiceResult<IReadOnlyList<ScoreAuditLogDto>>> GetMyScoreHistoryAsync(long scoreId, long? studentCustomerId, long userId);
+
+    /// <summary>
+    /// Kiểm tra giáo viên có được theo dõi realtime bảng điểm của bài kiểm tra này hay không (cùng quy tắc với xem bảng điểm).
+    /// </summary>
+    Task<bool> CanWatchAssessmentAsync(long assessmentId, long userId);
+
+    /// <summary>
+    /// Kiểm tra học sinh/phụ huynh có được theo dõi realtime điểm của học sinh này hay không.
+    /// </summary>
+    Task<bool> CanWatchStudentScoresAsync(long studentCustomerId, long userId);
 }

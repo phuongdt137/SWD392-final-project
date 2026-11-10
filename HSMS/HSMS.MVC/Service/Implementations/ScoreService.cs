@@ -2,6 +2,7 @@ using HSMS.MVC.Common;
 using HSMS.MVC.DTOs.Score;
 using HSMS.MVC.Models;
 using HSMS.MVC.Repositories.Interfaces;
+using Microsoft.EntityFrameworkCore;
 
 namespace HSMS.MVC.Service;
 
@@ -18,6 +19,7 @@ public class ScoreService : IScoreService
     private readonly ICustomerRepository _customerRepository;
     private readonly IStudentScoreRepository _studentScoreRepository;
     private readonly INotificationService _notificationService;
+    private readonly IScoreRealtimeNotifier _realtimeNotifier;
     private readonly ILogger<ScoreService> _logger;
 
     public ScoreService(
@@ -28,6 +30,7 @@ public class ScoreService : IScoreService
         ICustomerRepository customerRepository,
         IStudentScoreRepository studentScoreRepository,
         INotificationService notificationService,
+        IScoreRealtimeNotifier realtimeNotifier,
         ILogger<ScoreService> logger)
     {
         _userRepository = userRepository;
@@ -37,6 +40,7 @@ public class ScoreService : IScoreService
         _customerRepository = customerRepository;
         _studentScoreRepository = studentScoreRepository;
         _notificationService = notificationService;
+        _realtimeNotifier = realtimeNotifier;
         _logger = logger;
     }
 
@@ -106,18 +110,16 @@ public class ScoreService : IScoreService
             var assignment = await _assignmentRepository.GetWithDetailsAsync(dto.AssignmentId)
                 ?? throw ScoreErrors.AssignmentNotFound;
 
-            if (!assignment.IsTaughtBy(teacher.Id))
-                throw ScoreErrors.NotYourClass;
+            teacher.EnsureTeaches(assignment);
 
             var assessmentType = await _assessmentTypeRepository.GetByIdAsync(dto.AssessmentTypeId)
                 ?? throw ScoreErrors.AssessmentTypeNotFound;
 
-            var currentCount = assignment.Assessments.Count(a => a.AssessmentTypeId == assessmentType.Id);
-            if (!assessmentType.IsValidEntryCount(currentCount + 1))
-                throw ScoreErrors.MaxEntriesExceeded;
+            var sameScopeAssessments = await _assignmentRepository.GetAssessmentsInScopeAsync(
+                assignment.SubjectId, assignment.ClassId, assignment.SemesterId);
 
-            var assessment = new Assessment(assignment.Id, assessmentType.Id, dto.AssessmentName, dto.ConductedAt);
-            assignment.AddAssessment(assessment);
+            var assessment = teacher.CreateAssessment(
+                assignment, assessmentType, dto.AssessmentName, dto.ConductedAt, sameScopeAssessments);
 
             await _assignmentRepository.SaveChangesAsync();
 
@@ -139,13 +141,13 @@ public class ScoreService : IScoreService
         try
         {
             var teacher = await ResolveTeacherAsync(userId);
-            var assessment = await GetOwnedAssessmentAsync(assessmentId, teacher.Id);
+            var assessment = await GetOwnedAssessmentAsync(assessmentId, teacher);
 
             var students = await _customerRepository.GetActiveStudentsByClassAsync(assessment.TeachingAssignment.ClassId);
 
             var rows = students.Select(student =>
             {
-                var score = assessment.StudentScores.FirstOrDefault(s => s.CustomerId == student.Id);
+                var score = assessment.FindStudentScore(student.Id);
                 return new ScoreSheetRowDto
                 {
                     CustomerId = student.Id,
@@ -186,67 +188,37 @@ public class ScoreService : IScoreService
         try
         {
             var teacher = await ResolveTeacherAsync(userId);
-            var assessment = await GetOwnedAssessmentAsync(dto.AssessmentId, teacher.Id);
+            var assessment = await GetOwnedAssessmentAsync(dto.AssessmentId, teacher);
 
-            if (assessment.StudentScores.Any(s => s.IsLocked))
-                throw ScoreErrors.ScoreLocked;
+            var students = await _customerRepository.GetActiveStudentsByClassAsync(assessment.TeachingAssignment.ClassId);
+            var roster = students.ToDictionary(s => s.Id, s => s.FullName);
 
-            var roster = await _customerRepository.GetActiveStudentsByClassAsync(assessment.TeachingAssignment.ClassId);
-            var rosterNames = roster.ToDictionary(s => s.Id, s => s.FullName);
+            var entries = dto.Items.Select(i => new ScoreEntry(i.CustomerId, i.Score, i.Comment));
 
-            var entries = dto.Items
-                .Where(i => i.Score.HasValue || !string.IsNullOrWhiteSpace(i.Comment))
-                .ToList();
-
-            // Kiểm tra toàn bộ trước khi ghi, để không lưu một phần khi có lỗi.
-            var errors = new List<string>();
-            foreach (var item in entries)
-            {
-                var name = rosterNames.GetValueOrDefault(item.CustomerId, "Học sinh không xác định");
-
-                if (!rosterNames.ContainsKey(item.CustomerId))
-                {
-                    errors.Add($"{name}: không thuộc lớp của phân công này.");
-                    continue;
-                }
-
-                if (item.Score.HasValue && (item.Score.Value < 0 || item.Score.Value > 10))
-                {
-                    errors.Add($"{name}: điểm phải nằm trong khoảng từ 0 đến 10.");
-                    continue;
-                }
-
-                var existing = assessment.StudentScores.FirstOrDefault(s => s.CustomerId == item.CustomerId);
-                if (existing?.Score != null && item.Score.HasValue && item.Score.Value != existing.Score.Value)
-                {
-                    errors.Add($"{name}: đã có điểm, vui lòng dùng chức năng sửa điểm để thay đổi.");
-                }
-            }
-
-            if (errors.Count > 0)
-                return ServiceResult.Failed(ScoreErrors.InvalidScore, 400, errors.Distinct());
-
-            foreach (var item in entries)
-            {
-                var existing = assessment.StudentScores.FirstOrDefault(s => s.CustomerId == item.CustomerId);
-
-                if (existing == null)
-                {
-                    assessment.AddStudentScore(item.CustomerId, item.Score, item.Comment);
-                }
-                else if (existing.Score == null && item.Score.HasValue)
-                {
-                    existing.EnterScore(item.Score.Value, item.Comment);
-                }
-            }
+            // Giáo viên kiểm tra toàn bộ trước khi ghi, để không lưu một phần khi có lỗi.
+            var applied = teacher.EnterScores(assessment, roster, entries);
+            if (applied == 0)
+                throw ScoreErrors.NothingToSave;
 
             await _assessmentRepository.SaveChangesAsync();
+            await _realtimeNotifier.ScoresUpdatedAsync(assessment.Id, dto.Items.Select(i => i.CustomerId));
 
             return ServiceResult.Success("Lưu điểm thành công.");
+        }
+        catch (ScoreEntryValidationError ex)
+        {
+            return ServiceResult.Failed(ex, 400, ex.Details);
         }
         catch (AppError ex)
         {
             return ServiceResult.Failed(ex);
+        }
+        catch (DbUpdateException ex) when (ex.InnerException is Microsoft.Data.SqlClient.SqlException { Number: 2601 or 2627 })
+        {
+            // Vi phạm unique (CustomerId, AssessmentId): hai thao tác lưu cùng lúc cho cùng học sinh.
+            // Các lỗi lưu khác rơi xuống nhánh Exception bên dưới để được ghi LogError và báo lỗi hệ thống.
+            _logger.LogWarning(ex, "Xung đột khi nhập điểm AssessmentId: {AssessmentId}", dto.AssessmentId);
+            return ServiceResult.Failed(ScoreErrors.ConcurrentUpdate);
         }
         catch (Exception ex)
         {
@@ -264,17 +236,12 @@ public class ScoreService : IScoreService
             var score = await _studentScoreRepository.GetWithDetailsAsync(dto.ScoreId)
                 ?? throw ScoreErrors.ScoreNotFound;
 
-            if (!score.Assessment.TeachingAssignment.IsTaughtBy(teacher.Id))
-                throw ScoreErrors.NotYourClass;
-
-            if (score.IsLocked)
-                throw ScoreErrors.ScoreLocked;
-
             var oldScore = score.Score;
-            score.UpdateScore(dto.NewScore, dto.Reason, teacher, ipAddress);
+            teacher.UpdateScore(score, dto.NewScore, dto.Reason, ipAddress);
 
             await _studentScoreRepository.SaveChangesAsync();
             await _notificationService.NotifyScoreChangedAsync(score, oldScore, userId);
+            await _realtimeNotifier.ScoresUpdatedAsync(score.AssessmentId, new[] { score.CustomerId });
 
             return ServiceResult<StudentScoreDto>.Success(ToStudentScoreDto(score), "Cập nhật điểm thành công.");
         }
@@ -294,10 +261,13 @@ public class ScoreService : IScoreService
         try
         {
             var teacher = await ResolveTeacherAsync(userId);
-            var assessment = await GetOwnedAssessmentAsync(assessmentId, teacher.Id);
+            var assessment = await GetOwnedAssessmentAsync(assessmentId, teacher);
 
-            assessment.LockAllScores();
+            var students = await _customerRepository.GetActiveStudentsByClassAsync(assessment.TeachingAssignment.ClassId);
+
+            teacher.LockScores(assessment, students.Select(s => s.Id));
             await _assessmentRepository.SaveChangesAsync();
+            await _realtimeNotifier.ScoresUpdatedAsync(assessment.Id, students.Select(s => s.Id));
 
             var result = new LockResultDto
             {
@@ -327,21 +297,11 @@ public class ScoreService : IScoreService
             var score = await _studentScoreRepository.GetWithDetailsAsync(scoreId)
                 ?? throw ScoreErrors.ScoreNotFound;
 
-            if (!score.Assessment.TeachingAssignment.IsTaughtBy(teacher.Id))
-                throw ScoreErrors.NotYourClass;
+            teacher.EnsureTeaches(score.Assessment.TeachingAssignment);
 
             var history = score.GetAuditLogs()
                 .OrderByDescending(l => l.ChangedAt)
-                .Select(l => new ScoreAuditLogDto
-                {
-                    ChangedAt = l.ChangedAt,
-                    OldScore = l.OldScore,
-                    NewScore = l.NewScore,
-                    Difference = l.GetScoreDifference(),
-                    ChangeReason = l.ChangeReason,
-                    ChangedByName = l.ChangedByEmployee?.FullName ?? string.Empty,
-                    IpAddress = l.IpAddress
-                })
+                .Select(l => ToAuditLogDto(l, includeIpAddress: true))
                 .ToList();
 
             return ServiceResult<IReadOnlyList<ScoreAuditLogDto>>.Success(history);
@@ -361,27 +321,18 @@ public class ScoreService : IScoreService
     {
         try
         {
-            var viewer = await _customerRepository.GetByUserIdWithChildrenAsync(userId)
-                ?? throw ScoreErrors.NotStudentOrParent;
+            var (viewer, student) = await ResolveViewableStudentAsync(studentCustomerId, userId);
 
-            var targetId = studentCustomerId
-                ?? (viewer.Children.Count > 0 ? viewer.Children.First().Id : viewer.Id);
+            var semesters = student.GetScoreSemesters();
 
-            var student = await _customerRepository.GetByIdWithUserAsync(targetId)
-                ?? throw ScoreErrors.StudentNotFound;
+            // semesterId không thuộc học sinh đang xem (ví dụ phụ huynh vừa đổi con) thì rơi về học kỳ mặc định.
+            Semester? selectedSemester = (semesterId.HasValue ? semesters.FirstOrDefault(s => s.Id == semesterId.Value) : null)
+                ?? semesters.FirstOrDefault(s => s.IsCurrentSemester())
+                ?? semesters.FirstOrDefault();
 
-            if (student.Id != viewer.Id && !viewer.IsGuardianOf(student))
-                throw ScoreErrors.NotStudentOrParent;
-
-            var semesters = await _studentScoreRepository.GetSemestersByStudentAsync(student.Id);
-
-            Semester? selectedSemester = semesterId.HasValue
-                ? semesters.FirstOrDefault(s => s.Id == semesterId.Value)
-                : semesters.FirstOrDefault(s => s.IsOngoing()) ?? semesters.FirstOrDefault();
-
-            IReadOnlyList<StudentScore> scores = new List<StudentScore>();
-            if (selectedSemester != null)
-                scores = await _studentScoreRepository.GetByStudentAndSemesterAsync(student.Id, selectedSemester.Id);
+            var scores = selectedSemester != null
+                ? student.GetStudentScores(selectedSemester.Id)
+                : new List<StudentScore>();
 
             var subjects = scores
                 .GroupBy(s => s.Assessment.TeachingAssignment.SubjectId)
@@ -393,6 +344,8 @@ public class ScoreService : IScoreService
                         .OrderBy(s => s.Assessment.AssessmentName)
                         .Select(s => new AssessmentScoreItemDto
                         {
+                            ScoreId = s.Id,
+                            ChangeCount = s.ScoreAuditLogs.Count,
                             AssessmentName = s.Assessment.AssessmentName,
                             TypeName = s.Assessment.AssessmentType.TypeName,
                             Weight = s.Assessment.AssessmentType.GetWeight(),
@@ -426,6 +379,113 @@ public class ScoreService : IScoreService
         }
     }
 
+    public async Task<ServiceResult<IReadOnlyList<ScoreAuditLogDto>>> GetMyScoreHistoryAsync(long scoreId, long? studentCustomerId, long userId)
+    {
+        try
+        {
+            var (_, student) = await ResolveViewableStudentAsync(studentCustomerId, userId);
+
+            // Học sinh / phụ huynh không xem được địa chỉ IP của người sửa điểm.
+            var history = student.GetScoreHistory(scoreId)
+                .Select(l => ToAuditLogDto(l, includeIpAddress: false))
+                .ToList();
+
+            return ServiceResult<IReadOnlyList<ScoreAuditLogDto>>.Success(history);
+        }
+        catch (AppError ex)
+        {
+            return ServiceResult<IReadOnlyList<ScoreAuditLogDto>>.Failed(ex);
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Lỗi khi xem lịch sử điểm ScoreId: {ScoreId}, UserId: {UserId}", scoreId, userId);
+            return ServiceResult<IReadOnlyList<ScoreAuditLogDto>>.Failed(ScoreErrors.SystemError);
+        }
+    }
+
+    public async Task<bool> CanWatchAssessmentAsync(long assessmentId, long userId)
+    {
+        try
+        {
+            var teacher = await ResolveTeacherAsync(userId);
+            await GetOwnedAssessmentAsync(assessmentId, teacher);
+            return true;
+        }
+        catch (AppError)
+        {
+            return false;
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Lỗi khi kiểm tra quyền theo dõi AssessmentId: {AssessmentId}", assessmentId);
+            return false;
+        }
+    }
+
+    public async Task<bool> CanWatchStudentScoresAsync(long studentCustomerId, long userId)
+    {
+        try
+        {
+            var viewer = await _customerRepository.GetByUserIdWithChildrenAsync(userId);
+            return viewer != null && viewer.CanViewScoresOf(studentCustomerId);
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Lỗi khi kiểm tra quyền theo dõi điểm StudentCustomerId: {StudentCustomerId}", studentCustomerId);
+            return false;
+        }
+    }
+
+    /// <summary>
+    /// Xác định học sinh mà người đang đăng nhập được xem điểm theo vai trò: học sinh chỉ xem chính mình,
+    /// phụ huynh xem con (mặc định là con đầu tiên, chưa có con thì báo chưa liên kết).
+    /// Trả về hồ sơ người xem và hồ sơ học sinh đã nạp kèm điểm.
+    /// </summary>
+    private async Task<(Customer Viewer, Customer Student)> ResolveViewableStudentAsync(long? studentCustomerId, long userId)
+    {
+        var viewer = await _customerRepository.GetByUserIdWithChildrenAsync(userId)
+            ?? throw ScoreErrors.NotStudentOrParent;
+
+        var user = await _userRepository.GetByIdWithDetailsAsync(userId);
+        var roles = user?.GetActiveRoleCodes() ?? Array.Empty<string>();
+        var isParent = roles.Contains("PARENT");
+        var isStudentOnly = roles.Contains("STUDENT") && !isParent;
+
+        long targetId;
+        if (studentCustomerId.HasValue)
+            targetId = studentCustomerId.Value;
+        else if (isStudentOnly)
+            targetId = viewer.Id;
+        else if (viewer.Children.Count > 0)
+            targetId = viewer.Children.First().Id;
+        else if (isParent && !roles.Contains("STUDENT"))
+            throw ScoreErrors.NoLinkedStudent;
+        else
+            targetId = viewer.Id;
+
+        if (isStudentOnly ? targetId != viewer.Id : !viewer.CanViewScoresOf(targetId))
+            throw ScoreErrors.NotStudentOrParent;
+
+        var student = await _customerRepository.GetWithScoresAsync(targetId)
+            ?? throw ScoreErrors.StudentNotFound;
+
+        return (viewer, student);
+    }
+
+    private static ScoreAuditLogDto ToAuditLogDto(ScoreAuditLog log, bool includeIpAddress)
+    {
+        return new ScoreAuditLogDto
+        {
+            ChangedAt = log.ChangedAt,
+            OldScore = log.OldScore,
+            NewScore = log.NewScore,
+            Difference = log.GetScoreDifference(),
+            ChangeReason = log.ChangeReason,
+            ChangedByName = log.ChangedByEmployee?.FullName ?? string.Empty,
+            IpAddress = includeIpAddress ? log.IpAddress : null
+        };
+    }
+
     /// <summary>
     /// Lấy hồ sơ giáo viên (Employee) của người đang đăng nhập; ném lỗi nếu không phải giáo viên.
     /// </summary>
@@ -441,29 +501,39 @@ public class ScoreService : IScoreService
     /// <summary>
     /// Lấy bài kiểm tra và kiểm tra giáo viên có được phân công lớp/môn đó hay không.
     /// </summary>
-    private async Task<Assessment> GetOwnedAssessmentAsync(long assessmentId, long employeeId)
+    private async Task<Assessment> GetOwnedAssessmentAsync(long assessmentId, Employee teacher)
     {
         var assessment = await _assessmentRepository.GetWithDetailsAsync(assessmentId)
             ?? throw ScoreErrors.AssessmentNotFound;
 
-        if (!assessment.TeachingAssignment.IsTaughtBy(employeeId))
-            throw ScoreErrors.NotYourClass;
+        teacher.EnsureTeaches(assessment.TeachingAssignment);
 
         return assessment;
     }
 
     /// <summary>
-    /// Điểm trung bình có trọng số = Σ(điểm × trọng số) / Σ(trọng số), chỉ tính các đầu điểm đã nhập.
+    /// Điểm trung bình môn: lấy trung bình cộng các đầu điểm trong từng loại (TX, GK, CK...), rồi tính
+    /// Σ(TB loại × trọng số loại) / Σ(trọng số loại), chỉ xét các loại đã có điểm. Nhờ vậy trọng số của một
+    /// loại luôn được tính một lần dù loại đó có bao nhiêu đầu điểm. Làm tròn 2 chữ số, .5 làm tròn lên.
     /// </summary>
     private static decimal? CalculateWeightedAverage(IEnumerable<StudentScore> scores)
     {
-        var graded = scores.Where(s => s.Score.HasValue).ToList();
-        var totalWeight = graded.Sum(s => s.Assessment.AssessmentType.GetWeight());
+        var typeAverages = scores
+            .Where(s => s.Score.HasValue)
+            .GroupBy(s => s.Assessment.AssessmentTypeId)
+            .Select(group => new
+            {
+                Weight = group.First().Assessment.AssessmentType.GetWeight(),
+                Average = group.Average(s => s.Score!.Value)
+            })
+            .ToList();
+
+        var totalWeight = typeAverages.Sum(t => t.Weight);
         if (totalWeight <= 0)
             return null;
 
-        var weightedSum = graded.Sum(s => s.Score!.Value * s.Assessment.AssessmentType.GetWeight());
-        return Math.Round(weightedSum / totalWeight, 2);
+        var weightedSum = typeAverages.Sum(t => t.Average * t.Weight);
+        return Math.Round(weightedSum / totalWeight, 2, MidpointRounding.AwayFromZero);
     }
 
     private static AssessmentSummaryDto ToAssessmentSummary(Assessment assessment)

@@ -113,6 +113,8 @@ public class OptionDto
 
 public class AssessmentScoreItemDto
 {
+    public long ScoreId { get; set; }
+    public int ChangeCount { get; set; }
     public string AssessmentName { get; set; } = string.Empty;
     public string TypeName { get; set; } = string.Empty;
     public decimal Weight { get; set; }

@@ -1,6 +1,20 @@
 namespace HSMS.MVC.Common;
 
 /// <summary>
+/// Lỗi nhập điểm có nhiều dòng sai cùng lúc; Details chứa lỗi chi tiết từng học sinh.
+/// </summary>
+public class ScoreEntryValidationError : AppError
+{
+    public IReadOnlyList<string> Details { get; }
+
+    public ScoreEntryValidationError(IEnumerable<string> details)
+        : base(ScoreErrors.InvalidScoreEntries.Description, ScoreErrors.InvalidScoreEntries.Code, ErrorType.Validation)
+    {
+        Details = details.Distinct().ToList();
+    }
+}
+
+/// <summary>
 /// Danh mục các lỗi nghiệp vụ định nghĩa sẵn cho phân hệ Đánh giá & Điểm số (Assessment & Score).
 /// </summary>
 public static class ScoreErrors
@@ -49,6 +63,27 @@ public static class ScoreErrors
 
     public static readonly AppError StudentNotInClass =
         new("Học sinh không thuộc lớp của phân công này.", "SCORE_STUDENT_NOT_IN_CLASS", ErrorType.Validation);
+
+    public static readonly AppError InvalidScoreEntries =
+        new("Dữ liệu nhập điểm chưa hợp lệ, vui lòng kiểm tra lại:", "SCORE_INVALID_ENTRIES", ErrorType.Validation);
+
+    public static readonly AppError NothingToSave =
+        new("Chưa có điểm hoặc nhận xét mới nào để lưu.", "SCORE_NOTHING_TO_SAVE", ErrorType.Validation);
+
+    public static readonly AppError ScoreUnchanged =
+        new("Điểm mới trùng với điểm hiện tại, không có gì để cập nhật.", "SCORE_UNCHANGED", ErrorType.Validation);
+
+    public static readonly AppError ConcurrentUpdate =
+        new("Bảng điểm vừa được cập nhật bởi một thao tác khác. Vui lòng tải lại trang rồi thử lại.", "SCORE_CONCURRENT_UPDATE", ErrorType.Conflict);
+
+    public static readonly AppError ConductedAtOutOfSemester =
+        new("Ngày tổ chức phải nằm trong khoảng thời gian của học kỳ.", "SCORE_CONDUCTED_AT_OUT_OF_SEMESTER", ErrorType.Validation);
+
+    public static readonly AppError NoLinkedStudent =
+        new("Tài khoản phụ huynh chưa liên kết với học sinh nào.", "SCORE_NO_LINKED_STUDENT", ErrorType.Validation);
+
+    public static readonly AppError SubjectNotScored =
+        new("Môn học này được đánh giá bằng nhận xét, không có đầu điểm số.", "SCORE_SUBJECT_NOT_SCORED", ErrorType.Validation);
 
     public static readonly AppError SystemError =
         new("Hệ thống gặp sự cố khi xử lý điểm số. Vui lòng thử lại sau.", "SYSTEM_ERROR", ErrorType.Failure);

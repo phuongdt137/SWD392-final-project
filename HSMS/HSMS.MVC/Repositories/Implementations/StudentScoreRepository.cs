@@ -21,35 +21,12 @@ public class StudentScoreRepository : GenericRepository<StudentScore>, IStudentS
                 .ThenInclude(a => a.TeachingAssignment)
                     .ThenInclude(ta => ta.Subject)
             .Include(s => s.Customer)
+                .ThenInclude(c => c.User)
+            .Include(s => s.Customer)
                 .ThenInclude(c => c.Parent)
             .Include(s => s.ScoreAuditLogs)
                 .ThenInclude(l => l.ChangedByEmployee)
                     .ThenInclude(e => e.User)
             .FirstOrDefaultAsync(s => s.Id == id);
-    }
-
-    public async Task<IReadOnlyList<StudentScore>> GetByStudentAndSemesterAsync(long customerId, long? semesterId)
-    {
-        return await _dbSet
-            .AsNoTracking()
-            .Include(s => s.Assessment)
-                .ThenInclude(a => a.AssessmentType)
-            .Include(s => s.Assessment)
-                .ThenInclude(a => a.TeachingAssignment)
-                    .ThenInclude(ta => ta.Subject)
-            .Where(s => s.CustomerId == customerId
-                && (semesterId == null || s.Assessment.TeachingAssignment.SemesterId == semesterId))
-            .ToListAsync();
-    }
-
-    public async Task<IReadOnlyList<Semester>> GetSemestersByStudentAsync(long customerId)
-    {
-        return await _dbSet
-            .AsNoTracking()
-            .Where(s => s.CustomerId == customerId)
-            .Select(s => s.Assessment.TeachingAssignment.Semester)
-            .Distinct()
-            .OrderByDescending(sem => sem.StartDate)
-            .ToListAsync();
     }
 }

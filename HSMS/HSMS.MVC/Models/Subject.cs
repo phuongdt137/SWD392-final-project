@@ -27,5 +27,20 @@ public class Subject
         EvaluationType = evaluationType?.Trim();
     }
 
-    public Subject GetDetails() => this;
+    /// <summary>
+    /// Môn có đánh giá bằng điểm số hay không. Môn để trống hình thức đánh giá được coi là chấm điểm;
+    /// môn đánh giá bằng nhận xét / đạt - chưa đạt thì không nhập điểm số.
+    /// </summary>
+    public bool IsScoreEvaluated()
+    {
+        if (string.IsNullOrWhiteSpace(EvaluationType))
+            return true;
+
+        var type = EvaluationType.Trim();
+        return !(type.Contains("nhận xét", StringComparison.OrdinalIgnoreCase)
+                 || type.Contains("comment", StringComparison.OrdinalIgnoreCase)
+                 || type.Contains("đạt", StringComparison.OrdinalIgnoreCase));
+    }
+
+    public Subject GetSubjectDetails() => this;
 }
