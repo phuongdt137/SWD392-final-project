@@ -18,7 +18,7 @@ public interface ICustomerRepository : IGenericRepository<Customer>
     Task<Customer?> GetByUserIdWithChildrenAsync(long userId);
 
     /// <summary>
-    /// Tìm hồ sơ Customer theo Id, kèm User và phụ huynh.
+    /// Tìm hồ sơ học sinh theo Id, kèm toàn bộ điểm (bài kiểm tra, loại, môn, học kỳ) và nhật ký chỉnh sửa.
     /// </summary>
-    Task<Customer?> GetByIdWithUserAsync(long id);
+    Task<Customer?> GetWithScoresAsync(long id);
 }

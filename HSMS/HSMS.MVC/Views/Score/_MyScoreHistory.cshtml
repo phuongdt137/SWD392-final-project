@@ -1,0 +1,36 @@
+@using System.Globalization
+@using HSMS.MVC.Common
+@model IReadOnlyList<HSMS.MVC.DTOs.Score.ScoreAuditLogDto>
+
+@if (!Model.Any())
+{
+    <p class="text-muted mb-0">Điểm này chưa từng được chỉnh sửa.</p>
+}
+else
+{
+    <div class="table-responsive">
+        <table class="table table-sm align-middle mb-0">
+            <thead>
+                <tr>
+                    <th>Thời gian</th>
+                    <th>Điểm cũ → mới</th>
+                    <th>Chênh lệch</th>
+                    <th>Lý do</th>
+                    <th>Giáo viên</th>
+                </tr>
+            </thead>
+            <tbody>
+                @foreach (var log in Model)
+                {
+                    <tr>
+                        <td>@SchoolTime.Local(log.ChangedAt).ToString("dd/MM/yyyy HH:mm")</td>
+                        <td>@(log.OldScore?.ToString("0.00", CultureInfo.InvariantCulture) ?? "—") → @(log.NewScore?.ToString("0.00", CultureInfo.InvariantCulture) ?? "—")</td>
+                        <td>@log.Difference.ToString("+0.00;-0.00;0.00", CultureInfo.InvariantCulture)</td>
+                        <td>@log.ChangeReason</td>
+                        <td>@log.ChangedByName</td>
+                    </tr>
+                }
+            </tbody>
+        </table>
+    </div>
+}

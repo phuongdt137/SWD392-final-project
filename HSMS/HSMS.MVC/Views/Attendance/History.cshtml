@@ -1,51 +1,114 @@
-@using HSMS.MVC.Common
-@using HSMS.MVC.ViewModels.Attendance
-@* Tra cứu kết quả cho quản lý/giáo viên; phạm vi dữ liệu được giới hạn ở Service/Repository. *@
-@model HSMS.MVC.ViewModels.Attendance.AttendanceHistory
+@model AttendanceHistoryViewModel
 @{
-    Layout = "_DashboardLayout"; ViewData["Title"] = "Lịch sử chuyên cần";
-    var f = Model.Filter;
-    var pages = Math.Max(1, (int)Math.Ceiling(Model.Total / 30d));
-    // Giữ điều kiện tra cứu khi chuyển trang hoặc quay lại từ chỉnh sửa.
-    string PageUrl(int page) => Url.Action("History", new { f.From, f.To, f.StudentId, f.ClassId, f.SubjectId, f.Status, Page = page })!;
+    Layout = "_DashboardLayout";
+    var title = Model.IsLearner ? (Model.IsParent ? "Điểm danh của con" : "Điểm danh của tôi") : "Lịch sử điểm danh";
+    ViewData["Title"] = title;
+    var filter = Model.Filter;
+    var staffReader = !Model.IsLearner;
+    var semester = Model.Semesters.FirstOrDefault(s => s.Id == filter.SemesterId);
+    string PageUrl(int page) => Url.Action("History", new
+    {
+        From = filter.From?.ToString("yyyy-MM-dd"), To = filter.To?.ToString("yyyy-MM-dd"),
+        filter.ClassId, filter.StudentId, filter.Status, Page = page,
+        filter.SemesterId, filter.SubjectId, Date = filter.Date?.ToString("yyyy-MM-dd")
+    })!;
 }
-<div class="attendance-page">
-    <h1 class="h3 fw-bold">Tra cứu chuyên cần</h1>
-    <p class="text-muted">Thống kê theo lượt học sinh–tiết đã ghi nhận; các tiết chưa điểm danh không được tính là vắng.</p>
-    <form method="get" class="row g-3 mb-4">
-        <div class="col-sm-3"><label for="from" class="form-label">Từ ngày</label><input id="from" name="From" type="date" value="@f.From?.ToString("yyyy-MM-dd")" class="form-control" /></div>
-        <div class="col-sm-3"><label for="to" class="form-label">Đến ngày</label><input id="to" name="To" type="date" value="@f.To?.ToString("yyyy-MM-dd")" class="form-control" /></div>
-        <div class="col-sm-3"><label for="status" class="form-label">Trạng thái</label><select id="status" name="Status" class="form-select"><option value="">Tất cả</option>
-            @foreach (var s in AttendanceStatuses.All) { <option value="@s" selected="@(f.Status == s)">@AttendanceStatuses.Label(s)</option> }</select></div>
-        @if (Model.Choices.Students.Count > 0) {
-            <div class="col-sm-3"><label for="student" class="form-label">Học sinh</label><select id="student" name="StudentId" class="form-select"><option value="">Tất cả trong phạm vi</option>
-                @foreach (var s in Model.Choices.Students) { <option value="@s.Id" selected="@(f.StudentId == s.Id)">@s.Name</option> }</select></div>
-        }
-        <div class="col-sm-3"><label for="class" class="form-label">Lớp</label><select id="class" name="ClassId" class="form-select"><option value="">Tất cả</option>
-            @foreach (var c in Model.Choices.Classes) { <option value="@c.Id" selected="@(f.ClassId == c.Id)">@c.Name</option> }</select></div>
-        <div class="col-sm-3"><label for="subject" class="form-label">Môn học</label><select id="subject" name="SubjectId" class="form-select"><option value="">Tất cả</option>
-            @foreach (var s in Model.Choices.Subjects) { <option value="@s.Id" selected="@(f.SubjectId == s.Id)">@s.Name</option> }</select></div>
-        <div class="col-12"><button class="btn btn-primary">Tra cứu</button> <a asp-action="Index" class="btn btn-outline-secondary">Lịch điểm danh</a></div>
-    </form>
-    @* Thống kê toàn tập đã lọc; chưa ghi không coi là vắng. *@
-    <div class="attendance-stats mb-4">
-        <div><strong>@(Model.Summary.Rate?.ToString("0.#") + (Model.Summary.Rate.HasValue ? "%" : "Chưa có dữ liệu"))</strong><span>Tỷ lệ tham dự</span></div>
-        <div><strong>@Model.Summary.Absent</strong><span>Tiết vắng không phép</span></div><div><strong>@Model.Summary.Excused</strong><span>Tiết vắng có phép</span></div><div><strong>@Model.Summary.Late</strong><span>Tiết đi muộn</span></div>
+<link rel="stylesheet" href="~/css/attendance-module.css" asp-append-version="true" />
+<div class="attendance-module">
+    <div class="am-heading">
+        <div><h1>@title</h1><p>@(Model.IsLearner ? "Chọn học kỳ và môn học để xem kết quả; để trống ngày học nếu muốn xem cả học kỳ." : "Kết quả trong phạm vi được phép xem của tài khoản hiện tại.")</p></div>
+        @if (staffReader) { <a asp-action="Index" class="btn btn-outline-primary">Lịch điểm danh</a> }
     </div>
-    <div class="card p-3 border-0 shadow-sm table-responsive"><table class="table align-middle">
-        <thead><tr><th>Ngày / Tiết</th><th>Học sinh</th><th>Lớp / Môn</th><th>Kết quả</th><th>Ghi chú</th><th>Thao tác</th></tr></thead>
-        <tbody>@foreach (var r in Model.Records) {
-            <tr><td>@r.AttendanceDate.ToString("dd/MM/yyyy")<br /><small>Tiết @r.TimetableEntry.TimeSlot.PeriodNo</small></td><td>@r.Customer.FullName<br /><small>@r.Customer.StudentCode</small></td>
-                <td>@r.TimetableEntry.TeachingAssignment.Class.ClassName<br /><small>@r.TimetableEntry.TeachingAssignment.Subject.SubjectName</small></td>
-                <td><span class="attendance-badge @r.Status.ToLowerInvariant()">@AttendanceStatuses.Label(r.Status)</span></td><td>@r.Comment</td>
-                <td><div class="d-flex gap-2 align-items-center">
-                    @* Ẩn/hiện nút chỉ hỗ trợ giao diện; action đích vẫn tự kiểm tra quyền. *@
-                    @if (User.IsInRole("ADMIN") || User.IsInRole("STAFF")) { <a asp-action="Mark" asp-route-timetableEntryId="@r.TimetableEntryId" asp-route-date="@r.AttendanceDate.ToString("yyyy-MM-dd")" asp-route-returnUrl="@PageUrl(f.Page)" class="btn btn-sm btn-outline-primary">Chỉnh sửa</a> }
-                    @if (User.IsInRole("ADMIN") || User.IsInRole("STAFF") || User.IsInRole("PRINCIPAL") || User.IsInRole("TEACHER")) { <a asp-action="Audit" asp-route-id="@r.Id">Nhật ký</a> }
-                </div></td></tr>
-        }</tbody>
-    </table>@if (Model.Total == 0) { <p class="text-muted">Chưa có dữ liệu phù hợp trong phạm vi truy cập.</p> }</div>
-    <footer class="review-pagination"><span>@Model.Total kết quả · Trang @f.Page/@pages</span>
-        <partial name="_AttendancePagination" model="@(new AttendancePagination(f.Page, pages, PageUrl))" />
-    </footer>
+    @if (Model.IsLearner)
+    {
+        <form method="get" class="am-learner-filters card p-3 mb-4" id="attendance-history-filters">
+            @if (Model.IsParent)
+            {
+                <div class="am-child"><label for="child">Học sinh</label>
+                    <select id="child" name="StudentId" class="form-select" data-reset="SemesterId,SubjectId,Date" disabled="@(Model.Students.Count == 0)">
+                        @if (Model.Students.Count == 0) { <option value="">Chưa có học sinh liên kết</option> }
+                        @foreach (var child in Model.Students) { <option value="@child.Id" selected="@(filter.StudentId == child.Id)">@child.Name</option> }
+                    </select>
+                </div>
+            }
+            <div class="am-wide"><label for="semester">Học kỳ</label>
+                <select id="semester" name="SemesterId" class="form-select" data-reset="SubjectId,Date" disabled="@(Model.Semesters.Count == 0)">
+                    @if (Model.Semesters.Count == 0) { <option value="">Chưa có học kỳ</option> }
+                    @foreach (var term in Model.Semesters) { <option value="@term.Id" selected="@(filter.SemesterId == term.Id)">@term.Name</option> }
+                </select>
+            </div>
+            <div class="am-wide"><label for="subject">Môn học</label>
+                <select id="subject" name="SubjectId" class="form-select" disabled="@(Model.Subjects.Count == 0)">
+                    <option value="">Tất cả môn học trong học kỳ</option>
+                    @foreach (var subject in Model.Subjects) { <option value="@subject.Id" selected="@(filter.SubjectId == subject.Id)">@subject.Name</option> }
+                </select>
+            </div>
+            <div><label for="study-date">Ngày học</label><input id="study-date" name="Date" type="date"
+                min="@semester?.StartDate.ToString("yyyy-MM-dd")" max="@semester?.EndDate.ToString("yyyy-MM-dd")"
+                value="@filter.Date?.ToString("yyyy-MM-dd")" class="form-control" /></div>
+            <div><label for="learner-status">Trạng thái</label><select id="learner-status" name="Status" class="form-select">
+                <option value="">Tất cả trạng thái</option>
+                @foreach (var status in AttendanceStatuses.All) { <option value="@status" selected="@(filter.Status == status)">@AttendanceStatuses.Label(status)</option> }
+            </select></div>
+            <div class="am-filter-actions">
+                <a asp-action="History" asp-route-studentId="@(Model.IsParent ? filter.StudentId : null)" class="btn btn-outline-secondary">Đặt lại</a>
+                <button class="btn btn-primary">Lọc kết quả</button>
+            </div>
+        </form>
+    }
+    else
+    {
+    <form method="get" class="am-filters card p-3 mb-4">
+        <div><label for="from">Từ ngày</label><input id="from" name="From" type="date" value="@filter.From?.ToString("yyyy-MM-dd")" class="form-control" /></div>
+        <div><label for="to">Đến ngày</label><input id="to" name="To" type="date" value="@filter.To?.ToString("yyyy-MM-dd")" class="form-control" /></div>
+        <div><label for="class">Lớp</label><select id="class" name="ClassId" class="form-select">
+            <option value="">Tất cả</option>
+            @foreach (var item in Model.Classes) { <option value="@item.Id" selected="@(filter.ClassId == item.Id)">@item.Name</option> }
+        </select></div>
+        <div><label for="student">Học sinh</label><select id="student" name="StudentId" class="form-select">
+            <option value="">Tất cả học sinh được phép xem</option>
+            @foreach (var item in Model.Students) { <option value="@item.Id" selected="@(filter.StudentId == item.Id)">@item.Name</option> }
+        </select></div>
+        <div><label for="status">Trạng thái</label><select id="status" name="Status" class="form-select">
+            <option value="">Tất cả</option>
+            @foreach (var status in AttendanceStatuses.All) { <option value="@status" selected="@(filter.Status == status)">@AttendanceStatuses.Label(status)</option> }
+        </select></div>
+        <button class="btn btn-primary">Tra cứu</button>
+    </form>
+    }
+    <p class="text-muted">@Model.Total kết quả · Trang @filter.Page / @Model.Pages</p>
+    <div class="card table-responsive"><table class="table align-middle mb-0">
+        <thead><tr><th>Ngày / tiết</th><th>Học sinh</th><th>Lớp / môn</th><th>Trạng thái</th><th>Ghi chú</th>@if (staffReader) { <th>Thao tác</th> }</tr></thead>
+        <tbody>
+        @foreach (var record in Model.Records)
+        {
+            <tr>
+                <td>@record.AttendanceDate.ToString("dd/MM/yyyy")<br /><small>Tiết @record.TimetableEntry.TimeSlot.PeriodNo</small></td>
+                <td>@record.Customer.FullName<br /><small>@record.Customer.StudentCode</small></td>
+                <td>@record.TimetableEntry.TeachingAssignment.Class.ClassName<br /><small>@record.TimetableEntry.TeachingAssignment.Subject.SubjectName</small></td>
+                <td><span class="am-badge am-@record.Status.ToLowerInvariant()">@AttendanceStatuses.Label(record.Status)</span></td>
+                <td>@(record.Comment ?? "—")</td>
+                @if (staffReader)
+                {
+                    <td><a asp-action="Audit" asp-route-id="@record.Id">Nhật ký</a><br />
+                        <a asp-action="Mark" asp-route-timetableEntryId="@record.TimetableEntryId" asp-route-date="@record.AttendanceDate.ToString("yyyy-MM-dd")">Mở bảng</a>
+                    </td>
+                }
+            </tr>
+        }
+        @if (Model.Records.Count == 0)
+        {
+            <tr><td colspan="@(staffReader ? 6 : 5)">
+                @(Model.IsParent && Model.Students.Count == 0 ? "Tài khoản chưa có học sinh được liên kết." :
+                    Model.IsLearner && Model.Semesters.Count == 0 ? "Học sinh chưa có học kỳ hoặc phân công lớp/môn để tra cứu." :
+                    "Chưa có kết quả phù hợp với bộ lọc.")
+            </td></tr>
+        }
+        </tbody>
+    </table></div>
+    <nav class="am-pagination" aria-label="Phân trang lịch sử điểm danh">
+        @if (filter.Page > 1) { <a href="@PageUrl(filter.Page - 1)" class="btn btn-outline-secondary">Trang trước</a> }
+        @if (filter.Page < Model.Pages) { <a href="@PageUrl(filter.Page + 1)" class="btn btn-outline-secondary">Trang sau</a> }
+    </nav>
 </div>
+@section Scripts { @if (Model.IsLearner) { <script src="~/js/attendance-history.js" asp-append-version="true"></script> } }

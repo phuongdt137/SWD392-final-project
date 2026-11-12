@@ -14,6 +14,13 @@ public class LoginResponseDto
     public string UserType { get; set; } = string.Empty; // "CUSTOMER" hoặc "EMPLOYEE"
     public IReadOnlyList<string> Roles { get; set; } = Array.Empty<string>();
     public string? AvatarUrl { get; set; }
+    public long? EmployeeId { get; set; }
+    public long? CustomerId { get; set; }
+
+    public bool Has(string role) => Roles.Contains(role);
+
+    [JsonIgnore]
+    public bool SchoolReader => Has("STAFF") || Has("PRINCIPAL");
 
     public LoginResponseDto() { }
 
@@ -25,7 +32,9 @@ public class LoginResponseDto
         string email,
         string userType,
         IReadOnlyList<string> roles,
-        string? avatarUrl = null)
+        string? avatarUrl = null,
+        long? employeeId = null,
+        long? customerId = null)
     {
         Id = id;
         Username = username;
@@ -34,6 +43,8 @@ public class LoginResponseDto
         UserType = userType;
         Roles = roles ?? Array.Empty<string>();
         AvatarUrl = avatarUrl;
+        EmployeeId = employeeId;
+        CustomerId = customerId;
     }
 
     public LoginResponseDto(
@@ -43,8 +54,10 @@ public class LoginResponseDto
         string email,
         string userType,
         IEnumerable<string> roles,
-        string? avatarUrl = null)
-        : this(id, username, fullName, email, userType, (roles?.ToList() ?? new List<string>()).AsReadOnly(), avatarUrl)
+        string? avatarUrl = null,
+        long? employeeId = null,
+        long? customerId = null)
+        : this(id, username, fullName, email, userType, (roles?.ToList() ?? new List<string>()).AsReadOnly(), avatarUrl, employeeId, customerId)
     {
     }
 }

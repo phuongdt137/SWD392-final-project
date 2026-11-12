@@ -55,5 +55,8 @@ public class TeachingAssignment
 
         Assessments.Add(assessment);
     }
-    public TeachingAssignment GetAssignments() => this;
+
+    public IReadOnlyList<Assessment> GetAssessments() => Assessments.ToList();
+
+    public TeachingAssignment GetAssignmentDetails() => this;
 }

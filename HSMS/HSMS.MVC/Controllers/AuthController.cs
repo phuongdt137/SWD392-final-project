@@ -1,4 +1,5 @@
 using System.Text.Json;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using HSMS.MVC.Common;
 using HSMS.MVC.DTOs.Auth;
@@ -9,7 +10,7 @@ namespace HSMS.MVC.Controllers;
 
 public class AuthController : Controller
 {
-    public const string SessionUserKey = "CurrentUser";
+    public const string SessionUserKey = SessionKeys.CurrentUser;
     private readonly IAuthService _authService;
 
     public AuthController(IAuthService authService)
@@ -20,8 +21,7 @@ public class AuthController : Controller
     [HttpGet]
     public IActionResult Login(string? returnUrl = null)
     {
-        var user = GetCurrentUserFromSession();
-        if (user != null)
+        if (User.Identity?.IsAuthenticated == true)
         {
             return RedirectToDefaultDashboard();
         }
@@ -48,7 +48,7 @@ public class AuthController : Controller
         }
 
         var userJson = JsonSerializer.Serialize(result.Data);
-        HttpContext.Session.SetString(SessionUserKey, userJson);
+        HttpContext.Session.SetString(SessionKeys.CurrentUser, userJson);
 
         if (!string.IsNullOrWhiteSpace(model.ReturnUrl) 
             && Url.IsLocalUrl(model.ReturnUrl)
@@ -75,33 +75,25 @@ public class AuthController : Controller
         return RedirectToAction("Index", "Home");
     }
 
+    [Authorize]
     [HttpGet]
     public IActionResult ChangePassword()
     {
-        var user = GetCurrentUserFromSession();
-        if (user == null)
-        {
-            return RedirectToAction("Login", new { returnUrl = "/Auth/ChangePassword" });
-        }
-
         return View(new ChangePasswordViewModel());
     }
 
+    [Authorize]
     [HttpPost]
     [ValidateAntiForgeryToken]
     public async Task<IActionResult> ChangePassword(ChangePasswordViewModel model)
     {
-        var user = GetCurrentUserFromSession();
-        if (user == null)
-        {
-            return RedirectToAction("Login", new { returnUrl = "/Auth/ChangePassword" });
-        }
-
         if (!ModelState.IsValid)
         {
             return View(model);
         }
 
+        var userJson = HttpContext.Session.GetString(SessionKeys.CurrentUser)!;
+        var user = JsonSerializer.Deserialize<LoginResponseDto>(userJson)!;
         var dto = new ChangePasswordDto(user.Id, model.CurrentPassword, model.NewPassword);
         var result = await _authService.ChangePasswordAsync(dto);
 
@@ -190,25 +182,10 @@ public class AuthController : Controller
         return View();
     }
 
-    private LoginResponseDto? GetCurrentUserFromSession()
-    {
-        var userJson = HttpContext.Session.GetString(SessionUserKey);
-        if (string.IsNullOrEmpty(userJson))
-            return null;
-
-        try
-        {
-            return JsonSerializer.Deserialize<LoginResponseDto>(userJson);
-        }
-        catch
-        {
-            return null;
-        }
-    }
-
     private IActionResult RedirectToDefaultDashboard()
     {
-        var user = GetCurrentUserFromSession();
+        var userJson = HttpContext.Session.GetString(SessionKeys.CurrentUser);
+        var user = string.IsNullOrEmpty(userJson) ? null : JsonSerializer.Deserialize<LoginResponseDto>(userJson);
         if (user?.Roles != null && user.Roles.Count > 0)
         {
             return RedirectToRoleDashboard(user.Roles);
@@ -252,3 +229,4 @@ public class AuthController : Controller
         return RedirectToAction("Index", "Dashboard");
     }
 }
+

@@ -34,12 +34,27 @@ public class CustomerRepository : GenericRepository<Customer>, ICustomerReposito
             .FirstOrDefaultAsync(c => c.UserId == userId);
     }
 
-    public async Task<Customer?> GetByIdWithUserAsync(long id)
+    public async Task<Customer?> GetWithScoresAsync(long id)
     {
         return await _dbSet
-            .AsNoTracking()
+            .AsNoTrackingWithIdentityResolution()
+            .AsSplitQuery()
             .Include(c => c.User)
-            .Include(c => c.Parent)
+            .Include(c => c.StudentScores)
+                .ThenInclude(s => s.Assessment)
+                    .ThenInclude(a => a.AssessmentType)
+            .Include(c => c.StudentScores)
+                .ThenInclude(s => s.Assessment)
+                    .ThenInclude(a => a.TeachingAssignment)
+                        .ThenInclude(ta => ta.Subject)
+            .Include(c => c.StudentScores)
+                .ThenInclude(s => s.Assessment)
+                    .ThenInclude(a => a.TeachingAssignment)
+                        .ThenInclude(ta => ta.Semester)
+            .Include(c => c.StudentScores)
+                .ThenInclude(s => s.ScoreAuditLogs)
+                    .ThenInclude(l => l.ChangedByEmployee)
+                        .ThenInclude(e => e.User)
             .FirstOrDefaultAsync(c => c.Id == id);
     }
 }

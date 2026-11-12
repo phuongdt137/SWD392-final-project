@@ -1,12 +1,24 @@
 using System.Net;
 using System.Net.Mail;
 using System.Text;
+using HSMS.MVC.DTOs.Email;
 
 namespace HSMS.MVC.Service;
 
-// Dùng chung SMTP cho đặt lại mật khẩu và điểm danh, không tạo dịch vụ mail riêng.
+// Dùng chung SMTP cho đặt lại mật khẩu, điểm danh và hàng đợi ưu tiên EmailPriorityQueue.
 public class EmailService(IConfiguration configuration, ILogger<EmailService> logger) : IEmailService
 {
+    public async Task SendEmailAsync(EmailMessage message, CancellationToken ct = default)
+    {
+        ArgumentNullException.ThrowIfNull(message);
+        await SendCoreAsync(message.ToEmail, message.Subject, message.Body, message.IsHtml, ct);
+    }
+
+    public async Task SendHtmlEmailAsync(string toEmail, string subject, string htmlBody, CancellationToken ct = default)
+    {
+        await SendCoreAsync(toEmail, subject, htmlBody, isHtml: true, ct);
+    }
+
     public async Task SendPasswordResetEmailAsync(string toEmail, string resetLink)
     {
         // Giữ cách xử lý của Auth: thiếu cấu hình thì bỏ qua, lỗi SMTP chỉ ghi log.
@@ -21,7 +33,7 @@ public class EmailService(IConfiguration configuration, ILogger<EmailService> lo
                 <p><a href="{link}">Đặt lại mật khẩu</a></p>
                 <p>Nếu bạn không thực hiện yêu cầu này, vui lòng bỏ qua email.</p>
                 """;
-            await SendHtmlAsync(toEmail, "HSMS - Đặt lại mật khẩu tài khoản", body, CancellationToken.None);
+            await SendCoreAsync(toEmail, "HSMS - Đặt lại mật khẩu tài khoản", body, isHtml: true, CancellationToken.None);
         }
         catch (Exception ex)
         {
@@ -52,7 +64,7 @@ public class EmailService(IConfiguration configuration, ILogger<EmailService> lo
             {action}
             <p>Đây là thông báo tự động từ High School Management System.</p>
             """;
-        await SendHtmlAsync(address.Address, "HSMS - " + title, body, ct);
+        await SendCoreAsync(address.Address, "HSMS - " + title, body, isHtml: true, ct);
     }
 
     private string? AttendanceLink(string? relativeLink)
@@ -73,7 +85,7 @@ public class EmailService(IConfiguration configuration, ILogger<EmailService> lo
         !string.IsNullOrWhiteSpace(configuration["EmailSettings:SenderEmail"]) &&
         !string.IsNullOrWhiteSpace(configuration["EmailSettings:SenderPassword"]);
 
-    private async Task SendHtmlAsync(string recipient, string subject, string body, CancellationToken ct)
+    private async Task SendCoreAsync(string recipient, string subject, string body, bool isHtml, CancellationToken ct)
     {
         if (!HasSmtpConfiguration())
             throw new InvalidOperationException("Chưa cấu hình đầy đủ EmailSettings cho máy chủ SMTP.");
@@ -93,7 +105,7 @@ public class EmailService(IConfiguration configuration, ILogger<EmailService> lo
             SubjectEncoding = Encoding.UTF8,
             Body = body,
             BodyEncoding = Encoding.UTF8,
-            IsBodyHtml = true
+            IsBodyHtml = isHtml
         };
         message.To.Add(recipient);
         // Giới hạn thời gian mỗi lần gửi; token dừng ứng dụng vẫn có hiệu lực.

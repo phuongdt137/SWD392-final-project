@@ -1,5 +1,6 @@
 using HSMS.MVC.Common;
 using HSMS.MVC.Data;
+using HSMS.MVC.Hubs;
 using HSMS.MVC.Repositories.Implementations;
 using HSMS.MVC.Repositories.Interfaces;
 using HSMS.MVC.Service;
@@ -7,37 +8,44 @@ using HSMS.MVC.Service.Implementations;
 using HSMS.MVC.Service.Interfaces;
 using HSMS.MVC.Service.Notifications;
 using Microsoft.AspNetCore.Authentication;
+using Microsoft.AspNetCore.Authentication.Cookies;
 using Microsoft.EntityFrameworkCore;
 
 var builder = WebApplication.CreateBuilder(args);
 
 // Add services to the container.
-// Thông báo qua Redirect (TempData) cũng dùng Session thay vì cookie TempData riêng.
 builder.Services.AddControllersWithViews().AddSessionStateTempDataProvider();
 builder.Services.AddHttpContextAccessor();
 builder.Services.AddDistributedMemoryCache();
-// Xác thực duy nhất từ Session, không tạo cookie đăng nhập riêng.
-builder.Services.AddAuthentication(UserPrincipal.SessionScheme)
-    .AddScheme<AuthenticationSchemeOptions, SessionAuthenticationHandler>(UserPrincipal.SessionScheme, _ => { });
+builder.Services.AddSignalR();
+
+// Cấu hình đường dẫn chuyển hướng mặc định cho [Authorize] (Login & AccessDenied)
+builder.Services.AddAuthentication(CookieAuthenticationDefaults.AuthenticationScheme)
+    .AddCookie(options =>
+    {
+        options.LoginPath = "/Auth/Login";
+        options.AccessDeniedPath = "/Auth/AccessDenied";
+    });
 builder.Services.AddAuthorization();
+
 builder.Services.AddSingleton(TimeProvider.System);
 builder.Services.AddSingleton<SchoolTime>();
-// Đăng ký theo request: Controller nhận interface, DI cấp đúng Service/Repository Attendance.
-builder.Services.AddScoped<ICurrentUserService, CurrentUserService>();
-builder.Services.AddScoped<IAttendanceRepository, AttendanceRepository>();
-builder.Services.AddScoped<IAttendanceService, AttendanceService>();
 builder.Services.AddScoped<INotificationRepository, NotificationRepository>();
 builder.Services.AddScoped<INotificationService, NotificationService>();
-// Tác vụ nền gửi email từ thông báo/MessageLog đã commit, không đẩy dữ liệu real-time.
 builder.Services.AddSingleton<NotificationDispatchSignal>();
 builder.Services.AddHostedService<NotificationDispatcher>();
+
+// Hàng đợi ưu tiên gửi Email bất đồng bộ dưới nền (PriorityQueue + SemaphoreSlim)
+builder.Services.AddSingleton<IEmailPriorityQueue, EmailPriorityQueue>();
+builder.Services.AddHostedService<EmailBackgroundWorker>();
 
 builder.Services.AddDbContext<AppDbContext>(options =>
     options.UseSqlServer(builder.Configuration.GetConnectionString("DefaultConnection")));
 
-// Session có sẵn lưu dữ liệu ở server; cookie dưới đây chỉ chứa mã phiên, không phải vé đăng nhập.
+// Session lưu dữ liệu userJson ở server; trình duyệt chỉ giữ cookie chứa SessionId.
 builder.Services.AddSession(options =>
 {
+    options.Cookie.Name = ".HSMS.SessionId";
     options.IdleTimeout = TimeSpan.FromHours(2);
     options.Cookie.HttpOnly = true;
     options.Cookie.IsEssential = true;
@@ -54,6 +62,9 @@ builder.Services.AddScoped<IAssessmentRepository, AssessmentRepository>();
 builder.Services.AddScoped<ICustomerRepository, CustomerRepository>();
 builder.Services.AddScoped<IStudentScoreRepository, StudentScoreRepository>();
 builder.Services.AddScoped<IScoreService, ScoreService>();
+builder.Services.AddScoped<IScoreRealtimeNotifier, ScoreRealtimeNotifier>();
+builder.Services.AddScoped<IAttendanceRepository, AttendanceRepository>();
+builder.Services.AddScoped<IAttendanceService, AttendanceService>();
 builder.Services.AddScoped<ISubjectRepository, SubjectRepository>();
 builder.Services.AddScoped<ISubjectService, SubjectService>();
 builder.Services.AddScoped<IAcademicYearRepository, AcademicYearRepository>();
@@ -76,22 +87,22 @@ app.UseStaticFiles();
 app.UseRouting();
 
 app.UseSession();
-// Session phải sẵn sàng trước khi SessionAuthenticationHandler dựng User cho request.
-app.UseAuthentication();
+// Middleware truy vấn Session theo SessionId từ cookie và nạp vào UserPrincipal (HttpContext.User)
+app.UseMiddleware<SessionAuthMiddleware>();
 app.UseAuthorization();
 
 app.MapControllerRoute(
     name: "default",
     pattern: "{controller=Home}/{action=Index}/{id?}");
 
-// Reuse the existing account seed; academic demo data is limited to Development.
+app.MapHub<ScoreHub>("/hubs/scores");
+
+// Seed the existing accounts and score demo data.
 {
     using var scope = app.Services.CreateScope();
     var context = scope.ServiceProvider.GetRequiredService<AppDbContext>();
     await DbSeeder.SeedAdminAccountsAsync(context);
     await ScoreSeeder.SeedAsync(context);
-    if (app.Environment.IsDevelopment() && builder.Configuration.GetValue<bool>("DemoData:AttendanceEnabled"))
-        await DbSeeder.SeedAttendanceDemoAsync(context, scope.ServiceProvider.GetRequiredService<SchoolTime>());
 }
 
 app.Run();

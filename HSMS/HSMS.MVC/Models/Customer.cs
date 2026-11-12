@@ -116,6 +116,50 @@ public class Customer
     /// </summary>
     public bool IsGuardianOf(Customer student) => student != null && student.ParentId == Id;
 
+    // ===== Đánh giá & Điểm số (học sinh / phụ huynh) =====
+
+    /// <summary>
+    /// Hồ sơ này được xem điểm của học sinh có Id đã cho khi là chính học sinh đó hoặc là phụ huynh (có con là học sinh đó).
+    /// Cần nạp sẵn Children.
+    /// </summary>
+    public bool CanViewScoresOf(long studentCustomerId)
+        => studentCustomerId == Id || Children.Any(c => c.Id == studentCustomerId);
+
+    /// <summary>
+    /// Các học kỳ mà học sinh đã có điểm, học kỳ mới nhất trước.
+    /// </summary>
+    public List<Semester> GetScoreSemesters()
+    {
+        return StudentScores
+            .Select(s => s.Assessment.TeachingAssignment.Semester)
+            .DistinctBy(sem => sem.Id)
+            .OrderByDescending(sem => sem.StartDate)
+            .ToList();
+    }
+
+    /// <summary>
+    /// Điểm của học sinh trong một học kỳ.
+    /// </summary>
+    public List<StudentScore> GetStudentScores(long semesterId)
+    {
+        return StudentScores
+            .Where(s => s.Assessment.TeachingAssignment.SemesterId == semesterId)
+            .ToList();
+    }
+
+    /// <summary>
+    /// Nhật ký chỉnh sửa của một điểm thuộc học sinh này, mới nhất trước.
+    /// </summary>
+    public List<ScoreAuditLog> GetScoreHistory(long scoreId)
+    {
+        var score = StudentScores.FirstOrDefault(s => s.Id == scoreId)
+            ?? throw ScoreErrors.ScoreNotFound;
+
+        return score.GetAuditLogs()
+            .OrderByDescending(l => l.ChangedAt)
+            .ToList();
+    }
+
     public void RemoveParent()
     {
         ParentId = null;

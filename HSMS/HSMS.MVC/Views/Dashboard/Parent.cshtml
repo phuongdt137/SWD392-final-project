@@ -4,7 +4,6 @@
     ViewData["Title"] = "Parent Dashboard - High School Management System";
     Layout = "_DashboardLayout";
 
-    var attendance = ViewData["AttendanceSummary"] as HSMS.MVC.DTOs.Attendance.AttendanceSummary ?? new(0, 0, 0, 0);
     var displayName = Model?.FullName ?? Model?.Username ?? "Phụ huynh";
 }
 
@@ -47,25 +46,6 @@
      2. 4 TOP KPI STAT CARDS
      ========================================== -->
 <div class="row g-3 mb-4">
-    <!-- Today Attendance -->
-    <div class="col-12 col-sm-6 col-xl-3">
-        <div class="kpi-card">
-            <div class="d-flex align-items-center">
-                <div class="kpi-icon-wrap kpi-icon-green">
-                    <i class="bi bi-check-circle-fill"></i>
-                </div>
-                <div class="kpi-content">
-                    <div class="kpi-title">Chuyên cần hôm nay</div>
-                    <div class="kpi-value text-success">@(attendance.Recorded == 0 ? "Chưa có dữ liệu" : (attendance.Present + attendance.Late) + "/" + attendance.Recorded)</div>
-                    <div class="kpi-subtext">@attendance.Absent tiết vắng · @attendance.Late tiết đi muộn</div>
-                </div>
-            </div>
-            <div class="kpi-arrow-btn">
-                <i class="bi bi-chevron-right"></i>
-            </div>
-        </div>
-    </div>
-
     <!-- GPA -->
     <div class="col-12 col-sm-6 col-xl-3">
         <div class="kpi-card">

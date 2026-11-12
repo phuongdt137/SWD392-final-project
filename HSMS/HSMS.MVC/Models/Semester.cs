@@ -39,11 +39,16 @@ public class Semester
         AcademicYearId = academicYearId;
     }
 
-    public bool IsOngoing()
+    /// <summary>
+    /// Học kỳ hiện tại: ngày hôm nay nằm trong khoảng StartDate – EndDate.
+    /// </summary>
+    public bool IsCurrentSemester()
     {
         var today = DateTime.Today;
         return StartDate <= today && today <= EndDate;
     }
 
-    public Semester GetDetails() => this;
+    public IReadOnlyList<TeachingAssignment> GetTeachingAssignments() => TeachingAssignments.ToList();
+
+    public Semester GetSemesterDetails() => this;
 }

@@ -1,0 +1,209 @@
+@model HSMS.MVC.ViewModels.Timetable.CreateTimetableViewModel
+@{
+    Layout = "_DashboardLayout";
+    ViewData["Title"] = "Đặt lịch dạy & Phân công giảng dạy - High School Management System";
+}
+
+<div class="row justify-content-center">
+    <div class="col-12 col-xl-10">
+        <!-- Header -->
+        <div class="d-flex justify-content-between align-items-center mb-4">
+            <div>
+                <a asp-action="Index" class="btn btn-link text-decoration-none text-secondary p-0 mb-2 d-inline-flex align-items-center gap-1">
+                    <i class="bi bi-arrow-left"></i> Quay lại thời khóa biểu
+                </a>
+                <h1 class="h3 fw-bold text-dark mb-1">
+                    <i class="bi bi-calendar-plus text-primary me-2"></i>Đặt lịch dạy & Phân công mới
+                </h1>
+                <p class="text-muted mb-0">Cán bộ học vụ chọn thông tin giáo viên, lớp, phòng và tiết học để lên lịch.</p>
+            </div>
+        </div>
+
+        @if (!ViewData.ModelState.IsValid && ViewData.ModelState.ErrorCount > 0)
+        {
+            <div class="alert alert-danger alert-dismissible fade show mb-4 shadow-sm rounded-3" role="alert">
+                <div class="d-flex align-items-center gap-2 mb-2">
+                    <i class="bi bi-exclamation-triangle-fill fs-5"></i>
+                    <strong>Không thể hoàn tất đặt lịch:</strong>
+                </div>
+                <div asp-validation-summary="All" class="mb-0 text-danger small"></div>
+                <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+            </div>
+        }
+
+        <!-- Card Form -->
+        <div class="card border-0 shadow-sm rounded-4">
+            <div class="card-body p-4 p-md-5">
+                <form method="post" asp-action="Create" id="createTimetableForm">
+                    @Html.AntiForgeryToken()
+
+                    <!-- SECTION 1: PHÂN CÔNG GIẢNG DẠY (TEACHING ASSIGNMENT) -->
+                    <div class="mb-4">
+                        <h5 class="fw-bold text-dark border-bottom pb-2 mb-3 d-flex align-items-center gap-2">
+                            <span class="badge bg-primary rounded-circle" style="width: 24px; height: 24px; display: inline-flex; align-items: center; justify-content: center; font-size: 0.8rem;">1</span>
+                            Thông tin Phân công giảng dạy
+                        </h5>
+                        <div class="row g-3">
+                            <!-- Giáo viên -->
+                            <div class="col-12 col-md-6">
+                                <label asp-for="Request.TeacherId" class="form-label fw-semibold text-secondary">
+                                    Giáo viên giảng dạy <span class="text-danger">*</span>
+                                </label>
+                                <select asp-for="Request.TeacherId" class="form-select rounded-3 py-2" required>
+                                    <option value="">-- Chọn giáo viên --</option>
+                                    @foreach (var t in Model.Teachers)
+                                    {
+                                        <option value="@t.Value" selected="@(t.Value == Model.Request.TeacherId.ToString() ? "selected" : null)">@t.Text</option>
+                                    }
+                                </select>
+                                <span asp-validation-for="Request.TeacherId" class="text-danger small"></span>
+                            </div>
+
+                            <!-- Môn học -->
+                            <div class="col-12 col-md-6">
+                                <label asp-for="Request.SubjectId" class="form-label fw-semibold text-secondary">
+                                    Môn học <span class="text-danger">*</span>
+                                </label>
+                                <select asp-for="Request.SubjectId" class="form-select rounded-3 py-2" required>
+                                    <option value="">-- Chọn môn học --</option>
+                                    @foreach (var s in Model.Subjects)
+                                    {
+                                        <option value="@s.Value" selected="@(s.Value == Model.Request.SubjectId.ToString() ? "selected" : null)">@s.Text</option>
+                                    }
+                                </select>
+                                <span asp-validation-for="Request.SubjectId" class="text-danger small"></span>
+                            </div>
+
+                            <!-- Lớp học -->
+                            <div class="col-12 col-md-6">
+                                <label asp-for="Request.ClassId" class="form-label fw-semibold text-secondary">
+                                    Lớp học <span class="text-danger">*</span>
+                                </label>
+                                <select asp-for="Request.ClassId" class="form-select rounded-3 py-2" required>
+                                    <option value="">-- Chọn lớp học --</option>
+                                    @foreach (var c in Model.Classes)
+                                    {
+                                        <option value="@c.Value" selected="@(c.Value == Model.Request.ClassId.ToString() ? "selected" : null)">@c.Text</option>
+                                    }
+                                </select>
+                                <span asp-validation-for="Request.ClassId" class="text-danger small"></span>
+                            </div>
+
+                            <!-- Học kỳ -->
+                            <div class="col-12 col-md-6">
+                                <label asp-for="Request.SemesterId" class="form-label fw-semibold text-secondary">
+                                    Học kỳ <span class="text-danger">*</span>
+                                </label>
+                                <select asp-for="Request.SemesterId" class="form-select rounded-3 py-2" required>
+                                    <option value="">-- Chọn học kỳ --</option>
+                                    @foreach (var sem in Model.Semesters)
+                                    {
+                                        <option value="@sem.Value" selected="@(sem.Value == Model.Request.SemesterId.ToString() ? "selected" : null)">@sem.Text</option>
+                                    }
+                                </select>
+                                <span asp-validation-for="Request.SemesterId" class="text-danger small"></span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- SECTION 2: THỜI KHÓA BIỂU & ĐỊA ĐIỂM (TIMETABLE ENTRY) -->
+                    <div class="mb-4">
+                        <h5 class="fw-bold text-dark border-bottom pb-2 mb-3 d-flex align-items-center gap-2">
+                            <span class="badge bg-primary rounded-circle" style="width: 24px; height: 24px; display: inline-flex; align-items: center; justify-content: center; font-size: 0.8rem;">2</span>
+                            Thời gian, Tiết học & Phòng học
+                        </h5>
+                        <div class="row g-3">
+                            <!-- Phòng học -->
+                            <div class="col-12 col-md-4">
+                                <label asp-for="Request.RoomId" class="form-label fw-semibold text-secondary">
+                                    Phòng học <span class="text-danger">*</span>
+                                </label>
+                                <select asp-for="Request.RoomId" class="form-select rounded-3 py-2" required>
+                                    <option value="">-- Chọn phòng học --</option>
+                                    @foreach (var r in Model.Rooms)
+                                    {
+                                        <option value="@r.Value" selected="@(r.Value == Model.Request.RoomId.ToString() ? "selected" : null)">@r.Text</option>
+                                    }
+                                </select>
+                                <span asp-validation-for="Request.RoomId" class="text-danger small"></span>
+                            </div>
+
+                            <!-- Thứ trong tuần -->
+                            <div class="col-12 col-md-4">
+                                <label asp-for="Request.DayOfWeek" class="form-label fw-semibold text-secondary">
+                                    Thứ trong tuần <span class="text-danger">*</span>
+                                </label>
+                                <select asp-for="Request.DayOfWeek" class="form-select rounded-3 py-2" required>
+                                    @foreach (var d in Model.DaysOfWeek)
+                                    {
+                                        <option value="@d.Value" selected="@(d.Value == Model.Request.DayOfWeek.ToString() ? "selected" : null)">@d.Text</option>
+                                    }
+                                </select>
+                                <span asp-validation-for="Request.DayOfWeek" class="text-danger small"></span>
+                            </div>
+
+                            <!-- Tiết học -->
+                            <div class="col-12 col-md-4">
+                                <label asp-for="Request.TimeSlotId" class="form-label fw-semibold text-secondary">
+                                    Tiết học <span class="text-danger">*</span>
+                                </label>
+                                <select asp-for="Request.TimeSlotId" class="form-select rounded-3 py-2" required>
+                                    <option value="">-- Chọn tiết học --</option>
+                                    @foreach (var ts in Model.TimeSlots)
+                                    {
+                                        <option value="@ts.Value" selected="@(ts.Value == Model.Request.TimeSlotId.ToString() ? "selected" : null)">@ts.Text</option>
+                                    }
+                                </select>
+                                <span asp-validation-for="Request.TimeSlotId" class="text-danger small"></span>
+                            </div>
+
+                            <!-- Ngày bắt đầu hiệu lực -->
+                            <div class="col-12 col-md-6">
+                                <label asp-for="Request.EffectiveFrom" class="form-label fw-semibold text-secondary">
+                                    Có hiệu lực từ ngày
+                                </label>
+                                <input asp-for="Request.EffectiveFrom" type="date" class="form-control rounded-3 py-2" />
+                                <span class="form-text text-muted">Để trống nếu áp dụng từ đầu học kỳ.</span>
+                                <span asp-validation-for="Request.EffectiveFrom" class="text-danger small"></span>
+                            </div>
+
+                            <!-- Ngày kết thúc hiệu lực -->
+                            <div class="col-12 col-md-6">
+                                <label asp-for="Request.EffectiveTo" class="form-label fw-semibold text-secondary">
+                                    Đến ngày (Kết thúc hiệu lực)
+                                </label>
+                                <input asp-for="Request.EffectiveTo" type="date" class="form-control rounded-3 py-2" />
+                                <span class="form-text text-muted">Để trống nếu áp dụng suốt học kỳ.</span>
+                                <span asp-validation-for="Request.EffectiveTo" class="text-danger small"></span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Notice Alert -->
+                    <div class="alert alert-light border d-flex align-items-center gap-2 mb-4 rounded-3 text-secondary small">
+                        <i class="bi bi-shield-check text-primary fs-5"></i>
+                        <span>
+                            Hệ thống sẽ tự động kiểm tra xung đột trùng lịch: Giáo viên bận, Lớp học bận hoặc Phòng học đã có người sử dụng trước khi lưu.
+                        </span>
+                    </div>
+
+                    <!-- Submit & Actions -->
+                    <div class="d-flex justify-content-end align-items-center gap-3 pt-3 border-top">
+                        <a asp-action="Index" class="btn btn-outline-secondary px-4 py-2 rounded-3">
+                            Hủy bỏ
+                        </a>
+                        <button type="submit" class="btn btn-primary px-4 py-2 rounded-3 d-flex align-items-center gap-2 shadow-sm">
+                            <i class="bi bi-save2-fill"></i>
+                            <span class="fw-semibold">Lưu và Xếp lịch dạy</span>
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <partial name="_ValidationScriptsPartial" />
+}
+

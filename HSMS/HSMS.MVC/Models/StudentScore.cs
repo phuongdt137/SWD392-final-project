@@ -33,7 +33,7 @@ public class StudentScore
         CustomerId = customerId;
         AssessmentId = assessmentId;
         Score = score;
-        Comment = comment;
+        Comment = NormalizeComment(comment);
         IsLocked = false;
         CreatedAt = DateTime.UtcNow;
     }
@@ -46,7 +46,7 @@ public class StudentScore
         ValidateScore(score);
 
         Score = score;
-        Comment = comment;
+        Comment = NormalizeComment(comment);
         UpdatedAt = DateTime.UtcNow;
     }
 
@@ -60,6 +60,9 @@ public class StudentScore
 
         if (string.IsNullOrWhiteSpace(reason))
             throw new AppError("Lý do sửa điểm không được để trống.", "REASON_REQUIRED");
+
+        if (Score.HasValue && Score.Value == newScore)
+            throw ScoreErrors.ScoreUnchanged;
 
         var auditLog = new ScoreAuditLog(
             Id,
@@ -87,9 +90,40 @@ public class StudentScore
 
     public ICollection<ScoreAuditLog> GetAuditLogs() => ScoreAuditLogs;
 
-    private static void ValidateScore(decimal score)
+    /// <summary>
+    /// Cập nhật nhận xét cho dòng điểm chưa có điểm (không đổi điểm, không ghi nhật ký sửa điểm).
+    /// </summary>
+    public void SetComment(string? comment)
+    {
+        if (IsLocked)
+            throw new AppError("Bảng điểm đã bị khóa, không thể nhập điểm.", "SCORE_LOCKED");
+
+        Comment = NormalizeComment(comment);
+        UpdatedAt = DateTime.UtcNow;
+    }
+
+    // Nhận xét luôn được lưu đã cắt khoảng trắng đầu/cuối; nhận xét trống lưu là null.
+    private static string? NormalizeComment(string? comment)
+        => string.IsNullOrWhiteSpace(comment) ? null : comment.Trim();
+
+    /// <summary>
+    /// Trả về thông báo lỗi nếu điểm không hợp lệ (ngoài 0–10 hoặc quá 2 chữ số thập phân), ngược lại trả null.
+    /// </summary>
+    public static string? GetScoreError(decimal score)
     {
         if (score < 0 || score > 10)
-            throw new AppError("Điểm số phải nằm trong khoảng từ 0 đến 10.", "INVALID_SCORE");
+            return "Điểm số phải nằm trong khoảng từ 0 đến 10.";
+
+        if (decimal.Round(score, 2) != score)
+            return "Điểm số chỉ được có tối đa 2 chữ số thập phân.";
+
+        return null;
+    }
+
+    private static void ValidateScore(decimal score)
+    {
+        var error = GetScoreError(score);
+        if (error != null)
+            throw new AppError(error, "INVALID_SCORE");
     }
 }

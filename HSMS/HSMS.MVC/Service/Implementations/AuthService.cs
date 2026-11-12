@@ -1,7 +1,10 @@
+using System.Net;
 using System.Security.Cryptography;
 using HSMS.MVC.Common;
 using HSMS.MVC.DTOs.Auth;
+using HSMS.MVC.DTOs.Email;
 using HSMS.MVC.Repositories.Interfaces;
+using HSMS.MVC.Service.Interfaces;
 
 namespace HSMS.MVC.Service;
 
@@ -12,16 +15,16 @@ namespace HSMS.MVC.Service;
 public class AuthService : IAuthService
 {
     private readonly IUserRepository _userRepository;
-    private readonly IEmailService _emailService;
+    private readonly IEmailPriorityQueue _emailQueue;
     private readonly ILogger<AuthService> _logger;
 
     public AuthService(
         IUserRepository userRepository,
-        IEmailService emailService,
+        IEmailPriorityQueue emailQueue,
         ILogger<AuthService> logger)
     {
         _userRepository = userRepository;
-        _emailService = emailService;
+        _emailQueue = emailQueue;
         _logger = logger;
     }
 
@@ -78,7 +81,9 @@ public class AuthService : IAuthService
                 user.Email,
                 userType,
                 roles,
-                user.AvatarUrl
+                user.AvatarUrl,
+                user.EmployeeProfile?.Id,
+                user.CustomerProfile?.Id
             );
 
             return ServiceResult<LoginResponseDto>.Success(responseDto, "Đăng nhập thành công.");
@@ -165,7 +170,25 @@ public class AuthService : IAuthService
             await _userRepository.SaveChangesAsync();
 
             var resetUrl = $"{resetLinkBaseUrl}?token={Uri.EscapeDataString(token)}&email={Uri.EscapeDataString(user.Email)}";
-            await _emailService.SendPasswordResetEmailAsync(user.Email, resetUrl);
+            var encodedLink = WebUtility.HtmlEncode(resetUrl);
+            var body = $"""
+                <h3>Yêu cầu đặt lại mật khẩu</h3>
+                <p>Bạn nhận được email này vì đã có yêu cầu đặt lại mật khẩu cho tài khoản tại High School Management System.</p>
+                <p>Vui lòng nhấn vào liên kết bên dưới để tạo mật khẩu mới (liên kết có hiệu lực trong 15 phút):</p>
+                <p><a href="{encodedLink}">Đặt lại mật khẩu</a></p>
+                <p>Nếu bạn không thực hiện yêu cầu này, vui lòng bỏ qua email.</p>
+                """;
+
+            // Đưa vào PriorityQueue với mức ưu tiên cao nhất (Critical = 1) để gửi bất đồng bộ ngay dưới nền
+            _emailQueue.Enqueue(new EmailMessage(
+                ToEmail: user.Email,
+                Subject: "HSMS - Đặt lại mật khẩu tài khoản",
+                Body: body,
+                IsHtml: true,
+                Priority: EmailPriority.Critical,
+                RecipientUserId: user.Id,
+                TemplateCode: "PASSWORD_RESET"
+            ));
 
             return ServiceResult.Success("Yêu cầu đặt lại mật khẩu đã được xử lý. Vui lòng kiểm tra email.");
         }
