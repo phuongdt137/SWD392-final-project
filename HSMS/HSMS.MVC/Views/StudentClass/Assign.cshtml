@@ -1,0 +1,37 @@
+﻿@using Microsoft.AspNetCore.Mvc.Rendering
+@model HSMS.MVC.DTOs.Academic.AssignStudentDto
+@{
+    ViewData["Title"] = "Xếp học sinh vào lớp - High School Management System";
+    Layout = "_DashboardLayout";
+}
+
+<h1 class="welcome-title h3 mb-1">Xếp học sinh vào lớp</h1>
+<p class="text-muted mb-4">Lớp <strong>@ViewBag.ClassName</strong> - năm học <strong>@ViewBag.YearCode</strong></p>
+
+<div class="card border-0 shadow-sm">
+    <div class="card-body p-4">
+        <form asp-action="Assign" method="post" class="row g-3">
+            <div asp-validation-summary="ModelOnly" class="text-danger col-12"></div>
+            <input type="hidden" asp-for="ClassId" />
+
+            <div class="col-md-8">
+                <label asp-for="CustomerId" class="form-label"></label>
+                <select asp-for="CustomerId" asp-items="(List<SelectListItem>)ViewBag.Students" class="form-select">
+                    <option value="">-- Chọn học sinh --</option>
+                </select>
+                <span asp-validation-for="CustomerId" class="text-danger"></span>
+                <div class="form-text">Chỉ hiện học sinh chưa có lớp nào trong năm học này.</div>
+            </div>
+            <div class="col-md-4">
+                <label asp-for="JoinedAt" class="form-label"></label>
+                <input asp-for="JoinedAt" class="form-control" />
+                <span asp-validation-for="JoinedAt" class="text-danger"></span>
+            </div>
+
+            <div class="col-12 d-flex gap-2">
+                <button type="submit" class="btn btn-primary">Xếp lớp</button>
+                <a asp-action="Index" asp-route-classId="@Model.ClassId" class="btn btn-light">Quay lại</a>
+            </div>
+        </form>
+    </div>
+</div>

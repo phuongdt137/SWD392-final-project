@@ -1,0 +1,78 @@
+﻿@using Microsoft.AspNetCore.Mvc.Rendering
+@model HSMS.MVC.DTOs.Academic.ClassStudentsDto?
+@{
+    ViewData["Title"] = "Xếp học sinh vào lớp - High School Management System";
+    Layout = "_DashboardLayout";
+}
+
+@if (TempData["SuccessMessage"] is string successMessage)
+{
+    <div class="alert alert-success">@successMessage</div>
+}
+@if (TempData["ErrorMessage"] is string errorMessage)
+{
+    <div class="alert alert-danger">@errorMessage</div>
+}
+
+<h1 class="welcome-title h3 mb-4">Xếp học sinh vào lớp</h1>
+
+<div class="card border-0 shadow-sm mb-4">
+    <div class="card-body p-4">
+        <form asp-action="Index" method="get" class="row g-3 align-items-end">
+            <div class="col-md-8">
+                <label class="form-label">Chọn lớp</label>
+                <select name="classId" asp-items="(List<SelectListItem>)ViewBag.Classes" class="form-select">
+                    <option value="">-- Chọn lớp --</option>
+                </select>
+            </div>
+            <div class="col-md-4">
+                <button type="submit" class="btn btn-primary">Xem danh sách</button>
+            </div>
+        </form>
+    </div>
+</div>
+
+@if (Model != null)
+{
+    <div class="d-flex justify-content-between align-items-center mb-3">
+        <h2 class="h5 mb-0">
+            Lớp @Model.ClassName (@Model.AcademicYearCode) - @Model.Students.Count học sinh
+        </h2>
+        @if (Model.ClassStatus == "ACTIVE")
+        {
+            <a asp-action="Assign" asp-route-classId="@Model.ClassId" class="btn btn-primary">Xếp học sinh vào lớp</a>
+        }
+    </div>
+
+    <div class="card border-0 shadow-sm">
+        <div class="card-body p-0">
+            <table class="table align-middle mb-0">
+                <thead>
+                    <tr>
+                        <th>Mã học sinh</th>
+                        <th>Họ tên</th>
+                        <th>Ngày vào lớp</th>
+                        <th></th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @foreach (var s in Model.Students)
+                    {
+                        <tr>
+                            <td class="fw-semibold">@s.StudentCode</td>
+                            <td>@s.FullName</td>
+                            <td>@s.JoinedAt.ToString("dd/MM/yyyy")</td>
+                            <td class="text-end">
+                                <a asp-action="Transfer" asp-route-id="@s.StudentClassId" class="btn btn-sm btn-outline-primary">Chuyển lớp</a>
+                            </td>
+                        </tr>
+                    }
+                    @if (!Model.Students.Any())
+                    {
+                        <tr><td colspan="4" class="text-muted">Lớp chưa có học sinh nào.</td></tr>
+                    }
+                </tbody>
+            </table>
+        </div>
+    </div>
+}

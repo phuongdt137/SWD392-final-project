@@ -1,0 +1,46 @@
+﻿@using Microsoft.AspNetCore.Mvc.Rendering
+@model HSMS.MVC.DTOs.Academic.TransferStudentDto
+@{
+    ViewData["Title"] = "Chuyển lớp - High School Management System";
+    Layout = "_DashboardLayout";
+}
+
+<h1 class="welcome-title h3 mb-4">Chuyển lớp</h1>
+
+<div class="card border-0 shadow-sm mb-4">
+    <div class="card-body p-4">
+        <div class="row g-3">
+            <div class="col-md-4"><div class="text-muted small">Học sinh</div><div class="fw-semibold">@ViewBag.StudentName (@ViewBag.StudentCode)</div></div>
+            <div class="col-md-4"><div class="text-muted small">Lớp hiện tại</div><div class="fw-semibold">@ViewBag.FromClassName</div></div>
+            <div class="col-md-4"><div class="text-muted small">Năm học</div><div class="fw-semibold">@ViewBag.YearCode</div></div>
+        </div>
+    </div>
+</div>
+
+<div class="card border-0 shadow-sm">
+    <div class="card-body p-4">
+        <form asp-action="Transfer" method="post" class="row g-3">
+            <div asp-validation-summary="ModelOnly" class="text-danger col-12"></div>
+            <input type="hidden" asp-for="StudentClassId" />
+
+            <div class="col-md-6">
+                <label asp-for="ToClassId" class="form-label"></label>
+                <select asp-for="ToClassId" asp-items="(List<SelectListItem>)ViewBag.Classes" class="form-select">
+                    <option value="">-- Chọn lớp mới --</option>
+                </select>
+                <span asp-validation-for="ToClassId" class="text-danger"></span>
+                <div class="form-text">Chỉ chuyển trong cùng năm học, sang lớp đang hoạt động.</div>
+            </div>
+            <div class="col-md-6">
+                <label asp-for="Reason" class="form-label"></label>
+                <textarea asp-for="Reason" class="form-control" rows="3"></textarea>
+                <span asp-validation-for="Reason" class="text-danger"></span>
+            </div>
+
+            <div class="col-12 d-flex gap-2">
+                <button type="submit" class="btn btn-primary">Xác nhận chuyển lớp</button>
+                <a asp-action="Index" class="btn btn-light">Quay lại</a>
+            </div>
+        </form>
+    </div>
+</div>
